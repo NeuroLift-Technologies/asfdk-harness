@@ -1,0 +1,42 @@
+{
+  "handoff_record": {
+    "session_id": "2026-06-25-codex-timestamp-normalization",
+    "agent_name": "Codex / OpenAI Codex CLI",
+    "date": "2026-06-25",
+    "timestamp": "2026-06-25T19:27:50Z",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "main",
+    "work_completed": [
+      "Normalized Codex log templates to require ISO timestamps alongside dates.",
+      "Updated the active threads header to use an ISO timestamp.",
+      "Backfilled the Codex handoff records touched in this session with ISO timestamps."
+    ],
+    "work_in_progress": [
+      "THREAD-003 remains the active Codex protocol thread."
+    ],
+    "blockers": [],
+    "decisions_made": [
+      "Future Codex-created or updated logs in this repo should include an ISO timestamp field."
+    ],
+    "decisions_pending": [
+      "Continue third-party protocol work on A2A/AG-UI/ACP/OpenAPI while leaving MCP to THREAD-002."
+    ],
+    "escalations": [],
+    "next_agent_notes": "Use the updated templates in templates/agent-registration.json and templates/handoff-record.json. The active threads file now carries a timestamped top-level update marker.",
+    "files_modified": [
+      "templates/agent-registration.json",
+      "templates/handoff-record.json",
+      "docs/agent-log/README.md",
+      "docs/active-threads.md",
+      "docs/agent-log/handoffs/2026-06-25-codex-session-rollup.json",
+      "docs/agent-log/handoffs/2026-06-25-codex-mcp-scope-correction.json",
+      "docs/agent-log/handoffs/2026-06-25-codex-timestamp-normalization.json"
+    ],
+    "tests_run": [
+      "JSON validation for timestamped handoff records"
+    ],
+    "tests_passing": true,
+    "pr_url": "TBD"
+  }
+}

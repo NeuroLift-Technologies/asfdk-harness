@@ -1,0 +1,37 @@
+{
+  "$schema": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/config-schema.json",
+  "name": "asfdk-governance-agent",
+  "compatibility_date": "2026-06-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "main": "src/server.ts",
+  "ai": {
+    "binding": "AI"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "SESSION",
+      "id": "37151fbc32b944e59da444aa6117edfe"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "AsfdkGovernanceAgent",
+        "class_name": "AsfdkGovernanceAgent"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["AsfdkGovernanceAgent"]
+    }
+  ],
+  "vars": {
+    "ASFDK_VERSION": "ORG-DEV-OTOI-1.0.2",
+    "GOVERNANCE_MODEL": "@cf/meta/llama-4-scout-17b-16e-instruct"
+  }
+}

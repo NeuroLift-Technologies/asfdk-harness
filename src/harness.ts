@@ -14,6 +14,7 @@ import {
   type GovernanceProtocolContext,
   type GovernanceProtocolSnapshot,
 } from "./protocols.js";
+import { createA2AAgentCard, type A2AAgentCard } from "./a2a.js";
 
 export interface AsfdkHarnessOptions {
   userId?: string;
@@ -22,6 +23,8 @@ export interface AsfdkHarnessOptions {
   cwd?: string;
   toiPath?: string;
   otoiPath?: string;
+  /** Public A2A service endpoint URL advertised on the generated Agent Card. */
+  a2aUrl?: string;
 }
 
 export interface TextAssessment {
@@ -36,6 +39,7 @@ export class AsfdkHarness {
   readonly cwd: string;
   readonly toiPath: string | undefined;
   readonly otoiPath: string | undefined;
+  readonly a2aUrl: string | undefined;
 
   #foundation: NeuroLiftFoundation | undefined;
   #protocolContext: GovernanceProtocolContext | undefined;
@@ -47,6 +51,7 @@ export class AsfdkHarness {
     this.cwd = options.cwd ?? process.cwd();
     this.toiPath = options.toiPath ?? process.env.ASFDK_TOI_PATH;
     this.otoiPath = options.otoiPath ?? process.env.ASFDK_OTOI_PATH;
+    this.a2aUrl = options.a2aUrl ?? process.env.ASFDK_A2A_URL;
   }
 
   async start(): Promise<void> {
@@ -123,6 +128,14 @@ export class AsfdkHarness {
 
   async protocolSystemPrompt(cwd?: string): Promise<string> {
     return formatProtocolSystemPrompt(await this.protocolContext(cwd));
+  }
+
+  async a2aAgentCard(cwd?: string): Promise<A2AAgentCard> {
+    return createA2AAgentCard(await this.protocolContext(cwd), {
+      agentId: "asfdk-harness",
+      agentName: "ASFDK Harness",
+      url: this.a2aUrl,
+    });
   }
 
   async foundation(): Promise<NeuroLiftFoundation> {

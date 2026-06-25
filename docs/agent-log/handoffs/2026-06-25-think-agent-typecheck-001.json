@@ -1,0 +1,76 @@
+{
+  "_template_info": {
+    "template_version": "1.0.0",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "otoi_section": "§5 — Handoff Protocol",
+    "sop_reference": "SOP-NLT-001 Step 8"
+  },
+  "handoff_record": {
+    "session_id": "think-agent-typecheck-001",
+    "agent_name": "opencode (big-pickle)",
+    "platform": "opencode",
+    "date": "2026-06-25",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "main",
+    "active_thread_id": "THREAD-001",
+    "work_completed": [
+      "Fixed agent.ts: correct Think API signatures (Session, TurnContext, TurnConfig, ChatResponseResult imports; parameters -> inputSchema for ai v6; ctx.system not this.systemPrompt; result.message.parts not result.messages)",
+      "Fixed createWorkspaceTools import path: @cloudflare/think/tools/workspace",
+      "Fixed createExecuteTool(this) one-liner pattern",
+      "Fixed crisis.ts/otoi.ts: AiTextGenerationModels -> keyof AiModels",
+      "npm run cf:check passes cleanly (tsc -p tsconfig.workers.json --noEmit)",
+      "Created .dev.vars template for local dev secrets",
+      "Created agent registration and handoff records"
+    ],
+    "work_in_progress": [
+      "None — type fixes and cf:check are complete"
+    ],
+    "blockers": [
+      "Standard npm run check fails on governance modules and server.ts due to pre-existing Workers type dependencies (Ai, KVNamespace, D1Database not in standard tsconfig) — governance types need @cloudflare/workers-types; not a regression from this session"
+    ],
+    "decisions_made": [
+      {
+        "decision": "Use createExecuteTool(this) one-liner (Think agent is an ExecuteToolAgent)",
+        "rationale": "Simpler than passing options object; Think SDK natively supports this pattern",
+        "made_by": "opencode"
+      },
+      {
+        "decision": "Use inputSchema instead of parameters for tool() from ai v6",
+        "rationale": "ai v6 SDK renamed the field; parameters is not recognized",
+        "made_by": "opencode"
+      },
+      {
+        "decision": "Remove BROWSER and SANDBOX from Env interface and tool set",
+        "rationale": "Not configured in wrangler.jsonc; createSandboxTools is not yet implemented",
+        "made_by": "opencode"
+      }
+    ],
+    "decisions_pending": [],
+    "escalations": [
+      {
+        "topic": "None",
+        "status": "not-required"
+      }
+    ],
+    "next_agent_notes": "agent.ts now compiles cleanly under tsconfig.workers.json. The Think agent uses: configureSession (Session.withContext/.withCachedPrompt), beforeTurn (ctx: TurnContext -> TurnConfig.system), getTools() (createWorkspaceTools + createExecuteTool(this) + custom asfdk_* tools), and onChatResponse (result.message.parts -> TextUIPart). Standard tsconfig check still has pre-existing governance type errors — these are in src/governance/ (used by Workers code only, not Pi extension). Next steps: create PR branch, deploy via wrangler, wire up actual DO + AI bindings.",
+    "files_modified": [
+      "agents/asfdk-governance/agent.ts",
+      "src/governance/crisis.ts",
+      "src/governance/otoi.ts",
+      "wrangler.jsonc"
+    ],
+    "files_created": [
+      ".dev.vars",
+      "docs/agent-log/registrations/2026-06-25-opencode-think-agent-typecheck.json",
+      "docs/agent-log/handoffs/2026-06-25-think-agent-typecheck-001.json"
+    ],
+    "files_deleted": [],
+    "tests_run": [
+      "npm run cf:check — passes (0 errors)"
+    ],
+    "tests_passing": true,
+    "pr_url": null,
+    "commit_shas": []
+  }
+}

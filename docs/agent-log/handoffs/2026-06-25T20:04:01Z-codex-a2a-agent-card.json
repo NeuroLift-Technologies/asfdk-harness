@@ -1,0 +1,53 @@
+{
+  "handoff_record": {
+    "session_id": "2026-06-25-codex-a2a-agent-card",
+    "agent_name": "Codex / OpenAI Codex CLI",
+    "date": "2026-06-25",
+    "timestamp": "2026-06-25T20:04:01Z",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "main",
+    "work_completed": [
+      "Added src/a2a.ts to generate a TOI/OTOI-governed A2A Agent Card from the active protocol snapshot.",
+      "Wired the A2A card generator into AsfdkHarness as a2aAgentCard().",
+      "Exposed the generated card through the Pi tool surface as asfdk_a2a_agent_card.",
+      "Added the /asfdk-a2a-card Pi command surface.",
+      "Updated README, third-party protocol docs, and active-thread tracking for the new A2A card generator."
+    ],
+    "work_in_progress": [
+      "THREAD-003 remains focused on non-MCP third-party protocol integration.",
+      "A real A2A HTTP adapter is still the next implementation step."
+    ],
+    "blockers": [
+      "MCP remains owned by THREAD-002 / Vibe and should not be modified by Codex."
+    ],
+    "decisions_made": [
+      "Implemented the A2A Agent Card generator before a network adapter so the harness can publish governed discovery metadata without crossing into MCP work.",
+      "Kept third-party protocol scope limited to A2A, AG-UI, ACP, OpenAPI/REST, and watchlist protocols."
+    ],
+    "decisions_pending": [
+      "Whether to add the full A2A HTTP adapter next or continue with adjacent non-MCP protocol surfaces."
+    ],
+    "escalations": [],
+    "next_agent_notes": "Read docs/active-threads.md and docs/third-party-protocols.md before continuing. The current A2A card is generated from the local governance snapshot and is not a live A2A endpoint.",
+    "files_modified": [
+      "src/a2a.ts",
+      "src/harness.ts",
+      "src/tools.ts",
+      "src/index.ts",
+      "test/tools.test.ts",
+      "test/harness.test.ts",
+      "test/extension-load.test.ts",
+      "README.md",
+      "docs/third-party-protocols.md",
+      "docs/active-threads.md",
+      "docs/agent-log/handoffs/2026-06-25T20:04:01Z-codex-a2a-agent-card.json"
+    ],
+    "tests_run": [
+      "npm run test:unit",
+      "node --import tsx -e test harness.a2aAgentCard() smoke check"
+    ],
+    "tests_passing": true,
+    "pr_url": "TBD"
+  }
+}

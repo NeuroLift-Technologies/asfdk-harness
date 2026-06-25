@@ -22,9 +22,13 @@
     "dev:mcp": "tsx src/mcp-server.ts",
     "harness": "tsx src/cli.ts",
     "mcp": "tsx src/mcp-server.ts",
-    "test": "npm run check && npm run test:unit",
+    "test": "npm run check && npm run cf:check && npm run test:unit",
     "test:unit": "node --import tsx --test test/*.test.ts",
-    "prepack": "npm run build"
+    "prepack": "npm run build",
+    "cf:dev": "npx wrangler dev",
+    "cf:deploy": "npx wrangler deploy",
+    "cf:typegen": "npx wrangler types",
+    "cf:check": "tsc -p tsconfig.workers.json --noEmit"
   },
   "files": [
     "dist",
@@ -47,7 +51,9 @@
     "agent-governance",
     "model-context-protocol",
     "mcp-server",
-    "mcp-tools"
+    "mcp-tools",
+    "cloudflare-workers",
+    "agents-sdk"
   ],
   "author": "NeuroLift Technologies <info@neuroliftsolutions.com>",
   "license": "Apache-2.0",
@@ -60,17 +66,24 @@
   },
   "homepage": "https://github.com/NeuroLift-Technologies/asfdk-harness#readme",
   "dependencies": {
+    "@cloudflare/shell": "^0.4.0",
+    "@cloudflare/think": "^0.10.0",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@neurolift-technologies/asfdk": "^0.2.0",
-    "zod": "^3.23.8"
+    "agents": "^0.16.2",
+    "ai": "^6.0.209",
+    "workers-ai-provider": "^3.2.1",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260624.0",
     "@earendil-works/pi-coding-agent": "^0.80.2",
     "@flue/cli": "^1.0.0-beta.5",
     "@types/node": "^26.0.1",
     "tsx": "^4.22.4",
     "typebox": "^1.3.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "wrangler": "^4.104.0"
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*",

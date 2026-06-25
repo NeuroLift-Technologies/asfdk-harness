@@ -96,5 +96,8 @@ The current repo includes a registry, not full network adapters:
 - `/asfdk-interop` shows the registry from the Pi command surface.
 - `asfdk_protocol_status` includes the registry alongside local `.toi`/`.otoi` protocol state.
 - MCP appears in the registry only as a separate-owner boundary marker.
+- `src/a2a.ts` generates an A2A Agent Card from the active protocol snapshot and resolved OTOI governance.
+- `asfdk_a2a_agent_card` returns the generated card inside Pi.
+- `/asfdk-a2a-card` shows the generated card from the Pi command surface.
 
-Next implementation step: add an A2A adapter module that can generate an Agent Card from the registry and resolved `.otoi` policy.
+Next implementation step: add a real A2A HTTP adapter that serves the generated card and task lifecycle endpoints.
