@@ -45,6 +45,14 @@ test("status merges foundation status with a real (loaded) protocol snapshot", a
   );
 });
 
+test("a2aAgentCard derives a governed A2A card from the active protocol snapshot", async () => {
+  const card = await harness.a2aAgentCard();
+  assert.equal(card.kind, "a2a-agent-card");
+  assert.equal(card.discovery.protocol, "A2A");
+  assert.ok(card.governance.toiPath.length > 0);
+  assert.ok(card.skills.some((skill) => skill.id === "asfdk.governed_pi_task"));
+});
+
 test("assessText returns an interaction and an emotionalState", async () => {
   const r = await harness.assessText("I am feeling calm and focused today.");
   assert.ok(r.interaction);

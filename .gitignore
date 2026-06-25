@@ -145,3 +145,8 @@ vite.config.ts.timestamp-*
 # ASFDK harness runtime artifacts
 # Sleepwalker Protocol cross-session continuity storage (created at runtime, per user id)
 .swp_storage/
+
+# Cloudflare Workers
+.wrangler/
+.dev.vars
+worker-configuration.d.ts

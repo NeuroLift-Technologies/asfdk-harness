@@ -14,6 +14,7 @@ import {
   type GovernanceProtocolContext,
   type GovernanceProtocolSnapshot,
 } from "./protocols.js";
+import { createA2AAgentCard, type A2AAgentCard } from "./a2a.js";
 
 export interface AsfdkHarnessOptions {
   userId?: string;
@@ -123,6 +124,13 @@ export class AsfdkHarness {
 
   async protocolSystemPrompt(cwd?: string): Promise<string> {
     return formatProtocolSystemPrompt(await this.protocolContext(cwd));
+  }
+
+  async a2aAgentCard(cwd?: string): Promise<A2AAgentCard> {
+    return createA2AAgentCard(await this.protocolContext(cwd), {
+      agentId: "asfdk-harness",
+      agentName: "ASFDK Harness",
+    });
   }
 
   async foundation(): Promise<NeuroLiftFoundation> {

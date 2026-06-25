@@ -1,0 +1,36 @@
+{
+  "_template_info": {
+    "template_version": "1.0.0",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "otoi_section": "§3 — Agent Registration",
+    "sop_reference": "SOP-NLT-001 Step 5"
+  },
+  "agent_registration": {
+    "agent_name": "opencode (big-pickle)",
+    "platform": "opencode",
+    "version": "big-pickle",
+    "session_id": "think-agent-typecheck-001",
+    "entry_date": "2026-06-25",
+    "entry_point": "user requested continuation of asfdk-governance Think agent type fixes",
+    "acknowledged_otoi": true,
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "working_repo": "NeuroLift-Technologies/asfdk-harness",
+    "working_branch": "main",
+    "task_summary": "Fix Think agent type errors, run cf:check until clean, create .dev.vars template",
+    "active_thread_id": "THREAD-001",
+    "capabilities_self_reported": [
+      "TypeScript type debugging",
+      "Workers SDK API exploration",
+      "ai v6 SDK migration (parameters -> inputSchema)"
+    ],
+    "known_limitations": [
+      "no write access to @cloudflare/think source"
+    ],
+    "preferred_handoff_format": "JSON handoff record",
+    "escalation_acknowledged": true,
+    "escalation_contact": "joshua@neurolift.tech",
+    "solidarity_framework_acknowledged": true,
+    "commit_format_acknowledged": true,
+    "handoff_required_acknowledged": true
+  }
+}

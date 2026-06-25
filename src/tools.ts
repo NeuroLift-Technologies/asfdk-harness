@@ -70,6 +70,23 @@ export function createAsfdkTools(harness: AsfdkHarness) {
       },
     },
     {
+      name: "asfdk_a2a_agent_card",
+      label: "ASFDK A2A Agent Card",
+      description: "Generate a TOI/OTOI-governed A2A Agent Card for the current harness state.",
+      promptSnippet: "Inspect the generated A2A Agent Card for the current ASFDK harness.",
+      promptGuidelines: [
+        "Use asfdk_a2a_agent_card when the user asks how this harness would present itself to A2A peers.",
+      ],
+      parameters: Type.Object({}),
+      async execute() {
+        const card = await harness.a2aAgentCard();
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(card, null, 2) }],
+          details: card as unknown as Record<string, unknown>,
+        };
+      },
+    },
+    {
       name: "asfdk_assess_text",
       label: "ASFDK Assess Text",
       description: "Assess text through ASFDK's active Solidarity Framework components.",

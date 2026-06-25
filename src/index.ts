@@ -85,6 +85,14 @@ export default function asfdkPiHarness(pi: ExtensionAPI) {
       ctx.ui.notify(JSON.stringify(getThirdPartyProtocolProfiles(), null, 2), "info");
     },
   });
+
+  pi.registerCommand("asfdk-a2a-card", {
+    description: "Show the generated A2A Agent Card for the current harness state.",
+    handler: async (_args, ctx) => {
+      const card = await harness.a2aAgentCard(ctx.cwd);
+      ctx.ui.notify(JSON.stringify(card, null, 2), "info");
+    },
+  });
 }
 
 export { AsfdkHarness } from "./harness.js";
@@ -96,6 +104,7 @@ export {
   formatProtocolSystemPrompt,
   loadGovernanceProtocols,
 } from "./protocols.js";
+export { createA2AAgentCard } from "./a2a.js";
 export type {
   GovernanceProtocolContext,
   GovernanceProtocolSnapshot,

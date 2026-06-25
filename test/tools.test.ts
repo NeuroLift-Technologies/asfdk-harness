@@ -25,9 +25,10 @@ const byName = (name: string) => {
   return t;
 };
 
-test("creates exactly the five ASFDK tools", () => {
+test("creates exactly the six ASFDK tools", () => {
   const names = tools.map((t) => t.name).sort();
   assert.deepEqual(names, [
+    "asfdk_a2a_agent_card",
     "asfdk_assess_text",
     "asfdk_interop_protocols",
     "asfdk_protocol_status",
@@ -56,6 +57,14 @@ test("asfdk_interop_protocols.execute returns third-party profiles (no foundatio
   const r = await (byName("asfdk_interop_protocols").execute as (id: string, p: unknown) => Promise<any>)("call-2", {});
   assert.ok(Array.isArray(r.details.protocols));
   assert.ok(r.details.protocols.length > 0, "expected at least one interop protocol profile");
+});
+
+test("asfdk_a2a_agent_card.execute returns an A2A-ready agent card", async () => {
+  const r = await (byName("asfdk_a2a_agent_card").execute as (id: string, p: unknown) => Promise<any>)("call-2a", {});
+  assert.equal(r.details.kind, "a2a-agent-card");
+  assert.equal(r.details.discovery.protocol, "A2A");
+  assert.ok(Array.isArray(r.details.skills));
+  assert.ok(r.details.skills.some((skill: { id?: string }) => skill.id === "asfdk.governed_pi_task"));
 });
 
 test("asfdk_assess_text.execute runs an assessment", async () => {

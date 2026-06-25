@@ -10,7 +10,7 @@
     "platform": "Claude Code",
     "version": "claude-opus-4-8 (1M context)",
     "session_id": "2026-06-25-claude-harness-hardening",
-    "entry_date": "2026-06-25",
+    "entry_date": "2026-06-25T14:35:59-04:00",
     "entry_point": "Direct task from Joshua W. Dorsey, Sr.: verify the Pi harness, confirm asfdk uses the published npm package, and harden the harness locally without colliding with the concurrent Codex / Mistral Vibe / opencode sessions.",
     "acknowledged_otoi": true,
     "otoi_version": "ORG-DEV-OTOI-1.0.2",

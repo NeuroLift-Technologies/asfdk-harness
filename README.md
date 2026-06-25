@@ -8,12 +8,16 @@ It adds Solidarity Framework hooks around Pi sessions so prompts and tool calls 
 
 - **Pi extension package** via `pi.extensions`
 - **ASFDK tools** registered in Pi:
+  - `asfdk_a2a_agent_card`
   - `asfdk_status`
+  - `asfdk_protocol_status`
+  - `asfdk_interop_protocols`
   - `asfdk_assess_text`
   - `asfdk_update_preferences`
 - **MCP Server** exposing ASFDK tools via Model Context Protocol
 - **TOI/OTOI protocol loader** for local `.toi` and `.otoi`
 - **Third-party protocol registry** for A2A, AG-UI, ACP, OpenAPI/REST, and watchlist protocols
+- **A2A Agent Card generator** derived from the active TOI/OTOI snapshot and third-party registry
 - **Turn preflight hook** using ASFDK assessment context
 - **Tool-call policy hook** for high-risk shell commands and sensitive local paths
 - **Standalone SDK runner** for one-shot Pi prompts with ASFDK hooks enabled
@@ -72,7 +76,7 @@ ASFDK_OTOI_PATH=.otoi
 
 ## Non-MCP protocols
 
-The harness integrates through local files, Pi extension hooks, Pi tools, slash commands, and the SDK/CLI runner. It also tracks third-party interoperability targets such as A2A, AG-UI, and ACP. MCP work is handled separately under `THREAD-002`.
+The harness integrates through local files, Pi extension hooks, Pi tools, slash commands, and the SDK/CLI runner. It also tracks third-party interoperability targets such as A2A, AG-UI, and ACP, and can generate an A2A Agent Card from the active governance snapshot. MCP work is handled separately under `THREAD-002`.
 
 See [docs/non-mcp-integration-protocols.md](docs/non-mcp-integration-protocols.md).
 See [docs/third-party-protocols.md](docs/third-party-protocols.md).

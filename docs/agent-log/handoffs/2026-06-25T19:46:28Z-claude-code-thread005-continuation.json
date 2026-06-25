@@ -1,0 +1,57 @@
+{
+  "_template_info": {
+    "template_version": "1.0.0",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "otoi_section": "§5 — Handoff Protocol",
+    "sop_reference": "SOP-NLT-001 Step 8"
+  },
+  "handoff_record": {
+    "session_id": "2026-06-25-claude-thread005-continuation",
+    "agent_name": "Claude Code",
+    "platform": "Claude Code",
+    "version": "claude-opus-4-8 (1M context)",
+    "date": "2026-06-25T15:46:28-04:00",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "bootstrap-pi-asfdk-harness (working tree; PR #1 merged to main as 822582b)",
+    "active_thread_id": "THREAD-005",
+    "work_completed": [
+      "Picked up THREAD-005 after PR #1 merged to main (822582b): the bootstrap, my test suite, and the asfdk->npm wiring guard are now on main.",
+      "Brought my own agent-log docs into ISO 8601 timestamp compliance per the new org standard: registration entry_date -> 2026-06-25T14:35:59-04:00, handoff date -> 2026-06-25T14:36:48-04:00, and set the handoff pr_url to PR #1.",
+      "Corrected a malformed 'Last updated' timestamp in docs/active-threads.md ('2026-06-25T19:30:39ZT19:27:50Z', a double-appended value) to a valid 2026-06-25T19:46:28Z.",
+      "Updated the THREAD-005 entry: status -> Merged to main (PR #1), Related PR -> #1, and Blockers note that Vibe's MCP fix is in-tree (uncommitted).",
+      "Established the canonical org-wide ISO-timestamp standard in .github-private (PR #166 — all CI green, mergeable); it auto-propagates to all repos via governance-auto-propagate.yml."
+    ],
+    "work_in_progress": [
+      "These continuation doc updates are left UNCOMMITTED in the working tree (consistent with the other agents' in-tree work), to be folded into the forthcoming round-2 PR rather than a separate PR (Joshua said 'hold' on driving that)."
+    ],
+    "blockers": [
+      "Merged main still ships the critical MCP bug; Vibe's fix (remove outputSchema) exists only as an uncommitted working-tree edit to src/mcp-server.ts and must land via the round-2 PR."
+    ],
+    "decisions_made": [
+      { "decision": "Did not retrofit other agents' existing docs or touch their source/threads; only updated my own docs + the shared 'Last updated' header.", "rationale": "Joshua instructed each agent to update their own docs going forward; avoid collision on a shared tree." },
+      { "decision": "Left continuation changes uncommitted in the working tree instead of opening a separate PR.", "rationale": "Joshua said to hold on the round-2/git-coordination work." }
+    ],
+    "decisions_pending": [
+      { "decision": "OTOI §9 amendment: update NLT-DEV-OTOI.md (root + skills/nlt-otoi/references mirror) date specs to ISO timestamps via the governance-proposal flow.", "owner": "Joshua W. Dorsey, Sr.", "urgency": "low" },
+      { "decision": "Close the bash sensitive-path policy bypass (safety-threshold change).", "owner": "Joshua W. Dorsey, Sr.", "urgency": "medium" },
+      { "decision": "before_agent_start governance: fail-loud vs deliberately fail-closed.", "owner": "Joshua W. Dorsey, Sr.", "urgency": "medium" }
+    ],
+    "escalations": [
+      { "topic": "Bash sensitive-path policy bypass (read/write/edit gated, bash not).", "status": "raised-to-joshua", "issue_url": null }
+    ],
+    "next_agent_notes": "A round-2 PR off the merged main is needed to land: (1) Vibe's MCP structuredContent fix (fixes the broken asfdk-harness-mcp bin), (2) Codex's timestamp-normalization, and (3) these THREAD-005 continuation doc updates. Run `npm test` (typecheck + 27 unit tests) on that branch. Once .github-private PR #166 propagates, downstream template/skill copies in this repo reconcile to the ISO standard automatically.",
+    "files_modified": [
+      "docs/agent-log/registrations/2026-06-25-claude-code-harness-hardening.json",
+      "docs/agent-log/handoffs/2026-06-25-claude-code-harness-hardening.json",
+      "docs/active-threads.md",
+      "docs/agent-log/handoffs/2026-06-25T19:46:28Z-claude-code-thread005-continuation.json"
+    ],
+    "tests_run": [
+      "JSON parse of edited registration + handoff records — valid",
+      "(no code changed this continuation; npm test last verified green at 27/27 on the merged state)"
+    ],
+    "tests_passing": true,
+    "pr_url": "https://github.com/NeuroLift-Technologies/asfdk-harness/pull/1"
+  }
+}

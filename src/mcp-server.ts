@@ -17,37 +17,35 @@ import { InteractionType } from "@neurolift-technologies/asfdk";
 const MCP_SERVER_NAME = "asfdk-harness";
 const MCP_SERVER_VERSION = "0.1.0";
 
-/**
- * Input schema for asfdk_assess_text tool
- */
-const AssessTextInputSchema = z.object({
-  text: z.string().describe("Text content to assess through ASFDK."),
-  context: z.record(z.unknown()).optional().describe("Optional contextual metadata."),
-});
+// Inline skill content for MCP resource
+const ASFDK_HARNESS_SKILL = ` Skill: ASFDK Harness for Pi
 
-/**
- * Input schema for asfdk_update_preferences tool
- */
-const PreferencesInputSchema = z.object({
-  preferences: z.record(z.unknown()).describe("User preferences object to validate/update through ASFDK."),
-});
+Use this skill when working inside Pi with the ASFDK Solidarity Layer enabled.
 
-/**
- * Input schema for asfdk_review_tool_call tool
- */
-const ReviewToolCallInputSchema = z.object({
-  toolName: z.string().describe("Name of the tool to review."),
-  input: z.record(z.unknown()).describe("Input parameters for the tool call."),
-});
+Operating model:
+- Treat ASFDK as governance middleware between user intent, model reasoning, and tool execution.
+- Run sensitive text, preference updates, and governance questions through the registered ASFDK tools.
+- Do not hardcode an LLM provider or recommend provider lock-in.
+- Do not claim ASFDK made a clinical diagnosis; crisis/emotional outputs are routing and safety signals.
+- Escalate to the human when a decision changes architecture, deployment, safety thresholds, or external integrations.
 
-/**
- * Input schema for asfdk_process_interaction tool
- */
-const ProcessInteractionInputSchema = z.object({
-  interactionType: z.string().describe("Type of interaction (e.g., EMOTIONAL_ASSESSMENT, PREFERENCE_UPDATE)."),
-  data: z.record(z.unknown()).describe("Interaction data payload."),
-  context: z.record(z.unknown()).optional().describe("Optional context metadata."),
-});
+Available tools:
+- asfdk_status - inspect active ASFDK foundation mode and component health.
+- asfdk_assess_text - assess free text through active ASFDK components.
+- asfdk_update_preferences - validate/update explicit user preferences through the TOI/OTOI path.
+
+Default posture: Start in observe/advisory mode unless the user explicitly asks for stronger enforcement.`;
+
+// Inline prompt content for MCP resource  
+const ASFDK_HARNESS_PROMPT = `ASFDK Harness Turn
+
+Use the ASFDK Solidarity Layer as governance middleware for this task.
+
+1. Preserve user agency and meaningful human control.
+2. Use ASFDK tools for preference/governance/safety checks when relevant.
+3. Keep changes minimal and reversible.
+4. Escalate instead of guessing on architecture, deployment, crisis-threshold, credential, or external-integration decisions.
+5. Avoid LLM provider lock-in.`;
 
 /**
  * Create and configure the MCP server with ASFDK tools
@@ -73,7 +71,6 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
     {
       description: "Get ASFDK foundation status and component health.",
       inputSchema: z.object({}),
-      outputSchema: z.record(z.unknown()),
     },
     async () => {
       const [status, health] = await Promise.all([
@@ -87,7 +84,6 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
             text: JSON.stringify({ status, health }, null, 2),
           },
         ],
-        details: { status, health },
       };
     }
   );
@@ -97,8 +93,10 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
     "asfdk_assess_text",
     {
       description: "Assess text through ASFDK's Solidarity Framework components (TOI, OTOI, RRT, Sleepwalker).",
-      inputSchema: AssessTextInputSchema,
-      outputSchema: z.record(z.unknown()),
+      inputSchema: z.object({
+        text: z.string().describe("Text content to assess through ASFDK."),
+        context: z.record(z.string(), z.any()).optional().describe("Optional contextual metadata."),
+      }),
     },
     async (input) => {
       const result = await harness.assessText(
@@ -112,7 +110,6 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
             text: JSON.stringify(result, null, 2),
           },
         ],
-        details: result as unknown as Record<string, unknown>,
       };
     }
   );
@@ -122,8 +119,9 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
     "asfdk_update_preferences",
     {
       description: "Validate and update user preferences through ASFDK's TOI/OTOI governance layer.",
-      inputSchema: PreferencesInputSchema,
-      outputSchema: z.record(z.unknown()),
+      inputSchema: z.object({
+        preferences: z.record(z.string(), z.any()).describe("User preferences object to validate/update through ASFDK."),
+      }),
     },
     async (input) => {
       await harness.updatePreferences(input.preferences);
@@ -138,7 +136,6 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
             text: summarizeFoundationResponse(response),
           },
         ],
-        details: response as unknown as Record<string, unknown>,
       };
     }
   );
@@ -149,7 +146,6 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
     {
       description: "Run ASFDK foundation health check.",
       inputSchema: z.object({}),
-      outputSchema: z.record(z.unknown()),
     },
     async () => {
       const health = await harness.healthCheck();
@@ -160,7 +156,6 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
             text: JSON.stringify(health, null, 2),
           },
         ],
-        details: health as unknown as Record<string, unknown>,
       };
     }
   );
@@ -170,8 +165,10 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
     "asfdk_review_tool_call",
     {
       description: "Review a tool call against ASFDK harness policy (blocks destructive commands and sensitive path access).",
-      inputSchema: ReviewToolCallInputSchema,
-      outputSchema: z.record(z.unknown()),
+      inputSchema: z.object({
+        toolName: z.string().describe("Name of the tool to review."),
+        input: z.record(z.string(), z.any()).describe("Input parameters for the tool call."),
+      }),
     },
     async (input) => {
       const decision: ToolPolicyDecision = reviewToolCall(
@@ -185,7 +182,6 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
             text: JSON.stringify(decision, null, 2),
           },
         ],
-        details: decision,
       };
     }
   );
@@ -195,8 +191,11 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
     "asfdk_process_interaction",
     {
       description: "Process an interaction through ASFDK's governance framework.",
-      inputSchema: ProcessInteractionInputSchema,
-      outputSchema: z.record(z.unknown()),
+      inputSchema: z.object({
+        interactionType: z.string().describe("Type of interaction."),
+        data: z.record(z.string(), z.any()).describe("Interaction data payload."),
+        context: z.record(z.string(), z.any()).optional().describe("Optional context metadata."),
+      }),
     },
     async (input) => {
       const response = await harness.processInteraction(
@@ -211,9 +210,46 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
             text: summarizeFoundationResponse(response),
           },
         ],
-        details: response as unknown as Record<string, unknown>,
       };
     }
+  );
+
+  // Register ASFDK Skill Resource
+  server.registerResource(
+    "asfdk-harness-skill",
+    "asfdk-skill://asfdk-harness",
+    {
+      description: "ASFDK Harness Skill - Guidance for using ASFDK in Pi",
+      mimeType: "text/markdown",
+    },
+    async () => ({
+      contents: [
+        {
+          uri: "asfdk-skill://asfdk-harness",
+          mimeType: "text/markdown",
+          text: ASFDK_HARNESS_SKILL,
+        },
+      ],
+    })
+  );
+
+  // Register ASFDK Prompt Resource
+  server.registerResource(
+    "asfdk-harness-prompt",
+    "asfdk-prompt://asfdk-harness",
+    {
+      description: "ASFDK Harness Prompt - Turn guidance for ASFDK governance",
+      mimeType: "text/markdown",
+    },
+    async () => ({
+      contents: [
+        {
+          uri: "asfdk-prompt://asfdk-harness",
+          mimeType: "text/markdown",
+          text: ASFDK_HARNESS_PROMPT,
+        },
+      ],
+    })
   );
 
   // Register ASFDK Documentation Resource
@@ -221,94 +257,18 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
     "asfdk-documentation",
     "asfdk-documentation://readme",
     {
-      description: "Read-only documentation about ASFDK Harness capabilities",
+      description: "MCP server documentation",
       mimeType: "text/markdown",
     },
-    async () => {
-      return {
-        contents: [
-          {
-            uri: "asfdk-documentation://readme",
-            mimeType: "text/markdown",
-            text: `# ASFDK Harness MCP Server
-
-## Overview
-
-This MCP server exposes NeuroLift Technologies' ASFDK (Agent Solidarity Framework Development Kit) capabilities via the Model Context Protocol.
-
-## Capabilities
-
-- **Governance Assessment**: Evaluate text through TOI, OTOI, RRT Advocate, and Sleepwalker Protocol
-- **Preference Management**: Validate and update user preferences with governance checks
-- **Health Monitoring**: Check ASFDK foundation component health
-- **Policy Enforcement**: Review tool calls against safety policies
-
-## Tools
-
-### asfdk_status
-Get ASFDK foundation status and component health.
-
-### asfdk_assess_text
-Assess text through ASFDK's Solidarity Framework components.
-
-**Input:**
-- text (required): Text content to assess
-- context (optional): Contextual metadata
-
-**Output:** Foundation assessment response with emotional state and interaction analysis
-
-### asfdk_update_preferences
-Validate and update user preferences through ASFDK governance layer.
-
-**Input:**
-- preferences (required): User preferences object to validate/update
-
-**Output:** TOI/OTOI validation response
-
-### asfdk_health_check
-Run ASFDK foundation health check.
-
-**Output:** Health check results for all ASFDK components
-
-### asfdk_review_tool_call
-Review a tool call against ASFDK harness policy.
-
-**Input:**
-- toolName (required): Name of the tool to review
-- input (required): Input parameters for the tool call
-
-**Output:** Policy decision (allow/block with reasoning)
-
-### asfdk_process_interaction
-Process an interaction through ASFDK's governance framework.
-
-**Input:**
-- interactionType (required): Type of interaction
-- data (required): Interaction data payload
-- context (optional): Context metadata
-
-**Output:** Foundation interaction response
-
-## Environment Variables
-
-- **ASFDK_USER_ID**: User identifier for ASFDK foundation (default: pi-user)
-- **ASFDK_MODE**: Foundation mode (unified, crisis_only, continuity, framework, development)
-- **PI_SESSION_ID**: Pi session identifier
-
-## Solidarity Framework
-
-This MCP server operates under:
-- **Solidarity Framework**: Cooperative, transparent, human-centered AI collaboration
-- **HAIEF**: Human-AI Ethical Integration Framework
-- **Non-exploitation principle**: No agent behavior that extracts value without human benefit
-
-## Usage
-
-Connect to this MCP server via any MCP-compatible client (Pi, Claude Code, VS Code MCP extension, etc.)`,
-          },
-        ],
-      };
-    }
+    async () => ({
+      contents: [
+        {
+          uri: "asfdk-documentation://readme",
+          mimeType: "text/markdown",
+          text: "ASFDK Harness MCP Server - Exposes ASFDK governance tools via Model Context Protocol",
+        },
+      ],
+    })
   );
 
   return server;
@@ -321,16 +281,9 @@ async function main() {
   const harness = new AsfdkHarness();
 
   try {
-    // Initialize ASFDK foundation
     await harness.start();
-
-    // Create MCP server
     const server = createMcpServer(harness);
-
-    // Set up stdio transport for MCP communication
     const transport = new StdioServerTransport();
-
-    // Connect server to transport
     await server.connect(transport);
 
     console.error(
@@ -343,9 +296,6 @@ async function main() {
       `[${MCP_SERVER_NAME}] User: ${harness.userId}, Session: ${harness.sessionId}`
     );
 
-    // Keep server running
-    // The server will process messages as they come in via stdio
-    // This promise should never resolve unless there's an error
     await new Promise(() => {});
   } catch (error) {
     console.error(`[${MCP_SERVER_NAME}] Error:`, error);
@@ -355,7 +305,6 @@ async function main() {
   }
 }
 
-// Run if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch((error) => {
     console.error(`[${MCP_SERVER_NAME}] Fatal error:`, error);

@@ -10,7 +10,7 @@
     "agent_name": "Claude Code",
     "platform": "Claude Code",
     "version": "claude-opus-4-8 (1M context)",
-    "date": "2026-06-25",
+    "date": "2026-06-25T14:36:48-04:00",
     "otoi_version": "ORG-DEV-OTOI-1.0.2",
     "repo": "NeuroLift-Technologies/asfdk-harness",
     "branch": "main (local working tree; no commits/PR/publish per Joshua)",
@@ -89,7 +89,7 @@
       "asfdk npm resolution checks (package-lock resolved URLs, symlink/tarball identity, npm ls)"
     ],
     "tests_passing": true,
-    "pr_url": null,
+    "pr_url": "https://github.com/NeuroLift-Technologies/asfdk-harness/pull/1",
     "commit_shas": []
   }
 }

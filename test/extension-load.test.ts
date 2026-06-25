@@ -14,13 +14,14 @@ import asfdkPiHarness from "../src/index.ts";
 import { cleanupSwpStorage } from "./setup.ts";
 
 const ASFDK_TOOL_NAMES = [
+  "asfdk_a2a_agent_card",
   "asfdk_status",
   "asfdk_protocol_status",
   "asfdk_interop_protocols",
   "asfdk_assess_text",
   "asfdk_update_preferences",
 ];
-const ASFDK_COMMAND_NAMES = ["asfdk-status", "asfdk-assess", "asfdk-protocols", "asfdk-interop"];
+const ASFDK_COMMAND_NAMES = ["asfdk-status", "asfdk-assess", "asfdk-protocols", "asfdk-interop", "asfdk-a2a-card"];
 const ASFDK_HOOKS = ["session_start", "session_shutdown", "before_agent_start", "tool_call"];
 
 function makeMockPi() {
