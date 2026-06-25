@@ -1,0 +1,37 @@
+{
+  "_template_info": {
+    "template_version": "1.0.0",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "otoi_section": "§3 — Agent Registration",
+    "sop_reference": "SOP-NLT-001 Step 5"
+  },
+  "agent_registration": {
+    "agent_name": "opencode (big-pickle)",
+    "platform": "opencode",
+    "version": "big-pickle",
+    "session_id": "memory-exploration-001",
+    "entry_date": "2026-06-25",
+    "entry_point": "direct task prompt — explore memory system in asfdk-harness",
+    "acknowledged_otoi": true,
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "working_repo": "NeuroLift-Technologies/asfdk-harness, NeuroLift-Technologies/asfdk",
+    "working_branch": "main (read-only exploration)",
+    "task_summary": "Explore and document the memory system across Pi SessionManager, ASFDK UnifiedStateManager, and Sleepwalker ContinuityManager",
+    "active_thread_id": "THREAD-001",
+    "capabilities_self_reported": [
+      "code reading and analysis",
+      "file search and pattern matching",
+      "cross-repository exploration"
+    ],
+    "known_limitations": [
+      "no write access to Pi coding agent package",
+      "no Python runtime execution in this session"
+    ],
+    "preferred_handoff_format": "JSON handoff record",
+    "escalation_acknowledged": true,
+    "escalation_contact": "joshua@neurolift.tech",
+    "solidarity_framework_acknowledged": true,
+    "commit_format_acknowledged": true,
+    "handoff_required_acknowledged": true
+  }
+}

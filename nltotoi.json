@@ -1,0 +1,59 @@
+{
+  "nltotoi_version": "1.0.2",
+  "document_id": "ORG-DEV-OTOI-1.0.2",
+  "repository": {
+    "name": "NeuroLift-Technologies/asfdk-harness",
+    "purpose": "Pi-based ASFDK agent harness with NLT governance stubs",
+    "mode": "development",
+    "visibility": "private",
+    "audience": "internal-coding-agents"
+  },
+  "canonical_contract": "NLT-DEV-OTOI.md",
+  "personal_toi": ".toi",
+  "orchestration_charter": ".otoi",
+  "agents_gateway": "AGENTS.md",
+  "claude_code_template": ".claude/",
+  "required_files": [
+    "NLT-DEV-OTOI.md",
+    "AGENTS.md",
+    "CLAUDE.md",
+    "docs/active-threads.md",
+    "docs/agent-log/README.md",
+    ".claude/README.md",
+    ".claude/settings.json",
+    ".claude/hooks/session-start.sh",
+    "templates/agent-registration.json",
+    "templates/handoff-record.json",
+    "templates/escalation.md",
+    "templates/intent-log.md"
+  ],
+  "authority": {
+    "final_decision_maker": "Joshua W. Dorsey, Sr.",
+    "escalation_target": "info@neuroliftsolutions.com",
+    "amendment_process": "governance-proposal GitHub issue → Joshua review → version bump"
+  },
+  "ethical_framework": {
+    "solidarity_framework": true,
+    "haief": true,
+    "haief_url": "https://elevaitionfoundation.org",
+    "public_governance": "https://github.com/NeuroLift-Technologies/.github"
+  },
+  "metadata": {
+    "created": "2026-06-25",
+    "version": "1.0.2",
+    "last_updated": "2026-06-25"
+  },
+  "source_contracts": {
+    "personal_toi": {
+      "repo": "NeuroLift-Technologies/nlt-toi",
+      "path": "packages/toi/test/fixtures/valid/josh-personal.toi",
+      "sha256": "43674ea62be23fc5caa2132967b48f19fcfd06351284f489564e1154ab49642e"
+    },
+    "org_developer_otoi": {
+      "repo": "NeuroLift-Technologies/.github-private",
+      "path": "NLT-DEV-OTOI.md",
+      "document_id": "ORG-DEV-OTOI-1.0.2",
+      "sha256": "e365bb0e6b0bd0331a2e41c45874726ddd003eb24e9691674b04e2ea5a3e239e"
+    }
+  }
+}

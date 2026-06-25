@@ -1,0 +1,26 @@
+{
+  "agent_registration": {
+    "agent_name": "Codex",
+    "platform": "OpenAI Codex CLI",
+    "version": "GPT-5 coding agent",
+    "session_id": "2026-06-25-codex-asfdk-harness-skill-metadata",
+    "entry_date": "2026-06-25",
+    "entry_point": "User asked to inspect Desktop/nlt-repos/asfdk-harness after downloading Pi and create/validate a harness",
+    "acknowledged_otoi": true,
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "working_repo": "NeuroLift-Technologies/asfdk-harness",
+    "working_branch": "main",
+    "capabilities_self_reported": [
+      "Read and edit local repository files",
+      "Run npm validation commands",
+      "Inspect Pi package discovery",
+      "Validate TypeScript extension registration"
+    ],
+    "known_limitations": [
+      "No autonomous architecture, deployment, credential, or external integration decisions",
+      "No production deployments",
+      "Model-backed Pi prompt execution was not invoked during smoke testing"
+    ],
+    "preferred_handoff_format": "Structured JSON handoff plus concise summary"
+  }
+}

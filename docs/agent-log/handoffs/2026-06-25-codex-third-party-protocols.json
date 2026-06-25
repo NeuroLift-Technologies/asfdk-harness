@@ -1,0 +1,52 @@
+{
+  "handoff_record": {
+    "session_id": "2026-06-25-codex-third-party-protocols",
+    "agent_name": "Codex / OpenAI Codex CLI",
+    "date": "2026-06-25",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "main",
+    "work_completed": [
+      "Corrected protocol focus from only local non-MCP runtime protocols to third-party interoperability protocols.",
+      "Added third-party protocol profiles for A2A, ACP, AG-UI, OpenAPI/REST, NLIP/Open Floor watchlist, and explicit MCP exclusion.",
+      "Added asfdk_interop_protocols tool and /asfdk-interop command.",
+      "Added docs/third-party-protocols.md and updated README, skill docs, and package files."
+    ],
+    "work_in_progress": [],
+    "blockers": [],
+    "decisions_made": [
+      "Prioritized A2A as the primary agent-to-agent target.",
+      "Prioritized AG-UI as the primary agent-to-user/frontend target.",
+      "Classified ACP as a REST-native compatibility adapter because ACP documentation says it is now part of A2A.",
+      "Kept MCP excluded from the core harness."
+    ],
+    "decisions_pending": [
+      "Joshua can decide whether the next implementation should be an A2A Agent Card generator or a full A2A HTTP adapter."
+    ],
+    "escalations": [],
+    "next_agent_notes": "The repo currently has a third-party protocol registry and documentation, not live network adapters. Next practical step is an A2A adapter module that generates an Agent Card from .otoi/protocol metadata and maps governed Pi runs to A2A task lifecycle.",
+    "files_modified": [
+      "src/protocols.ts",
+      "src/tools.ts",
+      "src/index.ts",
+      "docs/third-party-protocols.md",
+      "docs/non-mcp-integration-protocols.md",
+      "README.md",
+      "skills/asfdk-harness/SKILL.md",
+      "package.json",
+      "docs/active-threads.md",
+      "docs/agent-log/handoffs/2026-06-25-codex-third-party-protocols.json"
+    ],
+    "tests_run": [
+      "npm run check",
+      "npm run build",
+      "third-party registry smoke test",
+      "dist protocol snapshot smoke test",
+      "built extension registration smoke test",
+      "Pi resource discovery smoke test",
+      "npm pack --dry-run"
+    ],
+    "tests_passing": true,
+    "pr_url": "TBD"
+  }
+}

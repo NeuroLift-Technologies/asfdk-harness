@@ -1,0 +1,43 @@
+{
+  "handoff_record": {
+    "session_id": "2026-06-25-codex-toi-otoi-combine",
+    "agent_name": "Codex / OpenAI Codex CLI",
+    "date": "2026-06-25",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "main",
+    "work_completed": [
+      "Copied the canonical personal TOI fields from NeuroLift-Technologies/nlt-toi packages/toi/test/fixtures/valid/josh-personal.toi into the root .toi.",
+      "Added .toi custom metadata linking the personal TOI source and the private .github-private/NLT-DEV-OTOI.md org developer OTOI source, including SHA-256 hashes.",
+      "Created root .otoi charter that binds pi-asfdk-harness and codex agents to .toi and references NLT-DEV-OTOI.md governance metadata outside toi_sources.",
+      "Updated nltotoi.json to point to .toi, .otoi, and both source contracts."
+    ],
+    "work_in_progress": [],
+    "blockers": [],
+    "decisions_made": [
+      "Did not edit .github-private/NLT-DEV-OTOI.md because it is the canonical org governance contract.",
+      "Kept NLT-DEV-OTOI.md outside .otoi toi_sources because it is markdown developer governance, not a .toi document."
+    ],
+    "decisions_pending": [
+      "Joshua can decide whether future harness runtime code should load .otoi directly at session start."
+    ],
+    "escalations": [],
+    "next_agent_notes": "The combined artifacts are .toi and .otoi in the asfdk-harness repo root. Use @neurolift-technologies/toi parseToi for .toi and @neurolift-technologies/otoi parseCharter/honor for .otoi.",
+    "files_modified": [
+      ".toi",
+      ".otoi",
+      "nltotoi.json",
+      "docs/active-threads.md",
+      "docs/agent-log/handoffs/2026-06-25-codex-toi-otoi-combine.json"
+    ],
+    "tests_run": [
+      "JSON.parse smoke test for .toi, .otoi, and nltotoi.json",
+      "@neurolift-technologies/toi parseToi smoke test",
+      "@neurolift-technologies/otoi parseCharter/honor/propagate smoke test",
+      "npm run check",
+      "npm run build"
+    ],
+    "tests_passing": true,
+    "pr_url": "TBD"
+  }
+}

@@ -141,3 +141,7 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# ASFDK harness runtime artifacts
+# Sleepwalker Protocol cross-session continuity storage (created at runtime, per user id)
+.swp_storage/

@@ -1,0 +1,43 @@
+{
+  "handoff_record": {
+    "session_id": "2026-06-25-codex-asfdk-harness-skill-metadata",
+    "agent_name": "Codex / OpenAI Codex CLI",
+    "date": "2026-06-25",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "main",
+    "work_completed": [
+      "Confirmed Pi is installed at /home/joshd/.volta/bin/pi.",
+      "Confirmed Pi user packages already include /home/joshd/Desktop/nlt-repos/asfdk-harness.",
+      "Added required Pi skill frontmatter to skills/asfdk-harness/SKILL.md so Pi accepts the harness skill.",
+      "Verified Pi resource discovery sees the harness extension, asfdk-harness skill, and asfdk-harness prompt with no diagnostics.",
+      "Verified the built extension factory registers ASFDK tools, lifecycle hooks, and slash commands."
+    ],
+    "work_in_progress": [],
+    "blockers": [],
+    "decisions_made": [
+      "Kept Pi package registration as-is because pi list already showed this repo installed.",
+      "Used a local runtime smoke test instead of invoking a model-backed Pi prompt."
+    ],
+    "decisions_pending": [
+      "Joshua can decide whether the package should remain a user-level Pi package or be installed project-locally with pi install . -l."
+    ],
+    "escalations": [],
+    "next_agent_notes": "The harness compiles and Pi discovery is clean. A live Pi model run was not performed; use pi -p or npm run harness only when provider credentials and model choice are confirmed.",
+    "files_modified": [
+      "skills/asfdk-harness/SKILL.md",
+      "docs/active-threads.md",
+      "docs/agent-log/registrations/2026-06-25-codex-asfdk-harness-skill-metadata.json",
+      "docs/agent-log/handoffs/2026-06-25-codex-asfdk-harness-skill-metadata.json"
+    ],
+    "tests_run": [
+      "npm run check",
+      "npm run build",
+      "Pi resource discovery smoke test via DefaultResourceLoader",
+      "Built extension registration smoke test",
+      "Policy review smoke test for allowed shell, blocked destructive shell, and blocked sensitive path"
+    ],
+    "tests_passing": true,
+    "pr_url": "TBD"
+  }
+}
