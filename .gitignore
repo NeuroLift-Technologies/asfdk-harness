@@ -150,3 +150,7 @@ vite.config.ts.timestamp-*
 .wrangler/
 .dev.vars
 worker-configuration.d.ts
+
+# Compiled agent output (build artifacts; .ts source is tracked)
+agents/**/*.js
+agents/**/*.js.map

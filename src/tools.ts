@@ -18,6 +18,66 @@ export const PreferencesParams = Type.Object({
 export type AssessTextInput = Static<typeof AssessTextParams>;
 export type PreferencesInput = Static<typeof PreferencesParams>;
 
+export interface AsfdkToolSkill {
+  /** Pi tool this skill maps to; kept 1:1 with the tools returned by createAsfdkTools(). */
+  toolName: string;
+  id: string;
+  name: string;
+  description: string;
+  tags: string[];
+}
+
+/**
+ * Canonical catalog mapping every Pi tool exposed by createAsfdkTools() to its A2A
+ * AgentSkill metadata. This is the single source of truth the A2A Agent Card derives
+ * its advertised skills from, so the card can never drift from the real tool set
+ * (no phantom skills, and every real tool is advertised).
+ */
+export const ASFDK_TOOL_SKILLS: AsfdkToolSkill[] = [
+  {
+    toolName: "asfdk_status",
+    id: "asfdk.status",
+    name: "ASFDK status",
+    description: "Inspect foundation health, governance state, and loaded protocol context.",
+    tags: ["asfdk", "status", "health", "governance"],
+  },
+  {
+    toolName: "asfdk_protocol_status",
+    id: "asfdk.protocol_status",
+    name: "ASFDK protocol status",
+    description: "Inspect local TOI/OTOI resolution and non-MCP protocol loading.",
+    tags: ["asfdk", "protocols", "toi", "otoi"],
+  },
+  {
+    toolName: "asfdk_interop_protocols",
+    id: "asfdk.interop_protocols",
+    name: "ASFDK interop protocols",
+    description: "Inspect third-party interoperability protocol targets and MCP exclusion status.",
+    tags: ["asfdk", "interop", "a2a", "protocols"],
+  },
+  {
+    toolName: "asfdk_a2a_agent_card",
+    id: "asfdk.a2a_agent_card",
+    name: "ASFDK A2A agent card",
+    description: "Generate a TOI/OTOI-governed A2A Agent Card for the current harness state.",
+    tags: ["asfdk", "a2a", "agent-card", "discovery"],
+  },
+  {
+    toolName: "asfdk_assess_text",
+    id: "asfdk.assess_text",
+    name: "ASFDK assess text",
+    description: "Run governed text assessment through the active ASFDK foundation.",
+    tags: ["asfdk", "assessment", "governance", "safety"],
+  },
+  {
+    toolName: "asfdk_update_preferences",
+    id: "asfdk.update_preferences",
+    name: "ASFDK update preferences",
+    description: "Validate and update user preferences through TOI/OTOI enforcement.",
+    tags: ["asfdk", "preferences", "toi", "otoi"],
+  },
+];
+
 export function createAsfdkTools(harness: AsfdkHarness) {
   return [
     {

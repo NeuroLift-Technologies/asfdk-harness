@@ -63,8 +63,15 @@ test("asfdk_a2a_agent_card.execute returns an A2A-ready agent card", async () =>
   const r = await (byName("asfdk_a2a_agent_card").execute as (id: string, p: unknown) => Promise<any>)("call-2a", {});
   assert.equal(r.details.kind, "a2a-agent-card");
   assert.equal(r.details.discovery.protocol, "A2A");
+  assert.equal(r.details.preferredTransport, "JSONRPC");
   assert.ok(Array.isArray(r.details.skills));
-  assert.ok(r.details.skills.some((skill: { id?: string }) => skill.id === "asfdk.governed_pi_task"));
+  // Every advertised skill must map to a real Pi tool (no phantom skills).
+  const toolSkillIds = new Set(tools.map((t) => t.name.replace(/^asfdk_/, "asfdk.")));
+  assert.ok(r.details.skills.length > 0);
+  for (const skill of r.details.skills as Array<{ id: string; tags?: unknown }>) {
+    assert.ok(toolSkillIds.has(skill.id), `advertised skill ${skill.id} must map to a real tool`);
+    assert.ok(Array.isArray(skill.tags) && skill.tags.length > 0, `skill ${skill.id} must declare tags`);
+  }
 });
 
 test("asfdk_assess_text.execute runs an assessment", async () => {

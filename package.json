@@ -22,7 +22,7 @@
     "dev:mcp": "tsx src/mcp-server.ts",
     "harness": "tsx src/cli.ts",
     "mcp": "tsx src/mcp-server.ts",
-    "test": "npm run check && npm run test:unit",
+    "test": "npm run check && npm run cf:check && npm run test:unit",
     "test:unit": "node --import tsx --test test/*.test.ts",
     "prepack": "npm run build",
     "cf:dev": "npx wrangler dev",

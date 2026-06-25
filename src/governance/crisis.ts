@@ -28,15 +28,15 @@ export async function assessCrisis(
     content: m.content,
   }));
 
-  const result = await ai.run(    modelName as keyof AiModels, {
-    messages: [
-      { role: "system" as const, content: CRISIS_SYSTEM_PROMPT },
-      ...historyMessages,
-      { role: "user" as const, content: req.message },
-    ],
-  });
-
   try {
+    const result = await ai.run(modelName as keyof AiModels, {
+      messages: [
+        { role: "system" as const, content: CRISIS_SYSTEM_PROMPT },
+        ...historyMessages,
+        { role: "user" as const, content: req.message },
+      ],
+    });
+
     const text = (result as { response?: string }).response ?? "";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : text) as {
@@ -44,13 +44,29 @@ export async function assessCrisis(
       reason: string;
       intervention: string | null;
     };
-    const level: CrisisLevel = LEVEL_ORDER.includes(parsed.level) ? parsed.level : "GREEN";
+    if (!LEVEL_ORDER.includes(parsed.level)) {
+      // FAIL SAFE: an unrecognized level is a model malfunction — escalate for
+      // human review rather than assuming GREEN/all-clear.
+      return {
+        level: "ORANGE",
+        intervention:
+          "Crisis assessment returned an unrecognized level — escalating for human review as a precaution.",
+        escalate: true,
+      };
+    }
     return {
-      level,
+      level: parsed.level,
       intervention: parsed.intervention || undefined,
-      escalate: level === "BLACK",
+      escalate: parsed.level === "BLACK",
     };
   } catch {
-    return { level: "GREEN", escalate: false };
+    // FAIL SAFE: never return GREEN/all-clear on an AI error or unparseable
+    // output. Escalate conservatively so the failure routes to a human.
+    return {
+      level: "ORANGE",
+      intervention:
+        "Crisis assessment failed (AI error or unparseable output) — escalating for human review as a precaution.",
+      escalate: true,
+    };
   }
 }

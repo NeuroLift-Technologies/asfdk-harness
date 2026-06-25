@@ -1,9 +1,25 @@
 import { createProtocolSnapshot, type GovernanceProtocolContext, type ThirdPartyProtocolProfile } from "./protocols.js";
+import { ASFDK_TOOL_SKILLS } from "./tools.js";
 
 export interface A2ASkill {
   id: string;
   name: string;
   description: string;
+  tags: string[];
+  examples?: string[];
+  inputModes?: string[];
+  outputModes?: string[];
+}
+
+/**
+ * A2A capability extension (vendor namespace). Used to advertise NeuroLift TOI/OTOI
+ * governance features without polluting the standard top-level AgentCard fields.
+ */
+export interface A2AAgentExtension {
+  uri: string;
+  description?: string;
+  required: boolean;
+  params?: Record<string, unknown>;
 }
 
 export interface A2AAgentCardOptions {
@@ -12,30 +28,34 @@ export interface A2AAgentCardOptions {
   description?: string;
   url?: string;
   version?: string;
+  protocolVersion?: string;
+  preferredTransport?: "JSONRPC";
+  defaultInputModes?: string[];
+  defaultOutputModes?: string[];
+  streaming?: boolean;
+  pushNotifications?: boolean;
 }
 
 export interface A2AAgentCard {
   kind: "a2a-agent-card";
+  protocolVersion: string;
   id: string;
   name: string;
   description: string;
   version: string;
-  url?: string;
+  url: string;
+  preferredTransport: "JSONRPC";
+  defaultInputModes: string[];
+  defaultOutputModes: string[];
   discovery: {
     protocol: "A2A";
     mechanism: "Agent Card";
   };
-  transport: {
-    protocol: "JSON-RPC 2.0";
-    transport: "HTTP(S)";
-    streaming: boolean;
-    notifications: boolean;
-  };
   capabilities: {
-    agentToAgentDelegation: boolean;
-    governedTaskExecution: boolean;
-    humanInTheLoopApprovals: boolean;
-    privacyFiltering: boolean;
+    streaming: boolean;
+    pushNotifications: boolean;
+    stateTransitionHistory: boolean;
+    extensions: A2AAgentExtension[];
   };
   governance: {
     toiPath: string;
@@ -66,6 +86,10 @@ export interface A2AAgentCard {
   };
 }
 
+const A2A_PROTOCOL_VERSION = "0.3.0";
+const NLT_GOVERNANCE_EXTENSION_URI = "https://neurolift.tech/a2a/extensions/governance";
+const DEFAULT_A2A_MODES = ["text/plain", "application/json"];
+
 export function createA2AAgentCard(
   context: GovernanceProtocolContext,
   options: A2AAgentCardOptions = {},
@@ -75,30 +99,48 @@ export function createA2AAgentCard(
   const skills = buildA2ASkills();
   const authority = asRecord(context.devOtoi?.authority);
 
+  const diagnostics = [...context.diagnostics];
+  const url = options.url ?? process.env.ASFDK_A2A_URL ?? "";
+  if (!url) {
+    diagnostics.push(
+      "A2A Agent Card has no service endpoint URL; set ASFDK_A2A_URL or pass options.url. The card is emitted without a callable endpoint.",
+    );
+  }
+
   return {
     kind: "a2a-agent-card",
+    protocolVersion: options.protocolVersion ?? A2A_PROTOCOL_VERSION,
     id: options.agentId ?? "asfdk-harness",
     name: options.agentName ?? "ASFDK Harness",
     description:
       options.description ??
       "Governed Pi harness for TOI/OTOI-aware agent delegation and third-party interoperability.",
     version: options.version ?? "0.1.0",
-    url: options.url,
+    url,
+    preferredTransport: options.preferredTransport ?? "JSONRPC",
+    defaultInputModes: options.defaultInputModes ?? [...DEFAULT_A2A_MODES],
+    defaultOutputModes: options.defaultOutputModes ?? [...DEFAULT_A2A_MODES],
     discovery: {
       protocol: "A2A",
       mechanism: "Agent Card",
     },
-    transport: {
-      protocol: "JSON-RPC 2.0",
-      transport: "HTTP(S)",
-      streaming: true,
-      notifications: true,
-    },
     capabilities: {
-      agentToAgentDelegation: true,
-      governedTaskExecution: true,
-      humanInTheLoopApprovals: true,
-      privacyFiltering: true,
+      streaming: options.streaming ?? false,
+      pushNotifications: options.pushNotifications ?? false,
+      stateTransitionHistory: false,
+      extensions: [
+        {
+          uri: NLT_GOVERNANCE_EXTENSION_URI,
+          description: "NeuroLift TOI/OTOI governance capabilities exposed by the ASFDK harness.",
+          required: false,
+          params: {
+            agentToAgentDelegation: true,
+            governedTaskExecution: true,
+            humanInTheLoopApprovals: true,
+            privacyFiltering: true,
+          },
+        },
+      ],
     },
     governance: {
       toiPath: context.toiPath,
@@ -127,7 +169,7 @@ export function createA2AAgentCard(
       generatedAt: new Date().toISOString(),
       cwd: context.cwd,
       protocolSurface: snapshot.protocols,
-      diagnostics: context.diagnostics,
+      diagnostics,
     },
   };
 }
@@ -137,33 +179,14 @@ export function getA2ASkillIds(): string[] {
 }
 
 function buildA2ASkills(): A2ASkill[] {
-  return [
-    {
-      id: "asfdk.status",
-      name: "ASFDK status",
-      description: "Inspect foundation health, governance state, and loaded protocol context.",
-    },
-    {
-      id: "asfdk.protocol_status",
-      name: "ASFDK protocol status",
-      description: "Inspect local TOI/OTOI resolution and non-MCP protocol loading.",
-    },
-    {
-      id: "asfdk.assess_text",
-      name: "ASFDK assess text",
-      description: "Run governed text assessment through the active ASFDK foundation.",
-    },
-    {
-      id: "asfdk.preference_update",
-      name: "ASFDK preference update",
-      description: "Validate and update user preferences through TOI/OTOI enforcement.",
-    },
-    {
-      id: "asfdk.governed_pi_task",
-      name: "Governed Pi task",
-      description: "Execute a Pi-mediated task after policy preflight and governance checks.",
-    },
-  ];
+  // Derived from the real Pi tool set (src/tools.ts) so advertised skills stay in
+  // sync with the tools the harness actually exposes.
+  return ASFDK_TOOL_SKILLS.map((skill) => ({
+    id: skill.id,
+    name: skill.name,
+    description: skill.description,
+    tags: [...skill.tags],
+  }));
 }
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {

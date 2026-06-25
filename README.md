@@ -42,6 +42,8 @@ npm run build
 npm run harness -- "What files are in this repo?"
 ```
 
+> **Workers types:** run `npm run cf:typegen` (`wrangler types`) to generate `worker-configuration.d.ts` before `npm run cf:check` or `npm run cf:deploy`. This file is gitignored and not committed.
+
 ## MCP Server
 
 Run the MCP server to expose ASFDK capabilities via Model Context Protocol:

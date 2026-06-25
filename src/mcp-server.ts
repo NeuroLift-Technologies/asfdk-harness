@@ -6,6 +6,7 @@
  * Allows any MCP-compatible client to use ASFDK's Solidarity Framework capabilities
  */
 
+import { pathToFileURL } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
@@ -59,7 +60,6 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
     {
       capabilities: {
         tools: {},
-        prompts: {},
         resources: {},
       },
     }
@@ -192,14 +192,14 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
     {
       description: "Process an interaction through ASFDK's governance framework.",
       inputSchema: z.object({
-        interactionType: z.string().describe("Type of interaction."),
+        interactionType: z.nativeEnum(InteractionType).describe("Type of interaction."),
         data: z.record(z.string(), z.any()).describe("Interaction data payload."),
         context: z.record(z.string(), z.any()).optional().describe("Optional context metadata."),
       }),
     },
     async (input) => {
       const response = await harness.processInteraction(
-        input.interactionType as InteractionType,
+        input.interactionType,
         input.data,
         input.context ?? {}
       );
@@ -284,6 +284,20 @@ async function main() {
     await harness.start();
     const server = createMcpServer(harness);
     const transport = new StdioServerTransport();
+
+    // Graceful shutdown when the transport (stdin) closes.
+    transport.onclose = () => {
+      harness.shutdown().finally(() => process.exit(0));
+    };
+
+    // Graceful shutdown on termination signals.
+    const handleSignal = async () => {
+      await harness.shutdown();
+      process.exit(0);
+    };
+    process.on("SIGINT", handleSignal);
+    process.on("SIGTERM", handleSignal);
+
     await server.connect(transport);
 
     console.error(
@@ -296,16 +310,16 @@ async function main() {
       `[${MCP_SERVER_NAME}] User: ${harness.userId}, Session: ${harness.sessionId}`
     );
 
-    await new Promise(() => {});
+    // The stdio transport keeps the process alive; shutdown is driven by
+    // transport.onclose and the SIGINT/SIGTERM handlers above.
   } catch (error) {
     console.error(`[${MCP_SERVER_NAME}] Error:`, error);
-    process.exit(1);
-  } finally {
     await harness.shutdown();
+    process.exit(1);
   }
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {
     console.error(`[${MCP_SERVER_NAME}] Fatal error:`, error);
     process.exit(1);

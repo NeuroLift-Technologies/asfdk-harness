@@ -49,8 +49,13 @@ test("a2aAgentCard derives a governed A2A card from the active protocol snapshot
   const card = await harness.a2aAgentCard();
   assert.equal(card.kind, "a2a-agent-card");
   assert.equal(card.discovery.protocol, "A2A");
+  assert.equal(card.protocolVersion.length > 0, true);
+  assert.equal(card.preferredTransport, "JSONRPC");
   assert.ok(card.governance.toiPath.length > 0);
-  assert.ok(card.skills.some((skill) => skill.id === "asfdk.governed_pi_task"));
+  // Skills are derived from the real tool set: a real skill is present and every
+  // advertised skill carries tags (A2A AgentSkill requirement).
+  assert.ok(card.skills.some((skill) => skill.id === "asfdk.status"));
+  assert.ok(card.skills.every((skill) => Array.isArray(skill.tags) && skill.tags.length > 0));
 });
 
 test("assessText returns an interaction and an emotionalState", async () => {

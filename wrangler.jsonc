@@ -13,13 +13,9 @@
       "id": "37151fbc32b944e59da444aa6117edfe"
     }
   ],
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "asfdk-otoi",
-      "database_id": "7c495139-bd3d-48a8-bdc3-e94b39d0020f"
-    }
-  ],
+  "observability": {
+    "enabled": true
+  },
   "durable_objects": {
     "bindings": [
       {

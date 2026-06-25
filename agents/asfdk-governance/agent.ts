@@ -5,8 +5,6 @@ import {
   type TurnConfig,
   type ChatResponseResult,
 } from "@cloudflare/think";
-import { createWorkspaceTools } from "@cloudflare/think/tools/workspace";
-import { createExecuteTool } from "@cloudflare/think/tools/execute";
 import { createWorkersAI } from "workers-ai-provider";
 import { tool, type TextUIPart, type ToolSet } from "ai";
 import { z } from "zod";
@@ -14,11 +12,21 @@ import { assessCrisis } from "../../src/governance/crisis.js";
 import { governInteraction } from "../../src/governance/otoi.js";
 import { handleContinuity } from "../../src/governance/continuity.js";
 
-interface Env extends Cloudflare.Env {
-  LOADER?: WorkerLoader;
-}
+interface Env extends Cloudflare.Env {}
 
 export class AsfdkGovernanceAgent extends Think<Env> {
+  /**
+   * Per-room Durable Object instance name provided by the Agents framework.
+   * Used as the server-side user identity for crisis assessment and
+   * continuity so users never share a single KV record. Never fall back to
+   * the version constant — that would collapse all users into one record.
+   */
+  private getIdentity(): string {
+    return this.name && this.name.length > 0
+      ? this.name
+      : "unidentified-session";
+  }
+
   getModel() {
     return createWorkersAI({ binding: this.env.AI })(
       this.env.GOVERNANCE_MODEL,
@@ -63,7 +71,7 @@ ASFDK Solidarity Layer is active. Treat preflight context as governance context.
 
     const assessment = await assessCrisis(
       {
-        userId: this.env.ASFDK_VERSION,
+        userId: this.getIdentity(),
         message: lastUserMessage.content,
       },
       this.env.AI,
@@ -71,7 +79,7 @@ ASFDK Solidarity Layer is active. Treat preflight context as governance context.
     );
 
     const continuity = await handleContinuity(
-      { userId: this.env.ASFDK_VERSION, action: "load" },
+      { userId: this.getIdentity(), action: "load" },
       this.env.SESSION,
     );
 
@@ -95,13 +103,8 @@ ASFDK Solidarity Layer is active. Treat preflight context as governance context.
   }
 
   getTools(): ToolSet {
-    const workspaceTools = createWorkspaceTools(this.workspace);
-    const executeTool = createExecuteTool(this);
-
+    // Code-execution tools intentionally removed — re-add only behind auth + a worker_loaders binding if ever needed.
     return {
-      execute: executeTool,
-      ...workspaceTools,
-
       asfdk_status: tool({
         description: "Return ASFDK governance status and component health.",
         inputSchema: z.object({}),
@@ -159,12 +162,13 @@ ASFDK Solidarity Layer is active. Treat preflight context as governance context.
           "Load or save cross-session continuity context (emotional state, boundaries).",
         inputSchema: z.object({
           action: z.enum(["load", "save"]),
-          userId: z.string(),
           sessionData: z.any().optional(),
         }),
-        execute: async ({ action, userId, sessionData }) => {
+        execute: async ({ action, sessionData }) => {
+          // Bind continuity to the server-side identity so a caller cannot
+          // read or write another user's record (IDOR).
           return handleContinuity(
-            { userId, action, sessionData },
+            { userId: this.getIdentity(), action, sessionData },
             this.env.SESSION,
           );
         },
@@ -181,7 +185,7 @@ ASFDK Solidarity Layer is active. Treat preflight context as governance context.
     if (text) {
       await handleContinuity(
         {
-          userId: this.env.ASFDK_VERSION,
+          userId: this.getIdentity(),
           action: "save",
           sessionData: {
             lastResponse: text,
