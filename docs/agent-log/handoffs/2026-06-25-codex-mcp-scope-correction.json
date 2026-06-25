@@ -1,0 +1,44 @@
+{
+  "handoff_record": {
+    "session_id": "2026-06-25-codex-mcp-scope-correction",
+    "agent_name": "Codex / OpenAI Codex CLI",
+    "date": "2026-06-25",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "main",
+    "work_completed": [
+      "Corrected Codex-authored protocol language after Joshua clarified MCP is assigned to another agent.",
+      "Changed MCP from an excluded protocol posture to a separate-owner boundary in the third-party protocol registry and docs.",
+      "Updated active threads and the Codex session rollup to state that THREAD-002 owns MCP work."
+    ],
+    "work_in_progress": [],
+    "blockers": [],
+    "decisions_made": [
+      "Codex should not modify MCP implementation, MCP package scripts, MCP dependencies, or MCP documentation unless Joshua explicitly transfers that scope."
+    ],
+    "decisions_pending": [
+      "Codex third-party protocol work can continue on A2A, AG-UI, ACP, OpenAPI/REST, and NLIP/Open Floor watchlist items."
+    ],
+    "escalations": [],
+    "next_agent_notes": "MCP is owned by THREAD-002 / Vibe. Codex protocol work should avoid src/mcp-server.ts and MCP-related package changes.",
+    "files_modified": [
+      "src/protocols.ts",
+      "docs/third-party-protocols.md",
+      "docs/non-mcp-integration-protocols.md",
+      "README.md",
+      "skills/asfdk-harness/SKILL.md",
+      "docs/active-threads.md",
+      "docs/agent-log/2026-06-25-codex-session-rollup.md",
+      "docs/agent-log/handoffs/2026-06-25-codex-session-rollup.json",
+      "docs/agent-log/handoffs/2026-06-25-codex-mcp-scope-correction.json"
+    ],
+    "tests_run": [
+      "npm run check",
+      "npm run build",
+      "JSON validation for handoff files",
+      "third-party registry smoke test for MCP separate-owner status"
+    ],
+    "tests_passing": true,
+    "pr_url": "TBD"
+  }
+}

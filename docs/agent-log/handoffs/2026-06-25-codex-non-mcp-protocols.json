@@ -1,0 +1,49 @@
+{
+  "handoff_record": {
+    "session_id": "2026-06-25-codex-non-mcp-protocols",
+    "agent_name": "Codex / OpenAI Codex CLI",
+    "date": "2026-06-25",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "main",
+    "work_completed": [
+      "Added src/protocols.ts as a non-MCP local protocol layer for .toi/.otoi loading, OTOI honoring, protocol snapshots, and constrained system-prompt formatting.",
+      "Wired protocol snapshots into ASFDK status and Pi before_agent_start context.",
+      "Added asfdk_protocol_status tool and /asfdk-protocols command.",
+      "Updated README, skill docs, package files, and docs/non-mcp-integration-protocols.md to define the supported protocol surfaces and explicit MCP boundary."
+    ],
+    "work_in_progress": [],
+    "blockers": [],
+    "decisions_made": [
+      "Used ASFDK's TOI/OTOI re-exports instead of adding direct MCP or TOI/OTOI transport dependencies.",
+      "Kept MCP out of the core harness; future MCP work should be a separate adapter or explicit feature branch."
+    ],
+    "decisions_pending": [
+      "Joshua can decide whether the runtime should enforce protocol diagnostics as hard failures instead of advisory status."
+    ],
+    "escalations": [],
+    "next_agent_notes": "The non-MCP protocol layer resolves .toi/.otoi relative to Pi's active cwd by default, with ASFDK_TOI_PATH and ASFDK_OTOI_PATH overrides. The harness remains a Pi extension/SDK runner, not an MCP server.",
+    "files_modified": [
+      "src/protocols.ts",
+      "src/harness.ts",
+      "src/index.ts",
+      "src/tools.ts",
+      "README.md",
+      "skills/asfdk-harness/SKILL.md",
+      "package.json",
+      "docs/non-mcp-integration-protocols.md",
+      "docs/active-threads.md",
+      "docs/agent-log/handoffs/2026-06-25-codex-non-mcp-protocols.json"
+    ],
+    "tests_run": [
+      "npm run check",
+      "npm run build",
+      "dist protocol snapshot smoke test",
+      "built extension registration smoke test",
+      "Pi resource discovery smoke test",
+      "npm pack --dry-run"
+    ],
+    "tests_passing": true,
+    "pr_url": "TBD"
+  }
+}

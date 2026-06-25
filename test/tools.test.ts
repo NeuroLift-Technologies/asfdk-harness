@@ -1,0 +1,66 @@
+import "./setup.ts";
+import { test, before, after } from "node:test";
+import assert from "node:assert/strict";
+import { AsfdkHarness } from "../src/harness.ts";
+import { createAsfdkTools } from "../src/tools.ts";
+import { cleanupSwpStorage } from "./setup.ts";
+
+let harness: AsfdkHarness;
+let tools: ReturnType<typeof createAsfdkTools>;
+
+before(async () => {
+  harness = new AsfdkHarness();
+  await harness.start();
+  tools = createAsfdkTools(harness);
+});
+
+after(async () => {
+  await harness.shutdown();
+  cleanupSwpStorage();
+});
+
+const byName = (name: string) => {
+  const t = tools.find((tool) => tool.name === name);
+  assert.ok(t, `tool ${name} should exist`);
+  return t;
+};
+
+test("creates exactly the five ASFDK tools", () => {
+  const names = tools.map((t) => t.name).sort();
+  assert.deepEqual(names, [
+    "asfdk_assess_text",
+    "asfdk_interop_protocols",
+    "asfdk_protocol_status",
+    "asfdk_status",
+    "asfdk_update_preferences",
+  ]);
+});
+
+test("every tool satisfies the Pi tool contract shape", () => {
+  for (const t of tools) {
+    assert.equal(typeof t.name, "string");
+    assert.equal(typeof t.description, "string");
+    assert.ok(t.parameters, `${t.name} should declare parameters`);
+    assert.equal(typeof t.execute, "function");
+  }
+});
+
+test("asfdk_status.execute returns health + status content", async () => {
+  const r = await (byName("asfdk_status").execute as (id: string, p: unknown) => Promise<any>)("call-1", {});
+  assert.ok(Array.isArray(r.content));
+  assert.equal(r.content[0].type, "text");
+  assert.equal(r.details.health.healthy, true);
+});
+
+test("asfdk_interop_protocols.execute returns third-party profiles (no foundation needed)", async () => {
+  const r = await (byName("asfdk_interop_protocols").execute as (id: string, p: unknown) => Promise<any>)("call-2", {});
+  assert.ok(Array.isArray(r.details.protocols));
+  assert.ok(r.details.protocols.length > 0, "expected at least one interop protocol profile");
+});
+
+test("asfdk_assess_text.execute runs an assessment", async () => {
+  const r = await (byName("asfdk_assess_text").execute as (id: string, p: unknown) => Promise<any>)("call-3", {
+    text: "checking in",
+  });
+  assert.ok(r.details.interaction, "expected an interaction in the assessment result");
+});

@@ -1,0 +1,95 @@
+{
+  "_template_info": {
+    "template_version": "1.0.0",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "otoi_section": "§5 — Handoff Protocol",
+    "sop_reference": "SOP-NLT-001 Step 8"
+  },
+  "handoff_record": {
+    "session_id": "2026-06-25-claude-harness-hardening",
+    "agent_name": "Claude Code",
+    "platform": "Claude Code",
+    "version": "claude-opus-4-8 (1M context)",
+    "date": "2026-06-25",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "main (local working tree; no commits/PR/publish per Joshua)",
+    "active_thread_id": "THREAD-005",
+    "work_completed": [
+      "Verified Pi v0.80.2 is installed (/home/joshd/.volta/bin/pi) and this repo is a registered Pi user package; confirmed the integrated extension loads via Pi's real DefaultResourceLoader auto-discovery with ZERO load errors and registers all 5 ASFDK tools (asfdk_status, asfdk_protocol_status, asfdk_interop_protocols, asfdk_assess_text, asfdk_update_preferences) alongside Pi built-ins.",
+      "Verified the ASFDK foundation initializes and assesses text at runtime in unified mode (TOI/OTOI framework, Sleepwalker Protocol, and RRT Advocate all active).",
+      "Confirmed the harness typechecks across all 7 src files (npm run check, exit 0) against the real Pi v0.80.2 API; validated the tool_call policy's tool-name/input-field assumptions (bash->command, read/write/edit->path) against Pi's actual tool schemas.",
+      "Verified asfdk npm wiring (Joshua's 'is asfdk properly set / using the npm package' task): @neurolift-technologies/asfdk@0.2.0 + the four pillars (otoi 1.2.0, toi 1.0.1, rrt-advocate 0.1.1, sleepwalker-protocol 1.0.1) all resolve from registry.npmjs.org with integrity hashes; installed asfdk is the published tarball (dist only, not the local sibling repo), not a symlink, and matches published latest; no parent-workspace shadowing.",
+      "Added a hermetic test suite under test/ (setup.ts + policy/harness/tools/extension-load/asfdk-wiring .test.ts) — 27 tests, ZERO new dependencies (Node's built-in node:test + the existing tsx). Mutation-verified non-vacuous (a deliberately-wrong assertion fails as expected). Hermetic: dedicated test user id, temp session dir, self-cleaning (no .swp_storage or ~/.pi pollution).",
+      "Added test/asfdk-wiring.test.ts as a durable regression guard locking in the 'asfdk uses the published npm package' guarantee (fails if any agent later swaps in a file:/link:/git dep or a symlinked local checkout).",
+      "Added .swp_storage/ to .gitignore (Sleepwalker runtime continuity artifact) and wired npm scripts: added test:unit; `npm test` now runs typecheck + the unit suite.",
+      "Ran a read-only adversarial review WORKFLOW (25 agents, 4 finder dimensions, each finding independently verified) over the merged work of all four agents; 21 of 21 candidate findings confirmed. Fixed nothing in other agents' code — produced routed findings only.",
+      "Strengthened my own test suite per the review's valid critiques: before_agent_start hook is now actually invoked and asserted (injects governance prompt, hides preflight) instead of only type-checked; status() test asserts the protocol snapshot truly loaded; added an idempotent-shutdown test."
+    ],
+    "work_in_progress": [],
+    "blockers": [
+      "A functional mcp-server.ts test cannot be added until the critical structuredContent bug (see review_findings) is fixed — it would fail and break `npm test`."
+    ],
+    "decisions_made": [
+      { "decision": "Local changes only — no commits, PR, or npm publish.", "rationale": "Explicit instruction from Joshua." },
+      { "decision": "Stayed entirely off files owned by concurrent agents (.toi/.otoi/nltotoi.json/governance config = Codex; tools/skills/MCP = Vibe; memory system = opencode); confined work to net-new test/ files plus additive .gitignore/package.json/active-threads entries.", "rationale": "Four agents on one untracked tree with no git safety net; avoid clobbering uncommitted work." },
+      { "decision": "Used deterministic tests (not a workflow) for the asfdk-wiring guarantee.", "rationale": "'asfdk is wired to npm' is a precisely verifiable property; a test that runs every npm test/CI beats a one-shot agent opinion." },
+      { "decision": "Did NOT change the tool-call security-policy thresholds; documented the bash sensitive-path bypass in a test instead.", "rationale": "Safety-threshold changes escalate to Joshua per the personal .toi." }
+    ],
+    "decisions_pending": [
+      { "decision": "Close the bash sensitive-path policy bypass (broaden reviewToolCall to scan bash commands for reads of .env/id_rsa/credentials/secrets)?", "owner": "Joshua W. Dorsey, Sr.", "urgency": "medium" },
+      { "decision": "before_agent_start governance: make the silent fail-open explicit (fail-loud) or deliberately fail-closed?", "owner": "Joshua W. Dorsey, Sr.", "urgency": "medium" }
+    ],
+    "escalations": [
+      { "topic": "Bash sensitive-path policy bypass is a real safety hole (read/write/edit are gated but `bash: cat .env` is not).", "status": "raised-to-joshua", "issue_url": null }
+    ],
+    "review_findings": {
+      "summary": "Read-only adversarial review of the 4-agent merge. 21/21 confirmed. Severity: 2 critical, 1 high, 7 medium, 11 low.",
+      "critical": [
+        "[Vibe/THREAD-002] src/mcp-server.ts: all 6 MCP tools declare outputSchema but return Pi-style {content, details} with no structuredContent -> under @modelcontextprotocol/sdk@1.29.0 every tool call fails output validation (validateToolOutput throws, converted to an isError result). The entire MCP tool surface is non-functional. Fix: drop outputSchema OR return structuredContent (and use a real object schema)."
+      ],
+      "high": [
+        "[mine -> resolved as far as possible] The critical MCP failure ships untested; tsc cannot catch the missing structuredContent. A functional MCP test is needed once the bug is fixed."
+      ],
+      "medium": [
+        "[Codex/THREAD-003] src/protocols.ts readOptionalFile leaks readFile rejections (dir/race/perm) -> can crash session_start/before_agent_start.",
+        "[Vibe/THREAD-002] src/mcp-server.ts asfdk_process_interaction casts an unvalidated string to InteractionType; docs show wrong case. Use z.nativeEnum(InteractionType).",
+        "[cross-cutting/Joshua] src/index.ts before_agent_start governance is silently fail-open; any foundation/protocol error drops the Solidarity layer for that turn with no signal.",
+        "[test-gap] mcp-server.ts and protocols.ts have no tests; some lifecycle hooks and status assertions were weak (the latter strengthened this session)."
+      ],
+      "low": [
+        "[Codex] protocols.ts: governance context cached per-session and never reloaded (mid-session .toi/.otoi edits ignored); extractDevOtoi ?? chain shadowing on malformed charter; parse-vs-honor diagnostics conflated.",
+        "[Vibe] mcp-server.ts: zero-arg tools use z.object({}) which rejects omitted arguments; z.record output schemas are dropped from the tool listing; `finally { shutdown }` is unreachable after process.exit(1).",
+        "[cross-cutting] index.ts re-exports mcp-server.js (pulls the MCP SDK into every Pi extension load); Pi (5 tools) vs MCP (6 tools) are divergent hand-maintained lists; policy enforcement asymmetric (Pi enforces, MCP review advisory).",
+        "[safety/Joshua] policy bash sensitive-path bypass (see escalation)."
+      ],
+      "full_detail": "Workflow run wf_d25f7401-b81 — per-finding evidence + verifier reasoning."
+    },
+    "next_agent_notes": "Route the review findings: the CRITICAL mcp-server.ts structuredContent bug is owned by Vibe / THREAD-002 and must be fixed before the MCP bin (asfdk-harness-mcp) works at all; the protocols.ts crash-on-unreadable-file and other protocol items are Codex / THREAD-003; the fail-open governance and tool-parity questions are cross-cutting for Joshua. Run `npm test` (typecheck + 27 unit tests) before/after changes. Do NOT add a functional mcp-server test until the critical bug is fixed. The asfdk npm wiring is verified and now guarded by test/asfdk-wiring.test.ts — keep it green.",
+    "files_modified": [
+      "test/setup.ts (new)",
+      "test/policy.test.ts (new)",
+      "test/harness.test.ts (new)",
+      "test/tools.test.ts (new)",
+      "test/extension-load.test.ts (new)",
+      "test/asfdk-wiring.test.ts (new)",
+      ".gitignore (added .swp_storage/)",
+      "package.json (added test:unit script; test = check + test:unit)",
+      "docs/active-threads.md (added THREAD-005; existing threads untouched)",
+      "docs/agent-log/registrations/2026-06-25-claude-code-harness-hardening.json (new)",
+      "docs/agent-log/handoffs/2026-06-25-claude-code-harness-hardening.json (new)"
+    ],
+    "tests_run": [
+      "npm run check (tsc --noEmit) — pass",
+      "npm test (check + 27 unit tests) — pass",
+      "node --import tsx --test test/*.test.ts — 27/27 pass",
+      "mutation sanity check (intentionally-wrong assertion fails as expected) — confirmed non-vacuous",
+      "Pi extension live-load verification via DefaultResourceLoader + createAgentSession — 0 load errors, 5 ASFDK tools",
+      "ASFDK foundation smoke test (start/healthCheck/status/assessText/shutdown) — all components active",
+      "asfdk npm resolution checks (package-lock resolved URLs, symlink/tarball identity, npm ls)"
+    ],
+    "tests_passing": true,
+    "pr_url": null,
+    "commit_shas": []
+  }
+}

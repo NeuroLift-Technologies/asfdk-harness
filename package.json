@@ -1,0 +1,90 @@
+{
+  "name": "asfdk-harness",
+  "version": "0.1.0",
+  "description": "ASFDK harness on top of Pi: Solidarity Framework governance hooks, tools, prompts, and a standalone SDK runner.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "asfdk-harness": "./dist/cli.js",
+    "asfdk-harness-mcp": "./dist/mcp-server.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "dev": "tsx src/cli.ts",
+    "dev:mcp": "tsx src/mcp-server.ts",
+    "harness": "tsx src/cli.ts",
+    "mcp": "tsx src/mcp-server.ts",
+    "test": "npm run check && npm run test:unit",
+    "test:unit": "node --import tsx --test test/*.test.ts",
+    "prepack": "npm run build"
+  },
+  "files": [
+    "dist",
+    "src",
+    "skills",
+    "prompts",
+    ".toi",
+    ".otoi",
+    "nltotoi.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "pi-package",
+    "asfdk",
+    "solidarity-framework",
+    "haief",
+    "toi",
+    "otoi",
+    "agent-governance",
+    "model-context-protocol",
+    "mcp-server",
+    "mcp-tools"
+  ],
+  "author": "NeuroLift Technologies <info@neuroliftsolutions.com>",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NeuroLift-Technologies/asfdk-harness.git"
+  },
+  "bugs": {
+    "url": "https://github.com/NeuroLift-Technologies/asfdk-harness/issues"
+  },
+  "homepage": "https://github.com/NeuroLift-Technologies/asfdk-harness#readme",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@neurolift-technologies/asfdk": "^0.2.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "^0.80.2",
+    "@flue/cli": "^1.0.0-beta.5",
+    "@types/node": "^26.0.1",
+    "tsx": "^4.22.4",
+    "typebox": "^1.3.0",
+    "typescript": "^6.0.3"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "typebox": "*"
+  },
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ],
+    "skills": [
+      "./skills"
+    ],
+    "prompts": [
+      "./prompts"
+    ]
+  }
+}

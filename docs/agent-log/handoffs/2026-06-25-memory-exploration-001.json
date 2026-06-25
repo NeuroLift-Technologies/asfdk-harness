@@ -1,0 +1,67 @@
+{
+  "_template_info": {
+    "template_version": "1.0.0",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "otoi_section": "§5 — Handoff Protocol",
+    "sop_reference": "SOP-NLT-001 Step 8"
+  },
+  "handoff_record": {
+    "session_id": "memory-exploration-001",
+    "agent_name": "opencode (big-pickle)",
+    "platform": "opencode",
+    "date": "2026-06-25",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "repo": "NeuroLift-Technologies/asfdk-harness, NeuroLift-Technologies/asfdk",
+    "branch": "main (read-only exploration)",
+    "active_thread_id": "THREAD-001",
+    "work_completed": [
+      "Read and documented the entire asfdk-harness source tree (index.ts, harness.ts, tools.ts, policy.ts, cli.ts)",
+      "Explored Pi SessionManager type definitions and session format docs — JSONL tree structure with branching/compaction/CustomEntry",
+      "Explored ASFDK UnifiedStateManager (asfdk/unified_core/core_coordination/state_manager.py) — in-memory state with scopes, access control, change listeners; persistence is TODO-stubbed",
+      "Explored Sleepwalker ContinuityManager (asfdk/sleepwalker/sleepwalker_protocol/continuity.py) — cross-session JSON persistence at .swp_storage/<user_id>.json",
+      "Explored Pi AgentSession type definitions — session lifecycle, compaction, extension bindings",
+      "Mapped the connection flow: Pi JSONL → harness sessionId → ASFDK UnifiedStateManager → Sleepwalker ContinuityManager",
+      "Presented comprehensive three-layer memory architecture to the user"
+    ],
+    "work_in_progress": [
+      "None — exploration complete"
+    ],
+    "blockers": [
+      "None"
+    ],
+    "decisions_made": [
+      {
+        "decision": "Session is read-only exploration only",
+        "rationale": "User requested exploration of the memory system, no code changes needed",
+        "made_by": "Joshua W. Dorsey, Sr. (user direction)"
+      }
+    ],
+    "decisions_pending": [
+      {
+        "decision": "None",
+        "owner": "N/A",
+        "urgency": "N/A"
+      }
+    ],
+    "escalations": [
+      {
+        "topic": "None",
+        "status": "not-required",
+        "issue_url": null
+      }
+    ],
+    "next_agent_notes": "Memory system has three layers: (1) Pi SessionManager — JSONL conversation history at ~/.pi/agent/sessions/, tree-structured with CustomEntry for extension state; (2) ASFDK UnifiedStateManager — in-memory component state coordination with access control, persistence is TODO-stubbed; (3) Sleepwalker ContinuityManager — actual disk persistence via .swp_storage/<user_id>.json for cross-session emotional continuity. The harness itself has no memory system — it only passes sessionId to the foundation. Key gap: UnifiedStateManager and TOIOTOIIntegration both have TODO-stubbed persistence.",
+    "files_modified": [],
+    "files_created": [
+      "docs/agent-log/registrations/2026-06-25-opencode-memory-exploration.json",
+      "docs/agent-log/handoffs/2026-06-25-memory-exploration-001.json"
+    ],
+    "files_deleted": [],
+    "tests_run": [
+      "None (read-only exploration)"
+    ],
+    "tests_passing": true,
+    "pr_url": null,
+    "commit_shas": []
+  }
+}

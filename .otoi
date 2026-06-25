@@ -1,0 +1,82 @@
+{
+  "$otoi": "1.0.0",
+  "$created": "2026-06-25",
+  "$updated": "2026-06-25",
+  "identity": {
+    "author": "Joshua W. Dorsey, Sr. / NeuroLift Technologies"
+  },
+  "agents": [
+    {
+      "id": "pi-asfdk-harness",
+      "role": "Pi extension and standalone SDK runner",
+      "modalities": [
+        "coding-agent",
+        "local-tools"
+      ],
+      "affordances": [
+        "asfdk_status",
+        "asfdk_assess_text",
+        "asfdk_update_preferences",
+        "tool-call-policy"
+      ]
+    },
+    {
+      "id": "codex",
+      "role": "Repository coding agent",
+      "modalities": [
+        "code-editing",
+        "terminal",
+        "local-filesystem"
+      ],
+      "affordances": [
+        "read-files",
+        "edit-files",
+        "run-validation"
+      ]
+    }
+  ],
+  "enforcement": {
+    "mode": "enforced",
+    "on_conflict": "escalate",
+    "on_unsupported": "degrade",
+    "audit": true
+  },
+  "toi_sources": [
+    {
+      "tier": "personal",
+      "uri": ".toi"
+    }
+  ],
+  "x-nlt-dev-otoi": {
+    "note": "NLT-DEV-OTOI.md is a developer governance contract, not a .toi document, so it is referenced here outside toi_sources.",
+    "repo": "NeuroLift-Technologies/.github-private",
+    "path": "NLT-DEV-OTOI.md",
+    "document_id": "ORG-DEV-OTOI-1.0.2",
+    "scope": "Organization-Wide (NeuroLift Technologies)",
+    "maintainer": "Joshua W. Dorsey, Sr.",
+    "sha256": "e365bb0e6b0bd0331a2e41c45874726ddd003eb24e9691674b04e2ea5a3e239e",
+    "required_reading_order": [
+      "NLT-DEV-OTOI.md",
+      "CLAUDE.md",
+      "docs/active-threads.md",
+      "docs/agent-log/registrations/"
+    ],
+    "authority": {
+      "final_decision_maker": "Joshua W. Dorsey, Sr.",
+      "principle": "Escalate, do not guess"
+    },
+    "guardrails": [
+      "No LLM provider lock-in without explicit approval",
+      "No autonomous architecture, database, deployment, UX, or strategic decisions",
+      "No production deployments without explicit human sign-off",
+      "No credentials, secrets, or tokens in code or version control",
+      "No new external integrations without approval",
+      "Pull Request-only workflow for agent-authored changes",
+      "No self-amending NLT-DEV-OTOI.md"
+    ],
+    "handoff": {
+      "active_threads": "Update docs/active-threads.md.",
+      "handoff_records": "Write docs/agent-log/handoffs/[date]-[session-id].json before ending significant work."
+    }
+  }
+}
