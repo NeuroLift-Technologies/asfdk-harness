@@ -71,6 +71,12 @@ test("blocks bash commands that read/exfiltrate sensitive paths (shell-bypass cl
     "base64 id_ed25519",
     "grep SECRET .env.local",
     "cat config/credentials.json",
+    // Quote/escape bypasses — bash strips these before execution (all read `.env`/`.ssh`):
+    'cat .e""nv',
+    "cat '.env'",
+    "cat .e\\nv",
+    "cat \\.env",
+    "cat ~/.s''sh/id_rsa",
   ];
   for (const command of blocked) {
     const d = reviewToolCall("bash", { command });

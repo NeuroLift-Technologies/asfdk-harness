@@ -47,6 +47,9 @@ export default function asfdkPiHarness(pi: ExtensionAPI) {
       // but it must also not silently drop the Solidarity layer. Surface it visibly and proceed
       // with a caution directive for this turn.
       const reason = error instanceof Error ? error.message : String(error);
+      // Keep the system prompt static — never interpolate the raw error (which may carry
+      // user-controlled text) into it, to avoid prompt injection. The detail goes only into
+      // the (non-prompt) preflight message.
       return {
         message: {
           customType: "asfdk-preflight",
@@ -54,7 +57,7 @@ export default function asfdkPiHarness(pi: ExtensionAPI) {
           display: true,
           details: { error: reason },
         },
-        systemPrompt: `${event.systemPrompt}\n\n[ASFDK Solidarity Layer UNAVAILABLE this turn: ${reason}. The governance preflight did not run — proceed with heightened caution and avoid irreversible or high-risk actions.]`,
+        systemPrompt: `${event.systemPrompt}\n\n[ASFDK Solidarity Layer UNAVAILABLE this turn. The governance preflight did not run — proceed with heightened caution and avoid irreversible or high-risk actions.]`,
       };
     }
   });

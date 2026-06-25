@@ -34,9 +34,11 @@ export function reviewToolCall(toolName: string, input: Record<string, unknown>)
       };
     }
     // Close the shell bypass of the sensitive-path gate: a bash command can otherwise read or
-    // copy (cat/cp/grep/scp/…) a file the read/write/edit gate blocks. Tokenize the command and
-    // apply the same SENSITIVE_PATH_PATTERNS to each token.
-    const tokens = command.split(/[\s;|&><()'"`=]+/).filter(Boolean);
+    // copy (cat/cp/grep/scp/…) a file the read/write/edit gate blocks. Bash strips quotes and
+    // escapes before execution (so `cat .e""nv`, `cat '.env'`, and `cat .e\nv` all read `.env`),
+    // so normalize those away first, then tokenize and apply SENSITIVE_PATH_PATTERNS to each token.
+    const normalized = command.replace(/['"`]/g, "").replace(/\\/g, "");
+    const tokens = normalized.split(/[\s;|&><()=]+/).filter(Boolean);
     for (const token of tokens) {
       const sensitive = SENSITIVE_PATH_PATTERNS.find((pattern) => pattern.test(token));
       if (sensitive) {
