@@ -61,13 +61,32 @@ test("allows non-sensitive file paths", () => {
   }
 });
 
-test("documents the current coverage gap: non-file/non-bash tools are not gated", () => {
-  // `grep`/`ls`/`find` can surface sensitive content but are not currently gated, and
-  // `bash` is only checked for destructive patterns (not for reading sensitive paths).
-  // These assertions pin the *current* behavior so a future tightening is a deliberate change.
+test("blocks bash commands that read/exfiltrate sensitive paths (shell-bypass closed)", () => {
+  // The shell bypass of the read/write/edit sensitive-path gate is now closed: bash commands
+  // are tokenized and each token checked against the same SENSITIVE_PATH_PATTERNS.
+  const blocked = [
+    "cat .env",
+    "cp .env /tmp/x",
+    "cat ~/.ssh/id_rsa",
+    "base64 id_ed25519",
+    "grep SECRET .env.local",
+    "cat config/credentials.json",
+  ];
+  for (const command of blocked) {
+    const d = reviewToolCall("bash", { command });
+    assert.equal(d.allow, false, `should block: ${command}`);
+    assert.match(d.reason ?? "", /sensitive path/);
+  }
+  // Benign commands with no sensitive token still pass.
+  assert.equal(reviewToolCall("bash", { command: "cat README.md" }).allow, true);
+  assert.equal(reviewToolCall("bash", { command: "npm run build" }).allow, true);
+});
+
+test("documents the remaining coverage gap: dedicated search tools are not gated", () => {
+  // `grep`/`ls`/`find` invoked as their own tools (not via bash) remain ungated by design —
+  // pinned here so any future tightening is a deliberate change.
   assert.equal(reviewToolCall("grep", { pattern: "x", path: ".env" }).allow, true);
   assert.equal(reviewToolCall("ls", { path: "secrets" }).allow, true);
-  assert.equal(reviewToolCall("bash", { command: "cat .env" }).allow, true);
 });
 
 test("formatPolicyContext returns a governance-context string with the payload", () => {

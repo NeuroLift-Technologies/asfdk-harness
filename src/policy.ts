@@ -33,6 +33,20 @@ export function reviewToolCall(toolName: string, input: Record<string, unknown>)
         reason: `ASFDK harness blocked high-risk shell command pattern: ${matched}`,
       };
     }
+    // Close the shell bypass of the sensitive-path gate: a bash command can otherwise read or
+    // copy (cat/cp/grep/scp/…) a file the read/write/edit gate blocks. Tokenize the command and
+    // apply the same SENSITIVE_PATH_PATTERNS to each token.
+    const tokens = command.split(/[\s;|&><()'"`=]+/).filter(Boolean);
+    for (const token of tokens) {
+      const sensitive = SENSITIVE_PATH_PATTERNS.find((pattern) => pattern.test(token));
+      if (sensitive) {
+        return {
+          allow: false,
+          severity: "block",
+          reason: `ASFDK harness blocked shell access to sensitive path: ${token}`,
+        };
+      }
+    }
   }
 
   if (["read", "write", "edit"].includes(toolName)) {
