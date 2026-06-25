@@ -65,14 +65,31 @@ ASFDK Solidarity Layer is active. Treat preflight context as governance context.
       .filter((m) => m.role === "user")
       .at(-1);
 
-    if (!lastUserMessage || typeof lastUserMessage.content !== "string") {
+    if (!lastUserMessage) {
+      return;
+    }
+
+    // Extract text from string OR multimodal content-part array so crisis/continuity
+    // checks are not silently bypassed (fail-open) on rich-content messages.
+    const rawContent = lastUserMessage.content as unknown;
+    let userText = "";
+    if (typeof rawContent === "string") {
+      userText = rawContent;
+    } else if (Array.isArray(rawContent)) {
+      userText = (rawContent as Array<{ type?: string; text?: string }>)
+        .filter((part) => part.type === "text")
+        .map((part) => part.text ?? "")
+        .join("");
+    }
+
+    if (!userText) {
       return;
     }
 
     const assessment = await assessCrisis(
       {
         userId: this.getIdentity(),
-        message: lastUserMessage.content,
+        message: userText,
       },
       this.env.AI,
       this.env.GOVERNANCE_MODEL,
@@ -183,17 +200,21 @@ ASFDK Solidarity Layer is active. Treat preflight context as governance context.
     const text = textParts.map((p) => p.text).join("");
 
     if (text) {
-      await handleContinuity(
-        {
-          userId: this.getIdentity(),
-          action: "save",
-          sessionData: {
-            lastResponse: text,
-            ts: Date.now(),
+      try {
+        await handleContinuity(
+          {
+            userId: this.getIdentity(),
+            action: "save",
+            sessionData: {
+              lastResponse: text,
+              ts: Date.now(),
+            },
           },
-        },
-        this.env.SESSION,
-      );
+          this.env.SESSION,
+        );
+      } catch (error) {
+        console.error("Failed to save continuity context:", error);
+      }
     }
   }
 }

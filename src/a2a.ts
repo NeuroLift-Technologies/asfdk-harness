@@ -100,7 +100,7 @@ export function createA2AAgentCard(
   const authority = asRecord(context.devOtoi?.authority);
 
   const diagnostics = [...context.diagnostics];
-  const url = options.url ?? process.env.ASFDK_A2A_URL ?? "";
+  const url = options.url ?? (typeof process !== "undefined" ? process.env.ASFDK_A2A_URL : undefined) ?? "";
   if (!url) {
     diagnostics.push(
       "A2A Agent Card has no service endpoint URL; set ASFDK_A2A_URL or pass options.url. The card is emitted without a callable endpoint.",

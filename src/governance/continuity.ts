@@ -10,8 +10,12 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 export async function handleContinuity(
   req: ContinuityRequest,
-  kv: KVNamespace,
+  kv?: KVNamespace,
 ): Promise<ContinuityResponse> {
+  // Guard against a missing/misconfigured KV binding rather than crashing.
+  if (!kv) {
+    return req.action === "save" ? { saved: false } : {};
+  }
   // Validate the identity before it becomes part of the KV key so a caller
   // cannot traverse keys or collide with another user's record.
   if (!USER_ID_PATTERN.test(req.userId)) {

@@ -319,7 +319,7 @@ async function main() {
   }
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {
     console.error(`[${MCP_SERVER_NAME}] Fatal error:`, error);
     process.exit(1);

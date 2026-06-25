@@ -11,8 +11,9 @@ export default {
     const expectedToken = (env as Env & { ASFDK_API_TOKEN?: string })
       .ASFDK_API_TOKEN;
     const authHeader = request.headers.get("Authorization") ?? "";
-    const presentedToken = authHeader.startsWith("Bearer ")
-      ? authHeader.slice("Bearer ".length)
+    // Authorization scheme is case-insensitive per RFC 7235; preserve token casing.
+    const presentedToken = authHeader.toLowerCase().startsWith("bearer ")
+      ? authHeader.slice("bearer ".length)
       : undefined;
 
     // Fail closed: deny if the secret is unset or the bearer does not match.
