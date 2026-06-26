@@ -98,18 +98,8 @@ ASFDK Solidarity Layer is active. Treat preflight context as governance context.
       return;
     }
 
-    const governanceInput = await loadGovernanceContracts(
-      this.env.GOVERNANCE,
-      this.getIdentity(),
-    );
-    const governanceVerdict = verifyGovernance(governanceInput);
-    const mode = this.governanceMode();
-    const governanceSummary = formatGovernanceVerdict(governanceVerdict);
-
-    if (shouldSoftHaltGovernance(governanceVerdict, mode)) {
-      return governanceSoftHalt(ctx, governanceVerdict, mode);
-    }
-
+    // Crisis screening runs unconditionally before any governance gate so that
+    // RED/BLACK messages always reach RRT intervention regardless of contract state.
     const assessment = await assessCrisis(
       {
         userId: this.getIdentity(),
@@ -118,6 +108,23 @@ ASFDK Solidarity Layer is active. Treat preflight context as governance context.
       this.env.AI,
       this.env.GOVERNANCE_MODEL,
     );
+
+    const governanceInput = await loadGovernanceContracts(
+      this.env.GOVERNANCE,
+      this.getIdentity(),
+    );
+    const governanceVerdict = verifyGovernance(governanceInput);
+    const mode = this.governanceMode();
+    const governanceSummary = formatGovernanceVerdict(governanceVerdict);
+
+    // Governance soft-halt is skipped for RED/BLACK crisis levels so that
+    // an invalid or missing governance contract cannot suppress RRT intervention.
+    if (
+      shouldSoftHaltGovernance(governanceVerdict, mode) &&
+      assessment.level === "GREEN"
+    ) {
+      return governanceSoftHalt(ctx, governanceVerdict, mode);
+    }
 
     const continuity = await handleContinuity(
       { userId: this.getIdentity(), action: "load" },

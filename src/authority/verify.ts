@@ -32,7 +32,10 @@ interface ContractCheck {
 }
 
 export function isGovernanceAbsent(input: GovernanceVerifyInput): boolean {
-  return input.toi === undefined && input.otoi === undefined;
+  return (
+    (input.toi === undefined || input.toi === null) &&
+    (input.otoi === undefined || input.otoi === null)
+  );
 }
 
 export function verifyGovernance(input: GovernanceVerifyInput): GovernanceVerdict {
@@ -108,45 +111,56 @@ export function shouldSoftHaltGovernance(verdict: GovernanceVerdict, mode: Gover
 }
 
 function checkToi(candidate: unknown): ContractCheck {
-  if (candidate === undefined) return absentCheck();
+  if (candidate === undefined || candidate === null) return absentCheck();
 
-  const parsed = toi.safeParseToi(candidate);
-  if (!parsed.success) {
+  try {
+    const parsed = toi.safeParseToi(candidate);
+    if (!parsed.success) {
+      return {
+        present: true,
+        valid: false,
+        signed: false,
+        verified: false,
+        errors: [`Invalid TOI: ${formatError(parsed.error)}`],
+        warnings: [],
+      };
+    }
+
+    const signed = toi.isSigned(parsed.data);
+    if (!signed) {
+      return {
+        present: true,
+        valid: true,
+        signed: false,
+        verified: false,
+        errors: [],
+        warnings: ["TOI is unsigned."],
+      };
+    }
+
+    const verified = toi.verifyToi(parsed.data);
+    return {
+      present: true,
+      valid: verified,
+      signed: true,
+      verified,
+      errors: verified ? [] : ["Invalid TOI: signature verification failed."],
+      warnings: [],
+    };
+  } catch (error) {
     return {
       present: true,
       valid: false,
       signed: false,
       verified: false,
-      errors: [`Invalid TOI: ${formatError(parsed.error)}`],
+      errors: [`Invalid TOI: ${formatError(error)}`],
       warnings: [],
     };
   }
-
-  const signed = toi.isSigned(parsed.data);
-  if (!signed) {
-    return {
-      present: true,
-      valid: true,
-      signed: false,
-      verified: false,
-      errors: [],
-      warnings: ["TOI is unsigned."],
-    };
-  }
-
-  const verified = toi.verifyToi(parsed.data);
-  return {
-    present: true,
-    valid: verified,
-    signed: true,
-    verified,
-    errors: verified ? [] : ["Invalid TOI: signature verification failed."],
-    warnings: [],
-  };
 }
 
 function checkOtoi(candidate: unknown): ContractCheck {
-  if (candidate === undefined) return absentCheck();
+  if (candidate === undefined || candidate === null) return absentCheck();
 
   try {
     otoi.parseCharter(candidate);
