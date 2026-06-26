@@ -11,6 +11,10 @@
     {
       "binding": "SESSION",
       "id": "37151fbc32b944e59da444aa6117edfe"
+    },
+    {
+      "binding": "GOVERNANCE",
+      "id": "37151fbc32b944e59da444aa6117edfe"
     }
   ],
   "observability": {
@@ -32,6 +36,7 @@
   ],
   "vars": {
     "ASFDK_VERSION": "ORG-DEV-OTOI-1.0.2",
-    "GOVERNANCE_MODEL": "@cf/meta/llama-4-scout-17b-16e-instruct"
+    "GOVERNANCE_MODEL": "@cf/meta/llama-4-scout-17b-16e-instruct",
+    "ASFDK_GOVERNANCE_MODE": "lenient"
   }
 }

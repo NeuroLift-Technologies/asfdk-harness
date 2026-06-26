@@ -1,0 +1,69 @@
+{
+  "handoff_record": {
+    "session_id": "cloudflare-binding-completion-001",
+    "agent_name": "opencode (big-pickle)",
+    "platform": "opencode",
+    "date": "2026-06-26",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "main",
+    "active_thread_id": "THREAD-003 / round-2 consolidation continuation",
+    "work_completed": [
+      "Added GOVERNANCE KV binding to wrangler.jsonc (reuses SESSION namespace id per user approval)",
+      "Added ASFDK_GOVERNANCE_MODE: \"lenient\" var to wrangler.jsonc",
+      "Ran npx wrangler types — regenerated worker-configuration.d.ts with GOVERNANCE, ASFDK_GOVERNANCE_MODE, correct DO class_name (AsfdkGovernanceAgent)",
+      "npm run cf:check passes clean (0 errors)",
+      "Updated docs/active-threads.md with session work"
+    ],
+    "work_in_progress": [],
+    "blockers": [
+      "None. Cloudflare binding setup is complete."
+    ],
+    "decisions_made": [
+      {
+        "decision": "Reuse SESSION KV namespace (37151fbc32b944e59da444aa6117edfe) for GOVERNANCE binding",
+        "rationale": "Simpler deployment — no new KV namespace to create/manage. Governance contracts stored under governance:, toi:, otoi: key prefixes alongside existing swp: prefix.",
+        "made_by": "Joshua W. Dorsey, Sr. (user approval)"
+      }
+    ],
+    "decisions_pending": [
+      {
+        "decision": "None",
+        "owner": "N/A",
+        "urgency": "N/A"
+      }
+    ],
+    "next_agent_notes": "All Cloudflare binding integration is complete — wrangler.jsonc updated, types regenerated, cf:check passes. Focus should now shift to Codex's remaining incomplete work. The D1 binding (DB) was previously removed from wrangler.jsonc — if a future feature needs D1, it must be re-added along with a new database_id.",
+
+    "cloudflare_steps_remaining": [
+      "✓ npx wrangler types — done (GOVERNANCE, ASFDK_GOVERNANCE_MODE in generated types)",
+      "✓ npm run cf:check — passes clean (0 errors)"
+    ],
+
+    "codex_remaining_work": [
+      "3. Relabel src/governance/otoi.ts prompt from authoritative NLT-OTOI component to advisory response-compliance reviewer",
+      "4. Add tests for src/authority/verify.ts covering: absent input, valid unsigned TOI, valid unsigned OTOI, valid bundle, malformed TOI, malformed OTOI, failed TOI signature, formatted verdict, lenient-absent-continues, strict-absent-halts, strict-invalid-halts, valid-unsigned-continues-with-warning",
+      "5. Add mode behavior tests for normalizeGovernanceMode and shouldSoftHaltGovernance",
+      "6. Run npm run check, npm run cf:check, npm run test:unit, npm test",
+      "7. Do not edit src/mcp-server.ts or MCP-related files"
+    ],
+
+    "agent.ts_structural_notes": [
+      "Codex removed createWorkspaceTools, createExecuteTool, createWorkersAI imports and the execute/workspace tools — code-execution is intentionally disabled",
+      "IDOR fix: asfdk_continuity tool no longer accepts user-supplied userId — uses server-side this.getIdentity()",
+      "getIdentity() uses this.name from the Agents SDK per-room DO naming — users never share KV records",
+      "governanceSoftHalt uses activeTools: [], maxSteps: 1, maxOutputTokens: 160, sendReasoning: false — soft prompt-level halt only (Think beforeTurn has no hard-abort API)"
+    ],
+
+    "files_modified_by_this_agent": [
+      "wrangler.jsonc",
+      "docs/active-threads.md",
+      "docs/agent-log/handoffs/2026-06-26-cloudflare-binding-completion.json"
+    ],
+
+    "tests_run": [],
+    "tests_passing": null,
+    "pr_url": null,
+    "commit_shas": []
+  }
+}

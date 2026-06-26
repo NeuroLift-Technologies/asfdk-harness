@@ -47,13 +47,21 @@ export async function processPipeline(
   if (assessment.level === "BLACK") {
     return {
       assessment,
-      governed: { governedResponse: req.agentResponse, flags: [], modified: false },
+      governed: {
+        advisoryResponse: req.agentResponse,
+        advisoryFlags: [],
+        advisoryOnly: true,
+      },
       finalResponse: assessment.intervention ?? "Crisis intervention required.",
     };
   }
 
   const governed = await governInteraction(
-    { userId: req.userId, message: req.message, agentResponse: req.agentResponse },
+    {
+      userId: req.userId,
+      message: req.message,
+      agentResponse: req.agentResponse,
+    },
     env.AI,
     env.GOVERNANCE_MODEL,
   );
@@ -62,7 +70,11 @@ export async function processPipeline(
     {
       userId: req.userId,
       action: "save",
-      sessionData: { lastMessage: req.message, lastLevel: assessment.level, ts: Date.now() },
+      sessionData: {
+        lastMessage: req.message,
+        lastLevel: assessment.level,
+        ts: Date.now(),
+      },
     },
     env.SESSION,
   );
@@ -70,7 +82,7 @@ export async function processPipeline(
   return {
     assessment,
     governed,
-    finalResponse: governed.governedResponse,
+    finalResponse: governed.advisoryResponse,
   };
 }
 

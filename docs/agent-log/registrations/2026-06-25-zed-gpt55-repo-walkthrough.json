@@ -1,0 +1,26 @@
+{
+  "agent_registration": {
+    "agent_name": "Zed GPT-5.5",
+    "platform": "Zed coding agent",
+    "version": "GPT-5.5",
+    "session_id": "zed-gpt55-repo-walkthrough-2026-06-25",
+    "entry_date": "2026-06-25",
+    "entry_point": "User request: \"go through this repo\"",
+    "acknowledged_otoi": true,
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "working_repo": "NeuroLift-Technologies/asfdk-harness",
+    "working_branch": "round-2-consolidation",
+    "capabilities_self_reported": [
+      "Repository walkthrough and summarization",
+      "TypeScript/Node.js code inspection",
+      "Test and build validation",
+      "Documentation review"
+    ],
+    "known_limitations": [
+      "Will not make architecture, deployment, UX, or strategic decisions without Joshua W. Dorsey, Sr. approval",
+      "Will not modify protected governance documents",
+      "Can only validate commands available in the local workspace"
+    ],
+    "preferred_handoff_format": "Concise markdown summary plus JSON handoff records when significant work is performed"
+  }
+}
