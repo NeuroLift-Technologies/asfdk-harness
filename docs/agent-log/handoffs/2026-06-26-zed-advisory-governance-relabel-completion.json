@@ -1,0 +1,58 @@
+{
+  "handoff_record": {
+    "session_id": "zed-advisory-governance-relabel-completion-2026-06-26",
+    "agent_name": "Zed GPT-5.5",
+    "platform": "Zed coding agent",
+    "date": "2026-06-26T12:00:00Z",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "round-2-consolidation",
+    "active_thread_id": "THREAD-003 / round-2 consolidation continuation",
+    "work_completed": [
+      "Verified Codex deterministic authority verifier work and OpenCode Cloudflare binding work against the current tree.",
+      "Confirmed the remaining gap was src/governance/otoi.ts still using authoritative NLT-OTOI language and the old governedResponse/flags/modified shape.",
+      "Relabeled src/governance/otoi.ts as an advisory response-compliance reviewer, explicitly stating it is not the authoritative TOI/OTOI verifier and that deterministic verification is handled by the shared ASFDK authority verifier.",
+      "Changed GovernResponse shape to advisoryResponse/advisoryFlags/advisoryOnly and updated src/governance/index.ts consumers.",
+      "Updated the Worker asfdk_govern tool description to describe advisory review rather than authoritative governance.",
+      "Added test/governance-advisory.test.ts covering advisory response shape, prompt language, fallback rejection of old governedResponse shape, and delimiter sanitization.",
+      "Updated docs/active-threads.md with completion status for the advisory relabel gap."
+    ],
+    "work_in_progress": [],
+    "blockers": [],
+    "decisions_made": [
+      {
+        "decision": "Preserve the exported governInteraction/GovernResponse names while changing the semantics and fields to advisory.",
+        "rationale": "This keeps call sites stable while removing authoritative OTOI claims and making the returned data clearly advisory."
+      },
+      {
+        "decision": "Reject old governedResponse/flags/modified model output via strict shape validation.",
+        "rationale": "Prevents stale prompt/model behavior from being silently accepted as current advisory output."
+      }
+    ],
+    "decisions_pending": [
+      {
+        "decision": "Whether to rename public symbols from govern* to advisory* in a future breaking/API-cleanup PR.",
+        "owner": "Joshua W. Dorsey, Sr. / implementing agent proposal",
+        "urgency": "low"
+      }
+    ],
+    "escalations": [],
+    "next_agent_notes": "The deterministic verifier, Worker binding integration, and advisory LLM relabel now validate together. MCP files were not touched. Existing known follow-ups remain out of scope: shell policy hardening, production auth migration, crisis threshold changes, Pi use of src/authority/verify.ts, and real A2A HTTP adapter work.",
+    "files_modified": [
+      "src/governance/otoi.ts",
+      "src/governance/types.ts",
+      "src/governance/index.ts",
+      "agents/asfdk-governance/agent.ts",
+      "test/governance-advisory.test.ts",
+      "docs/active-threads.md",
+      "docs/agent-log/handoffs/2026-06-26-zed-advisory-governance-relabel-completion.json"
+    ],
+    "tests_run": [
+      "node --import tsx --test test/governance-advisory.test.ts test/governance-verify.test.ts",
+      "npm test"
+    ],
+    "tests_passing": true,
+    "pr_url": null,
+    "commit_shas": []
+  }
+}

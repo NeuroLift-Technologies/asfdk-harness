@@ -20,9 +20,9 @@ export interface GovernRequest {
 }
 
 export interface GovernResponse {
-  governedResponse: string;
-  flags: string[];
-  modified: boolean;
+  advisoryResponse: string;
+  advisoryFlags: string[];
+  advisoryOnly: true;
 }
 
 export interface ContinuityRequest {

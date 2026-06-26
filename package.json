@@ -71,14 +71,14 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@neurolift-technologies/asfdk": "^0.2.0",
     "agents": "^0.16.2",
-    "ai": "^6.0.209",
+    "ai": "^6.0.211",
     "workers-ai-provider": "^3.2.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260624.0",
     "@earendil-works/pi-coding-agent": "^0.80.2",
-    "@flue/cli": "^1.0.0-beta.5",
+    "@flue/cli": "^1.0.0-beta.6",
     "@types/node": "^26.0.1",
     "tsx": "^4.22.4",
     "typebox": "^1.3.0",

@@ -8,6 +8,15 @@ import {
 import { createWorkersAI } from "workers-ai-provider";
 import { tool, type TextUIPart, type ToolSet } from "ai";
 import { z } from "zod";
+import {
+  formatGovernanceVerdict,
+  normalizeGovernanceMode,
+  shouldSoftHaltGovernance,
+  verifyGovernance,
+  type GovernanceMode,
+  type GovernanceVerdict,
+  type GovernanceVerifyInput,
+} from "../../src/authority/verify.js";
 import { assessCrisis } from "../../src/governance/crisis.js";
 import { governInteraction } from "../../src/governance/otoi.js";
 import { handleContinuity } from "../../src/governance/continuity.js";
@@ -28,21 +37,24 @@ export class AsfdkGovernanceAgent extends Think<Env> {
   }
 
   getModel() {
-    return createWorkersAI({ binding: this.env.AI })(
-      this.env.GOVERNANCE_MODEL,
-    );
+    return createWorkersAI({ binding: this.env.AI })(this.env.GOVERNANCE_MODEL);
   }
 
   getSystemPrompt() {
     return `You are an ASFDK-governed agent operating under the NeuroLift Technologies Solidarity Framework.
 
 Governance active: TOI/OTOI v${this.env.ASFDK_VERSION ?? "ORG-DEV-OTOI-1.0.2"}
+Governance verification mode: ${this.governanceMode()}
 - Honor user Terms of Interaction and declared boundaries
 - Never commit to an LLM provider lock-in
 - Escalate architectural, deployment, and safety decisions to the user
 - Pass all responses through governance assessment before returning
 
 ASFDK Solidarity Layer is active. Treat preflight context as governance context.`;
+  }
+
+  private governanceMode(): GovernanceMode {
+    return normalizeGovernanceMode(this.env.ASFDK_GOVERNANCE_MODE);
   }
 
   configureSession(session: Session): Session {
@@ -86,6 +98,18 @@ ASFDK Solidarity Layer is active. Treat preflight context as governance context.
       return;
     }
 
+    const governanceInput = await loadGovernanceContracts(
+      this.env.GOVERNANCE,
+      this.getIdentity(),
+    );
+    const governanceVerdict = verifyGovernance(governanceInput);
+    const mode = this.governanceMode();
+    const governanceSummary = formatGovernanceVerdict(governanceVerdict);
+
+    if (shouldSoftHaltGovernance(governanceVerdict, mode)) {
+      return governanceSoftHalt(ctx, governanceVerdict, mode);
+    }
+
     const assessment = await assessCrisis(
       {
         userId: this.getIdentity(),
@@ -101,6 +125,7 @@ ASFDK Solidarity Layer is active. Treat preflight context as governance context.
     );
 
     const preflightBlocks: string[] = [];
+    preflightBlocks.push(`[ASFDK Authority] ${governanceSummary}`);
     if (assessment.level !== "GREEN") {
       preflightBlocks.push(
         `[RRT Advocate] Crisis level: ${assessment.level}${assessment.intervention ? ` — suggested response: ${assessment.intervention}` : ""}`,
@@ -130,6 +155,7 @@ ASFDK Solidarity Layer is active. Treat preflight context as governance context.
             version: this.env.ASFDK_VERSION,
             model: this.env.GOVERNANCE_MODEL,
             governance: "TOI-OTOI + RRT Advocate + Sleepwalker Continuity",
+            governanceMode: this.governanceMode(),
             mode: "advisory",
           };
         },
@@ -140,7 +166,10 @@ ASFDK Solidarity Layer is active. Treat preflight context as governance context.
           "Assess text through ASFDK crisis detection and governance. Returns crisis level, flags, and intervention suggestions.",
         inputSchema: z.object({
           text: z.string().describe("Text to assess"),
-          userId: z.string().optional().describe("User identifier for continuity"),
+          userId: z
+            .string()
+            .optional()
+            .describe("User identifier for continuity"),
         }),
         execute: async ({ text, userId }) => {
           const assessment = await assessCrisis(
@@ -154,7 +183,7 @@ ASFDK Solidarity Layer is active. Treat preflight context as governance context.
 
       asfdk_govern: tool({
         description:
-          "Pass an agent response through TOI/OTOI governance. Returns a governed (potentially modified) response with flags.",
+          "Pass an agent response through advisory TOI/OTOI compliance review. Deterministic authority verification runs separately before this LLM review path.",
         inputSchema: z.object({
           message: z.string().describe("Original user message"),
           agentResponse: z.string().describe("Agent response to govern"),
@@ -217,4 +246,100 @@ ASFDK Solidarity Layer is active. Treat preflight context as governance context.
       }
     }
   }
+}
+
+async function loadGovernanceContracts(
+  kv: KVNamespace,
+  identity: string,
+): Promise<GovernanceVerifyInput> {
+  const bundleKeys = [`governance:${identity}`, "governance:org"];
+  for (const key of bundleKeys) {
+    const raw = await kv.get(key);
+    if (raw !== null) return contractInputFromBundle(raw, key);
+  }
+
+  const toi = await getFirstKvValue(kv, [`toi:${identity}`, "toi:org"]);
+  const otoi = await getFirstKvValue(kv, [`otoi:${identity}`, "otoi:org"]);
+  return {
+    toi: toi?.value,
+    otoi: otoi?.value,
+    source:
+      [toi?.key, otoi?.key]
+        .filter((key): key is string => Boolean(key))
+        .join(", ") || undefined,
+  };
+}
+
+async function getFirstKvValue(
+  kv: KVNamespace,
+  keys: string[],
+): Promise<{ key: string; value: string } | undefined> {
+  for (const key of keys) {
+    const value = await kv.get(key);
+    if (value !== null) return { key, value };
+  }
+  return undefined;
+}
+
+function contractInputFromBundle(
+  raw: string,
+  source: string,
+): GovernanceVerifyInput {
+  const parsed = tryParseJson(raw);
+  if (isRecord(parsed) && ("toi" in parsed || "otoi" in parsed)) {
+    return {
+      toi: parsed.toi,
+      otoi: parsed.otoi,
+      source: stringValue(parsed.source) ?? source,
+    };
+  }
+
+  if (isRecord(parsed) && "$otoi" in parsed) {
+    return {
+      otoi: parsed,
+      source,
+    };
+  }
+
+  return {
+    toi: parsed,
+    source,
+  };
+}
+
+function tryParseJson(raw: string): unknown {
+  try {
+    return JSON.parse(raw) as unknown;
+  } catch {
+    return raw;
+  }
+}
+
+function governanceSoftHalt(
+  ctx: TurnContext,
+  verdict: GovernanceVerdict,
+  mode: GovernanceMode,
+): TurnConfig {
+  const reason = formatGovernanceVerdict(verdict);
+  return {
+    system: `${ctx.system}
+
+ASFDK Authority HALT:
+${reason}
+Governance mode: ${mode}
+
+Stop the turn. Do not perform tool calls, crisis assessment, continuity access, or task work. Reply only with a concise refusal that says deterministic TOI/OTOI verification failed or is absent under strict mode. This is a soft prompt-level halt because the installed Think beforeTurn API does not expose a fixed-response abort field.`,
+    activeTools: [],
+    maxSteps: 1,
+    maxOutputTokens: 160,
+    sendReasoning: false,
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function stringValue(value: unknown): string | undefined {
+  return typeof value === "string" && value.length > 0 ? value : undefined;
 }

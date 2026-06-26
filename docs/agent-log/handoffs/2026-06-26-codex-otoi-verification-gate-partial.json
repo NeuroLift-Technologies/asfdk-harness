@@ -1,0 +1,92 @@
+{
+  "handoff_record": {
+    "session_id": "2026-06-26-codex-otoi-verification-gate-partial",
+    "agent_name": "Codex / OpenAI Codex CLI",
+    "platform": "Codex CLI",
+    "date": "2026-06-26T01:59:55-04:00",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "round-2-consolidation",
+    "active_thread_id": "THREAD-003 / round-2 consolidation continuation",
+    "handoff_type": "partial-implementation-paused-by-user",
+    "work_completed": [
+      "Loaded Worker guidance and inspected current asfdk-harness Worker, Think API types, ASFDK package exports, active-thread ownership, and existing dirty worktree state.",
+      "Added new pure verifier module at src/authority/verify.ts with verifyGovernance(), isGovernanceAbsent(), formatGovernanceVerdict(), normalizeGovernanceMode(), and shouldSoftHaltGovernance().",
+      "Verifier uses @neurolift-technologies/asfdk re-exports for TOI/OTOI validation: toi.safeParseToi(), toi.isSigned(), toi.verifyToi(), and otoi.parseCharter().",
+      "Added test/governance-verify.test.ts covering absent, valid unsigned TOI, valid unsigned OTOI, valid TOI+OTOI bundle, verified signed TOI, tampered signed TOI, malformed TOI, malformed OTOI, formatted verdict, and mode halt behavior.",
+      "Verifier lane validation passed: targeted verifier test, npm run test:unit, and npm run check.",
+      "Started Worker integration in agents/asfdk-governance/agent.ts: imported verifier helpers, added governanceMode(), inserted governance verification before crisis and continuity passes, added ASFDK Authority preflight block, and added soft-halt TurnConfig behavior.",
+      "Added Worker helper functions to load preferred bundle keys governance:<identity> and governance:org, then fallback individual keys toi:<identity>, otoi:<identity>, toi:org, and otoi:org.",
+      "Kept MCP files untouched."
+    ],
+    "work_in_progress": [
+      "Worker integration is incomplete and currently does not pass npm run cf:check.",
+      "agents/asfdk-governance/agent.ts now references this.env.GOVERNANCE and this.env.ASFDK_GOVERNANCE_MODE, but wrangler.jsonc and worker-configuration.d.ts have not yet been updated.",
+      "src/governance/otoi.ts has not yet been relabeled from authoritative NLT-OTOI component to advisory response-compliance reviewer.",
+      "No active-threads update was made in this handoff beyond the pre-existing dirty docs/active-threads.md change from another agent."
+    ],
+    "blockers": [
+      "User interrupted implementation and asked to put remaining work in the handoff.",
+      "Dedicated GOVERNANCE KV namespace id/preview_id still needs to be chosen or created before wrangler config can be fully valid.",
+      "Think beforeTurn still appears to support only TurnConfig prompt/tool constraints, not a direct fixed-response hard abort; current implementation uses soft halt."
+    ],
+    "decisions_made": [
+      {
+        "decision": "Use a runtime-neutral pure verifier in src/authority/verify.ts.",
+        "rationale": "Keeps deterministic TOI/OTOI authority reusable by Worker, Pi, MCP diagnostics, CLI, and future A2A lanes."
+      },
+      {
+        "decision": "Default governance mode helper treats unset or unknown mode as lenient.",
+        "rationale": "Matches Josh's selected default and keeps dev turns from breaking on absent contracts while still halting invalid contracts."
+      },
+      {
+        "decision": "OTOI contracts cannot currently reach verified status through the installed package API.",
+        "rationale": "@neurolift-technologies/otoi exposes parse/honor APIs but no OTOI signature verification API; valid OTOI remains valid-unsigned."
+      }
+    ],
+    "decisions_pending": [
+      {
+        "decision": "Provide or create the dedicated GOVERNANCE KV namespace for wrangler.jsonc.",
+        "owner": "Joshua W. Dorsey, Sr. / next implementing agent",
+        "urgency": "high"
+      },
+      {
+        "decision": "Whether to add a hard abort path using lower-level Think APIs later.",
+        "owner": "Joshua W. Dorsey, Sr. / next implementing agent",
+        "urgency": "medium"
+      }
+    ],
+    "next_agent_notes": [
+      "Do not assume this compiles yet. First expected failure is missing Env bindings for GOVERNANCE and ASFDK_GOVERNANCE_MODE.",
+      "Next step 1: update wrangler.jsonc with GOVERNANCE KV and ASFDK_GOVERNANCE_MODE: \"lenient\", then run npm run cf:typegen so worker-configuration.d.ts is generated, not hand-edited.",
+      "Next step 2: relabel src/governance/otoi.ts prompt as advisory, explicitly saying deterministic verification is handled by the shared ASFDK authority verifier.",
+      "Next step 3: decide whether to add additional Worker-focused tests after bindings are generated; pure verifier tests already cover mode behavior.",
+      "Next step 4: run npm run check, npm run cf:check, npm run test:unit, and npm test.",
+      "Do not edit src/mcp-server.ts, MCP scripts/dependencies/docs, shell policy hardening, production auth, crisis thresholds, Pi before_agent_start, or README architecture unless Josh explicitly expands scope.",
+      "Do not add or commit untracked agents/asfdk-governance/agent.js; git ls-files showed only agents/asfdk-governance/agent.ts is tracked."
+    ],
+    "files_modified_by_this_agent": [
+      "src/authority/verify.ts",
+      "test/governance-verify.test.ts",
+      "agents/asfdk-governance/agent.ts",
+      "docs/agent-log/handoffs/2026-06-26-codex-otoi-verification-gate-partial.json"
+    ],
+    "pre_existing_dirty_worktree_not_owned_by_this_agent": [
+      "docs/active-threads.md",
+      "package.json",
+      "package-lock.json",
+      "[--root",
+      "docs/agent-log/handoffs/2026-06-25-zed-gpt55-repo-walkthrough.json",
+      "docs/agent-log/registrations/2026-06-25-zed-gpt55-repo-walkthrough.json"
+    ],
+    "tests_run": [
+      "node --import tsx --test test/governance-verify.test.ts",
+      "npm run test:unit",
+      "npm run check",
+      "npm run cf:check (expected failure: missing generated Env bindings for GOVERNANCE and ASFDK_GOVERNANCE_MODE)"
+    ],
+    "tests_passing": false,
+    "pr_url": null,
+    "commit_shas": []
+  }
+}
