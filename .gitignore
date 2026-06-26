@@ -146,6 +146,11 @@ vite.config.ts.timestamp-*
 # Sleepwalker Protocol cross-session continuity storage (created at runtime, per user id)
 .swp_storage/
 
+# Personal TOI files
+/.toi
+/.toi.backup-*
+/joshua-dorsey-personal.toi
+
 # Cloudflare Workers
 .wrangler/
 .dev.vars
