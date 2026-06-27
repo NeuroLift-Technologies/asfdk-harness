@@ -72,7 +72,12 @@ export class AsfdkHarness {
   async status(): Promise<Record<string, unknown>> {
     const foundation = await this.foundation();
     const [status, protocols] = await Promise.all([foundation.getSystemStatus(), this.protocolSnapshot()]);
-    return { ...status, protocols };
+
+    // Redact local filesystem paths unless in development mode
+    const redactedProtocols =
+      this.mode === FoundationMode.DEVELOPMENT ? protocols : this.redactProtocolPaths(protocols);
+
+    return { ...status, protocols: redactedProtocols };
   }
 
   async assessText(text: string, context: Record<string, unknown> = {}): Promise<TextAssessment> {
@@ -135,6 +140,7 @@ export class AsfdkHarness {
       agentId: "asfdk-harness",
       agentName: "ASFDK Harness",
       url: this.a2aUrl,
+      includeSensitiveGovernanceTools: canExposeSensitiveGovernanceTools(this.mode),
     });
   }
 
@@ -143,6 +149,69 @@ export class AsfdkHarness {
     if (!this.#foundation) throw new Error("ASFDK foundation failed to initialize");
     return this.#foundation;
   }
+
+  /**
+   * Redact local filesystem paths from protocol snapshot for security
+   * Replaces absolute paths with placeholders unless in development mode
+   */
+  redactProtocolPaths(snapshot: GovernanceProtocolSnapshot): GovernanceProtocolSnapshot {
+    // Create a deep copy to avoid mutating the original
+    const redacted: GovernanceProtocolSnapshot = {
+      cwd: this.redactPath(snapshot.cwd),
+      paths: {
+        toi: this.redactPath(snapshot.paths.toi),
+        otoi: this.redactPath(snapshot.paths.otoi),
+      },
+      protocols: [...snapshot.protocols],
+      diagnostics: snapshot.diagnostics.map((diagnostic) =>
+        typeof diagnostic === "string" ? this.redactPathInString(diagnostic) : diagnostic,
+      ),
+      toi: snapshot.toi,
+      otoi: snapshot.otoi,
+      thirdPartyProtocols: [...snapshot.thirdPartyProtocols],
+    };
+
+    return redacted;
+  }
+
+  /**
+   * Redact a single filesystem path
+   * Replaces absolute paths with [REDACTED_PATH] unless in development mode
+   */
+  redactPath(path: string): string {
+    // Don't redact in development mode
+    if (this.mode === FoundationMode.DEVELOPMENT) return path;
+
+    // Check if this looks like an absolute path
+    if (
+      typeof path === "string" &&
+      (path.startsWith("/") ||
+        (path.length > 1 && path[1] === ":" && (path[2] === "\\" || path[2] === "/")))
+    ) {
+      return "[REDACTED_PATH]";
+    }
+
+    return path;
+  }
+
+  /**
+   * Redact paths within a string (for diagnostics)
+   * Preserves the rest of the message while redacting any paths
+   */
+  redactPathInString(text: string): string {
+    // Don't redact in development mode
+    if (this.mode === FoundationMode.DEVELOPMENT) return text;
+
+    // Simple path pattern matching - this could be more sophisticated
+    // Look for common path patterns and replace them
+    return text
+      .replace(/\b(\/[^\s]+|[A-Za-z]:\\[^\s]+|\/[^\s]+)/g, "[REDACTED_PATH]")
+      .replace(/\b(\/\w+(\/\w+)+)/g, "[REDACTED_PATH]");
+  }
+}
+
+export function canExposeSensitiveGovernanceTools(mode: FoundationMode): boolean {
+  return mode === FoundationMode.DEVELOPMENT || process.env.ASFDK_GOVERNANCE_TOOLS === "approved";
 }
 
 export function parseFoundationMode(value: string | undefined): FoundationMode | undefined {

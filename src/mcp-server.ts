@@ -10,16 +10,21 @@ import { pathToFileURL } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { AsfdkHarness } from "./harness.js";
+import { AsfdkHarness, canExposeSensitiveGovernanceTools } from "./harness.js";
 import { summarizeFoundationResponse } from "./harness.js";
 import { reviewToolCall, type ToolPolicyDecision } from "./policy.js";
 import { InteractionType } from "@neurolift-technologies/asfdk";
+import {
+  buildGovernanceAuthorityInfo,
+  buildGovernanceRawData,
+  formatGovernanceSummary,
+} from "./tools.js";
 
 const MCP_SERVER_NAME = "asfdk-harness";
 const MCP_SERVER_VERSION = "0.1.0";
 
 // Inline skill content for MCP resource
-const ASFDK_HARNESS_SKILL = ` Skill: ASFDK Harness for Pi
+const ASFDK_HARNESS_SKILL_BASE = ` Skill: ASFDK Harness for Pi
 
 Use this skill when working inside Pi with the ASFDK Solidarity Layer enabled.
 
@@ -33,9 +38,32 @@ Operating model:
 Available tools:
 - asfdk_status - inspect active ASFDK foundation mode and component health.
 - asfdk_assess_text - assess free text through active ASFDK components.
-- asfdk_update_preferences - validate/update explicit user preferences through the TOI/OTOI path.
+- asfdk_update_preferences - validate/update explicit user preferences through the TOI/OTOI path.`;
 
+const ASFDK_HARNESS_GOVERNANCE_SKILL = `
+- asfdk_governance_summary - get human-readable governance state and authority structure (use governance file before file search).
+- asfdk_authority_chan - inspect authority chain, decision makers, and escalation paths (use governance file before file search).
+- asfdk_governance_raw - get raw governance protocol data for debugging (use governance file before file search).`;
+
+const ASFDK_HARNESS_SKILL_FOOTER = `
 Default posture: Start in observe/advisory mode unless the user explicitly asks for stronger enforcement.`;
+
+const ASFDK_HARNESS_GOVERNANCE_ALIASES = `
+MCP Resource Aliases:
+- asfdk-governance://summary - Access governance summary via MCP
+- asfdk-governance://authority-chain - Access authority chain via MCP
+- asfdk-governance://status - Access raw governance status via MCP`;
+
+function formatAsfdkHarnessSkill(includeSensitiveGovernanceTools: boolean): string {
+  return [
+    ASFDK_HARNESS_SKILL_BASE,
+    includeSensitiveGovernanceTools ? ASFDK_HARNESS_GOVERNANCE_SKILL : undefined,
+    ASFDK_HARNESS_SKILL_FOOTER,
+    includeSensitiveGovernanceTools ? ASFDK_HARNESS_GOVERNANCE_ALIASES : undefined,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
 
 // Inline prompt content for MCP resource  
 const ASFDK_HARNESS_PROMPT = `ASFDK Harness Turn
@@ -52,6 +80,7 @@ Use the ASFDK Solidarity Layer as governance middleware for this task.
  * Create and configure the MCP server with ASFDK tools
  */
 function createMcpServer(harness: AsfdkHarness): McpServer {
+  const exposeSensitiveGovernanceTools = canExposeSensitiveGovernanceTools(harness.mode);
   const server = new McpServer(
     {
       name: MCP_SERVER_NAME,
@@ -227,7 +256,7 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
         {
           uri: "asfdk-skill://asfdk-harness",
           mimeType: "text/markdown",
-          text: ASFDK_HARNESS_SKILL,
+          text: formatAsfdkHarnessSkill(exposeSensitiveGovernanceTools),
         },
       ],
     })
@@ -270,6 +299,140 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
       ],
     })
   );
+
+  if (exposeSensitiveGovernanceTools) {
+    // Register Governance Summary Tool
+    server.registerTool(
+      "asfdk_governance_summary",
+      {
+        description:
+          "Get a human-readable summary of the current governance state and authority structure. Use governance file before file search.",
+        inputSchema: z.object({}),
+      },
+      async () => {
+        const protocolContext = await harness.protocolContext();
+        const summary = formatGovernanceSummary(protocolContext);
+        return {
+          content: [
+            {
+              type: "text",
+              text: summary,
+            },
+          ],
+        };
+      },
+    );
+
+    // Register Authority Chain Tool
+    server.registerTool(
+      "asfdk_authority_chan",
+      {
+        description:
+          "Inspect the current authority chain, decision makers, and escalation paths. Use governance file before file search.",
+        inputSchema: z.object({}),
+      },
+      async () => {
+        const protocolContext = await harness.protocolContext();
+        const authorityInfo = buildGovernanceAuthorityInfo(protocolContext);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(authorityInfo, null, 2),
+            },
+          ],
+        };
+      },
+    );
+
+    // Register Governance Raw Tool
+    server.registerTool(
+      "asfdk_governance_raw",
+      {
+        description:
+          "Get raw governance protocol data including TOI, OTOI, and policy documents. Use governance file before file search.",
+        inputSchema: z.object({}),
+      },
+      async () => {
+        const protocolContext = await harness.protocolContext();
+        const rawData = buildGovernanceRawData(protocolContext);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(rawData, null, 2),
+            },
+          ],
+        };
+      },
+    );
+
+    // Register MCP Resource Aliases
+    server.registerResource(
+      "asfdk-governance-summary",
+      "asfdk-governance://summary",
+      {
+        description: "ASFDK Governance Summary - Human-readable governance state and authority structure",
+        mimeType: "text/markdown",
+      },
+      async () => {
+        const protocolContext = await harness.protocolContext();
+        return {
+          contents: [
+            {
+              uri: "asfdk-governance://summary",
+              mimeType: "text/markdown",
+              text: formatGovernanceSummary(protocolContext),
+            },
+          ],
+        };
+      },
+    );
+
+    server.registerResource(
+      "asfdk-governance-authority",
+      "asfdk-governance://authority-chain",
+      {
+        description: "ASFDK Authority Chain - Authority structure, decision makers, and escalation paths",
+        mimeType: "application/json",
+      },
+      async () => {
+        const protocolContext = await harness.protocolContext();
+        return {
+          contents: [
+            {
+              uri: "asfdk-governance://authority-chain",
+              mimeType: "application/json",
+              text: JSON.stringify(buildGovernanceAuthorityInfo(protocolContext), null, 2),
+            },
+          ],
+        };
+      },
+    );
+
+    server.registerResource(
+      "asfdk-governance-status",
+      "asfdk-governance://status",
+      {
+        description: "ASFDK Governance Status - Raw governance protocol data for debugging",
+        mimeType: "application/json",
+      },
+      async () => {
+        const protocolContext = await harness.protocolContext();
+        return {
+          contents: [
+            {
+              uri: "asfdk-governance://status",
+              mimeType: "application/json",
+              text: JSON.stringify(buildGovernanceRawData(protocolContext), null, 2),
+            },
+          ],
+        };
+      },
+    );
+  }
 
   return server;
 }
