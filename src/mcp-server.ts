@@ -764,7 +764,7 @@ async function main() {
     // Use stderr for all logging — stdout is reserved for the MCP stdio transport.
     console.error(`[${MCP_SERVER_NAME}] MCP server started (version ${MCP_SERVER_VERSION})`);
     console.error(`[${MCP_SERVER_NAME}] ASFDK foundation initialised in ${harness.mode} mode`);
-    console.error(`[${MCP_SERVER_NAME}] User: ${harness.userId}, Session: ${harness.sessionId}`);
+    console.error(`[${MCP_SERVER_NAME}] User/session context initialised (values redacted)`);
     console.error(`[${MCP_SERVER_NAME}] Sensitive governance tools: ${canExposeSensitiveGovernanceTools(harness.mode) ? "ENABLED" : "DISABLED"}`);
   } catch (error) {
     console.error(`[${MCP_SERVER_NAME}] Startup error:`, error);
