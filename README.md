@@ -77,6 +77,10 @@ npm run mcp:http
 
 It listens on `http://127.0.0.1:8788/mcp` by default. Override `MCP_HTTP_HOST`, `MCP_HTTP_PORT`, or `MCP_HTTP_PATH` if needed.
 
+### Cloudflare Worker MCP
+
+The Cloudflare Worker now also serves `/mcp` behind the same bearer token gate as the agent route. After deploy, the MCP URL is the Worker origin plus `/mcp`.
+
 ## Environment
 
 ```bash
