@@ -52,10 +52,11 @@ function createMcpHttpServer(harness: AsfdkHarness) {
       const parsedBody = req.method === "POST" ? await readJsonBody(req) : undefined;
       await transport.handleRequest(req as http.IncomingMessage & { auth?: AuthInfo }, res, parsedBody);
     } catch (error) {
+      console.error(`[${MCP_SERVER_NAME}] MCP HTTP request error:`, error);
       if (!res.headersSent) {
         res.statusCode = 500;
         res.setHeader("content-type", "text/plain; charset=utf-8");
-        res.end(error instanceof Error ? error.message : String(error));
+        res.end("Internal server error");
       } else {
         res.destroy(error instanceof Error ? error : undefined);
       }
