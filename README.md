@@ -72,7 +72,7 @@ The MCP server communicates via stdio. Configure your MCP-compatible client to s
 ```bash
 ASFDK_USER_ID=pi-user
 ASFDK_MODE=unified # unified | crisis_only | continuity | framework | development
-ASFDK_TOI_PATH=.toi
+ASFDK_TOI_PATH=.toi # optional; defaults to .toi when present, otherwise .toi.default
 ASFDK_OTOI_PATH=.otoi
 ```
 
@@ -90,7 +90,7 @@ User / Pi prompt
       ↓
 Pi extension lifecycle hooks
       ↓
-Local .toi + .otoi protocol resolution
+Local .toi/.toi.default + .otoi protocol resolution
       ↓
 ASFDK Harness
       ↓

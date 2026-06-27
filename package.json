@@ -35,7 +35,7 @@
     "src",
     "skills",
     "prompts",
-    ".toi",
+    ".toi.default",
     ".otoi",
     "nltotoi.json",
     "README.md",

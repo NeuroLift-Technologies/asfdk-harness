@@ -44,7 +44,7 @@
   "toi_sources": [
     {
       "tier": "personal",
-      "uri": ".toi"
+      "uri": ".toi.default"
     }
   ],
   "x-nlt-dev-otoi": {
