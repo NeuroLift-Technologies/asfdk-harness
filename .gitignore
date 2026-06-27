@@ -147,9 +147,9 @@ vite.config.ts.timestamp-*
 .swp_storage/
 
 # Personal TOI files
-/.toi
-/.toi.backup-*
-/joshua-dorsey-personal.toi
+.toi
+.toi.backup-*
+*-personal.toi
 
 # Cloudflare Workers
 .wrangler/

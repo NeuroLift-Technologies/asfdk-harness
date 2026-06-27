@@ -1,8 +1,16 @@
-import { InteractionType } from "@neurolift-technologies/asfdk";
 import { Type, type Static } from "typebox";
 import type { AsfdkHarness } from "./harness.js";
-import { summarizeFoundationResponse } from "./harness.js";
-import { getThirdPartyProtocolProfiles } from "./protocols.js";
+import {
+  InteractionType,
+  canExposeSensitiveGovernanceTools,
+  summarizeFoundationResponse,
+} from "./harness.js";
+import {
+  createProtocolSnapshot,
+  formatProtocolSystemPrompt,
+  getThirdPartyProtocolProfiles,
+  type GovernanceProtocolContext,
+} from "./protocols.js";
 
 export const AssessTextParams = Type.Object({
   text: Type.String({ description: "Free-text content to assess through ASFDK." }),
@@ -25,13 +33,24 @@ export interface AsfdkToolSkill {
   name: string;
   description: string;
   tags: string[];
+  /** MCP resource alias for this tool, if available */
+  mcpResourceAlias?: string;
+}
+
+export const SENSITIVE_GOVERNANCE_TOOL_NAMES = new Set([
+  "asfdk_governance_summary",
+  "asfdk_authority_chan",
+  "asfdk_governance_raw",
+]);
+
+export function isSensitiveGovernanceToolName(toolName: string): boolean {
+  return SENSITIVE_GOVERNANCE_TOOL_NAMES.has(toolName);
 }
 
 /**
- * Canonical catalog mapping every Pi tool exposed by createAsfdkTools() to its A2A
- * AgentSkill metadata. This is the single source of truth the A2A Agent Card derives
- * its advertised skills from, so the card can never drift from the real tool set
- * (no phantom skills, and every real tool is advertised).
+ * Canonical catalog mapping every Pi tool candidate to its A2A AgentSkill metadata.
+ * Sensitive governance entries are filtered at runtime by createAsfdkTools() and A2A
+ * card generation so advertised skills stay in sync with the active tool set.
  */
 export const ASFDK_TOOL_SKILLS: AsfdkToolSkill[] = [
   {
@@ -76,7 +95,59 @@ export const ASFDK_TOOL_SKILLS: AsfdkToolSkill[] = [
     description: "Validate and update user preferences through TOI/OTOI enforcement.",
     tags: ["asfdk", "preferences", "toi", "otoi"],
   },
+  {
+    toolName: "asfdk_governance_summary",
+    id: "asfdk.governance_summary",
+    name: "ASFDK governance summary",
+    description: "Get a human-readable summary of the current governance state and authority structure. Use governance file before file search.",
+    tags: ["asfdk", "governance", "summary", "authority"],
+    mcpResourceAlias: "asfdk-governance://summary",
+  },
+  {
+    toolName: "asfdk_authority_chan",
+    id: "asfdk.authority_chan",
+    name: "ASFDK authority chain",
+    description: "Inspect the current authority chain, decision makers, and escalation paths. Use governance file before file search.",
+    tags: ["asfdk", "authority", "escalation", "governance"],
+    mcpResourceAlias: "asfdk-governance://authority-chain",
+  },
+  {
+    toolName: "asfdk_governance_raw",
+    id: "asfdk.governance_raw",
+    name: "ASFDK governance raw",
+    description: "Get raw governance protocol data including TOI, OTOI, and policy documents. Use governance file before file search.",
+    tags: ["asfdk", "governance", "raw", "debug"],
+    mcpResourceAlias: "asfdk-governance://status",
+  },
 ];
+
+export function formatGovernanceSummary(protocolContext: GovernanceProtocolContext): string {
+  return formatProtocolSystemPrompt(protocolContext);
+}
+
+export function buildGovernanceAuthorityInfo(protocolContext: GovernanceProtocolContext) {
+  const snapshot = createProtocolSnapshot(protocolContext);
+  const authority = asRecord(protocolContext.devOtoi?.authority);
+
+  return {
+    finalDecisionMaker: stringValue(authority?.final_decision_maker),
+    escalationRule: stringValue(authority?.principle) ?? stringValue(authority?.escalation_rule),
+    guardrails: stringArray(protocolContext.devOtoi?.guardrails),
+    agents: snapshot.otoi?.agents ?? [],
+    tiers: snapshot.otoi?.tiers ?? [],
+  };
+}
+
+export function buildGovernanceRawData(protocolContext: GovernanceProtocolContext) {
+  return {
+    toi: protocolContext.personalToi,
+    otoiCharter: protocolContext.charter,
+    effectivePolicy: protocolContext.effectivePolicy,
+    effectiveToi: protocolContext.effectiveToi,
+    devOtoi: protocolContext.devOtoi,
+    diagnostics: protocolContext.diagnostics,
+  };
+}
 
 export function createAsfdkTools(harness: AsfdkHarness) {
   return [
@@ -179,5 +250,75 @@ export function createAsfdkTools(harness: AsfdkHarness) {
         };
       },
     },
-  ];
+    {
+      name: "asfdk_governance_summary",
+      label: "ASFDK Governance Summary",
+      description: "Get a human-readable summary of the current governance state and authority structure.",
+      promptSnippet: "Inspect the current ASFDK governance state, authority chain, and decision-making structure.",
+      promptGuidelines: [
+        "Use asfdk_governance_summary when the user asks about governance structure, authority, or decision-making processes.",
+      ],
+      parameters: Type.Object({}),
+      async execute() {
+        const protocolContext = await harness.protocolContext();
+        const summary = formatGovernanceSummary(protocolContext);
+        return {
+          content: [{ type: "text" as const, text: summary }],
+          details: { summary },
+        };
+      },
+    },
+    {
+      name: "asfdk_authority_chan",
+      label: "ASFDK Authority Chain",
+      description: "Inspect the current authority chain, decision makers, and escalation paths.",
+      promptSnippet: "Inspect the ASFDK authority chain, final decision makers, and escalation rules.",
+      promptGuidelines: [
+        "Use asfdk_authority_chan when the user asks about authority, escalation paths, or decision-making processes.",
+      ],
+      parameters: Type.Object({}),
+      async execute() {
+        const protocolContext = await harness.protocolContext();
+        const authorityInfo = buildGovernanceAuthorityInfo(protocolContext);
+
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(authorityInfo, null, 2) }],
+          details: authorityInfo,
+        };
+      },
+    },
+    {
+      name: "asfdk_governance_raw",
+      label: "ASFDK Governance Raw",
+      description: "Get raw governance protocol data including TOI, OTOI, and policy documents.",
+      promptSnippet: "Inspect raw TOI, OTOI, and governance policy documents for debugging and development.",
+      promptGuidelines: [
+        "Use asfdk_governance_raw only for debugging, development, or when explicit raw governance data is requested.",
+      ],
+      parameters: Type.Object({}),
+      async execute() {
+        const protocolContext = await harness.protocolContext();
+        const rawData = buildGovernanceRawData(protocolContext);
+
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(rawData, null, 2) }],
+          details: rawData,
+        };
+      },
+    },
+  ].filter((tool) => {
+    return !isSensitiveGovernanceToolName(tool.name) || canExposeSensitiveGovernanceTools(harness.mode);
+  });
+}
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : undefined;
+}
+
+function stringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+function stringValue(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
 }

@@ -1,12 +1,12 @@
-import { otoi, toi } from "@neurolift-technologies/asfdk";
 import { access, readFile } from "node:fs/promises";
 import { constants as fsConstants } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadAsfdk } from "./asfdk-runtime.js";
 
-type ToiDocument = ReturnType<typeof toi.parseToi>;
-type OtoiCharter = ReturnType<typeof otoi.parseCharter>;
-type EffectivePolicy = Awaited<ReturnType<typeof otoi.honor>>;
+type ToiDocument = any;
+type OtoiCharter = any;
+type EffectivePolicy = any;
 
 export type IntegrationProtocol =
   | "local-toi-file"
@@ -79,8 +79,12 @@ export interface GovernanceProtocolSnapshot {
 }
 
 export async function loadGovernanceProtocols(options: ProtocolLoadOptions = {}): Promise<GovernanceProtocolContext> {
+  const { otoi, toi } = await loadAsfdk();
   const cwd = resolve(options.cwd ?? process.cwd());
-  const toiPath = resolveProtocolPath(cwd, options.toiPath ?? process.env.ASFDK_TOI_PATH ?? ".toi");
+  const configuredToiPath = options.toiPath ?? process.env.ASFDK_TOI_PATH;
+  const toiPath = configuredToiPath
+    ? resolveProtocolPath(cwd, configuredToiPath)
+    : await resolveDefaultToiPath(cwd);
   const otoiPath = resolveProtocolPath(cwd, options.otoiPath ?? process.env.ASFDK_OTOI_PATH ?? ".otoi");
   const protocols: IntegrationProtocol[] = ["pi-extension-hooks", "sdk-cli-runner", "asfdk-tool-policy"];
   const diagnostics: string[] = [];
@@ -117,7 +121,7 @@ export async function loadGovernanceProtocols(options: ProtocolLoadOptions = {})
     }
   }
 
-  const effectiveToi = effectivePolicy?.effective ?? personalToi;
+  const effectiveToi = personalToi ?? effectivePolicy?.effective;
   const devOtoi = extractDevOtoi(charter, effectiveToi);
 
   return {
@@ -157,7 +161,7 @@ export function createProtocolSnapshot(context: GovernanceProtocolContext): Gove
     otoi: context.effectivePolicy
       ? {
           version: context.charter?.$otoi,
-          agents: context.effectivePolicy.agents.map((agent) => agent.id),
+            agents: context.effectivePolicy.agents.map((agent: any) => agent.id),
           tiers: context.effectivePolicy.tiers,
           enforcement: { ...context.effectivePolicy.enforcement },
           conflicts: context.effectivePolicy.conflicts.length,
@@ -345,6 +349,25 @@ async function readOptionalFile(path: string): Promise<string | undefined> {
     return undefined;
   }
   return readFile(path, "utf8");
+}
+
+async function resolveDefaultToiPath(cwd: string): Promise<string> {
+  const personalToiPath = resolveProtocolPath(cwd, ".toi");
+  if (await fileExists(personalToiPath)) return personalToiPath;
+
+  const defaultToiPath = resolveProtocolPath(cwd, ".toi.default");
+  if (await fileExists(defaultToiPath)) return defaultToiPath;
+
+  return personalToiPath;
+}
+
+async function fileExists(path: string): Promise<boolean> {
+  try {
+    await access(path, fsConstants.R_OK);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function resolveSourceUri(baseDir: string, uri: string): string {

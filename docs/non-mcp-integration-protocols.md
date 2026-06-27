@@ -8,7 +8,7 @@ MCP work is owned by `THREAD-002` and a separate agent. This document does not d
 
 | Protocol | Source | Runtime path | Purpose |
 |---|---|---|---|
-| Local TOI file | `.toi` or `ASFDK_TOI_PATH` | `loadGovernanceProtocols()` | Parse the personal Terms of Interaction with ASFDK's TOI re-export. |
+| Local TOI file | `.toi`, `.toi.default`, or `ASFDK_TOI_PATH` | `loadGovernanceProtocols()` | Parse the Terms of Interaction with ASFDK's TOI re-export; local `.toi` overrides the tracked default. |
 | Local OTOI charter | `.otoi` or `ASFDK_OTOI_PATH` | `loadGovernanceProtocols()` | Resolve the active TOI stack and agent bindings with ASFDK's OTOI re-export. |
 | Pi extension hooks | `src/index.ts` | `session_start`, `before_agent_start`, `tool_call` | Load protocol context, append a constrained system-prompt fragment, and enforce local tool policy. |
 | Pi tool protocol | `src/tools.ts` | `asfdk_status`, `asfdk_protocol_status`, `asfdk_assess_text`, `asfdk_update_preferences` | Expose status, protocol inspection, assessment, and preference update actions inside Pi. |
@@ -36,7 +36,7 @@ src/index.ts extension hooks
       |
       v
 src/protocols.ts
-  - read .toi
+  - read .toi when present, otherwise .toi.default
   - read .otoi
   - honor OTOI against local TOI sources
   - build protocol snapshot
@@ -49,7 +49,7 @@ ASFDK foundation + Pi tools + local policy
 ## Environment
 
 ```bash
-ASFDK_TOI_PATH=.toi
+ASFDK_TOI_PATH=.toi # optional; defaults to .toi when present, otherwise .toi.default
 ASFDK_OTOI_PATH=.otoi
 ```
 

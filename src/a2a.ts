@@ -1,5 +1,5 @@
 import { createProtocolSnapshot, type GovernanceProtocolContext, type ThirdPartyProtocolProfile } from "./protocols.js";
-import { ASFDK_TOOL_SKILLS } from "./tools.js";
+import { ASFDK_TOOL_SKILLS, isSensitiveGovernanceToolName } from "./tools.js";
 
 export interface A2ASkill {
   id: string;
@@ -34,6 +34,7 @@ export interface A2AAgentCardOptions {
   defaultOutputModes?: string[];
   streaming?: boolean;
   pushNotifications?: boolean;
+  includeSensitiveGovernanceTools?: boolean;
 }
 
 export interface A2AAgentCard {
@@ -96,7 +97,7 @@ export function createA2AAgentCard(
 ): A2AAgentCard {
   const snapshot = createProtocolSnapshot(context);
   const interopProtocols = snapshot.thirdPartyProtocols.filter((protocol) => protocol.status !== "separate-owner");
-  const skills = buildA2ASkills();
+  const skills = buildA2ASkills(options.includeSensitiveGovernanceTools ?? false);
   const authority = asRecord(context.devOtoi?.authority);
 
   const diagnostics = [...context.diagnostics];
@@ -156,7 +157,7 @@ export function createA2AAgentCard(
       otoi: context.effectivePolicy
         ? {
             version: context.charter?.$otoi,
-            agents: context.effectivePolicy.agents.map((agent) => agent.id),
+            agents: context.effectivePolicy.agents.map((agent: any) => agent.id),
             tiers: context.effectivePolicy.tiers,
             enforcement: { ...context.effectivePolicy.enforcement },
             conflicts: context.effectivePolicy.conflicts.length,
@@ -174,14 +175,15 @@ export function createA2AAgentCard(
   };
 }
 
-export function getA2ASkillIds(): string[] {
-  return buildA2ASkills().map((skill) => skill.id);
+export function getA2ASkillIds(options: Pick<A2AAgentCardOptions, "includeSensitiveGovernanceTools"> = {}): string[] {
+  return buildA2ASkills(options.includeSensitiveGovernanceTools ?? false).map((skill) => skill.id);
 }
 
-function buildA2ASkills(): A2ASkill[] {
-  // Derived from the real Pi tool set (src/tools.ts) so advertised skills stay in
-  // sync with the tools the harness actually exposes.
-  return ASFDK_TOOL_SKILLS.map((skill) => ({
+function buildA2ASkills(includeSensitiveGovernanceTools: boolean): A2ASkill[] {
+  // Derived from the Pi tool catalog and filtered by the same gate as runtime tool exposure.
+  return ASFDK_TOOL_SKILLS.filter(
+    (skill) => includeSensitiveGovernanceTools || !isSensitiveGovernanceToolName(skill.toolName),
+  ).map((skill) => ({
     id: skill.id,
     name: skill.name,
     description: skill.description,

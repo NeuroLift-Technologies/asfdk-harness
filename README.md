@@ -67,12 +67,26 @@ npx asfdk-harness-mcp
 
 The MCP server communicates via stdio. Configure your MCP-compatible client to start the server with the command `asfdk-harness-mcp`.
 
+### Local MCP URL
+
+For clients that expect a URL, run the local HTTP transport:
+
+```bash
+npm run mcp:http
+```
+
+It listens on `http://127.0.0.1:8788/mcp` by default. Override `MCP_HTTP_HOST`, `MCP_HTTP_PORT`, or `MCP_HTTP_PATH` if needed.
+
+### Cloudflare Worker MCP
+
+The Cloudflare Worker now also serves `/mcp` behind the same bearer token gate as the agent route. After deploy, the MCP URL is the Worker origin plus `/mcp`.
+
 ## Environment
 
 ```bash
 ASFDK_USER_ID=pi-user
 ASFDK_MODE=unified # unified | crisis_only | continuity | framework | development
-ASFDK_TOI_PATH=.toi
+ASFDK_TOI_PATH=.toi # optional; defaults to .toi when present, otherwise .toi.default
 ASFDK_OTOI_PATH=.otoi
 ```
 
@@ -90,7 +104,7 @@ User / Pi prompt
       ↓
 Pi extension lifecycle hooks
       ↓
-Local .toi + .otoi protocol resolution
+Local .toi/.toi.default + .otoi protocol resolution
       ↓
 ASFDK Harness
       ↓

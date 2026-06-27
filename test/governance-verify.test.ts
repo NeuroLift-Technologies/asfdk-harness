@@ -50,8 +50,8 @@ function validOtoi() {
   };
 }
 
-test("absent governance reports absent and invalid", () => {
-  const verdict = verifyGovernance({ checkedAt: CHECKED_AT });
+test("absent governance reports absent and invalid", async () => {
+  const verdict = await verifyGovernance({ checkedAt: CHECKED_AT });
 
   assert.equal(verdict.status, "absent");
   assert.equal(verdict.kind, "unknown");
@@ -61,8 +61,8 @@ test("absent governance reports absent and invalid", () => {
   assert.match(verdict.warnings.join("\n"), /No TOI or OTOI/);
 });
 
-test("valid unsigned TOI reports valid-unsigned", () => {
-  const verdict = verifyGovernance({
+test("valid unsigned TOI reports valid-unsigned", async () => {
+  const verdict = await verifyGovernance({
     toi: validToi(),
     source: "toi:test",
     checkedAt: CHECKED_AT,
@@ -77,8 +77,8 @@ test("valid unsigned TOI reports valid-unsigned", () => {
   assert.match(verdict.warnings.join("\n"), /TOI is unsigned/);
 });
 
-test("valid unsigned OTOI reports valid-unsigned", () => {
-  const verdict = verifyGovernance({
+test("valid unsigned OTOI reports valid-unsigned", async () => {
+  const verdict = await verifyGovernance({
     otoi: JSON.stringify(validOtoi()),
     source: "otoi:test",
     checkedAt: CHECKED_AT,
@@ -92,8 +92,8 @@ test("valid unsigned OTOI reports valid-unsigned", () => {
   assert.match(verdict.warnings.join("\n"), /OTOI signature verification is not supported/);
 });
 
-test("valid TOI and OTOI bundle reports valid-unsigned", () => {
-  const verdict = verifyGovernance({
+test("valid TOI and OTOI bundle reports valid-unsigned", async () => {
+  const verdict = await verifyGovernance({
     toi: validToi(),
     otoi: validOtoi(),
     source: "governance:test",
@@ -107,10 +107,10 @@ test("valid TOI and OTOI bundle reports valid-unsigned", () => {
   assert.deepEqual(verdict.errors, []);
 });
 
-test("signed TOI with valid signature reports verified", () => {
+test("signed TOI with valid signature reports verified", async () => {
   const keyPair = toi.generateKeyPair();
   const signedToi = toi.signToi(toi.parseToi(validToi()), keyPair.privateKey);
-  const verdict = verifyGovernance({
+  const verdict = await verifyGovernance({
     toi: signedToi,
     source: "toi:signed",
     checkedAt: CHECKED_AT,
@@ -123,7 +123,7 @@ test("signed TOI with valid signature reports verified", () => {
   assert.deepEqual(verdict.errors, []);
 });
 
-test("signed TOI with failed signature reports invalid", () => {
+test("signed TOI with failed signature reports invalid", async () => {
   const keyPair = toi.generateKeyPair();
   const signedToi = toi.signToi(toi.parseToi(validToi()), keyPair.privateKey);
   const tamperedToi = {
@@ -134,7 +134,7 @@ test("signed TOI with failed signature reports invalid", () => {
     },
   };
 
-  const verdict = verifyGovernance({
+  const verdict = await verifyGovernance({
     toi: tamperedToi,
     source: "toi:tampered",
     checkedAt: CHECKED_AT,
@@ -147,8 +147,8 @@ test("signed TOI with failed signature reports invalid", () => {
   assert.match(verdict.errors.join("\n"), /signature verification failed/);
 });
 
-test("malformed TOI reports invalid with errors", () => {
-  const verdict = verifyGovernance({
+test("malformed TOI reports invalid with errors", async () => {
+  const verdict = await verifyGovernance({
     toi: { $toi: "1.0.0", $tier: "personal" },
     checkedAt: CHECKED_AT,
   });
@@ -159,8 +159,8 @@ test("malformed TOI reports invalid with errors", () => {
   assert.match(verdict.errors.join("\n"), /Invalid TOI/);
 });
 
-test("malformed OTOI reports invalid with errors", () => {
-  const verdict = verifyGovernance({
+test("malformed OTOI reports invalid with errors", async () => {
+  const verdict = await verifyGovernance({
     otoi: { $otoi: "1.0.0", enforcement: { mode: "definitely-not-valid" } },
     checkedAt: CHECKED_AT,
   });
@@ -171,8 +171,8 @@ test("malformed OTOI reports invalid with errors", () => {
   assert.match(verdict.errors.join("\n"), /Invalid OTOI/);
 });
 
-test("formatGovernanceVerdict includes status, source, errors, and warnings", () => {
-  const verdict = verifyGovernance({
+test("formatGovernanceVerdict includes status, source, errors, and warnings", async () => {
+  const verdict = await verifyGovernance({
     toi: { $toi: "1.0.0", $tier: "personal" },
     source: "toi:bad",
     checkedAt: CHECKED_AT,
@@ -185,13 +185,13 @@ test("formatGovernanceVerdict includes status, source, errors, and warnings", ()
   assert.match(formatted, /errors=Invalid TOI/);
 });
 
-test("mode helpers default to lenient and only halt invalid or strict absent", () => {
-  const absent = verifyGovernance({ checkedAt: CHECKED_AT });
-  const invalid = verifyGovernance({
+test("mode helpers default to lenient and only halt invalid or strict absent", async () => {
+  const absent = await verifyGovernance({ checkedAt: CHECKED_AT });
+  const invalid = await verifyGovernance({
     toi: { $toi: "1.0.0", $tier: "personal" },
     checkedAt: CHECKED_AT,
   });
-  const validUnsigned = verifyGovernance({
+  const validUnsigned = await verifyGovernance({
     toi: validToi(),
     checkedAt: CHECKED_AT,
   });

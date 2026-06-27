@@ -1,0 +1,39 @@
+{
+  "$toi": "1.0.0",
+  "$tier": "personal",
+  "identity": {
+    "author": "NeuroLift Technologies ASFDK Harness"
+  },
+  "communication": {
+    "tone": "direct",
+    "verbosity": "adaptive",
+    "structure": "hierarchical",
+    "language": "en-US",
+    "jargon_tolerance": "high",
+    "pattern_highlighting": true,
+    "summary_on_return": true,
+    "thread_reconnection": "brief-summary"
+  },
+  "privacy": {
+    "retention": "session-only",
+    "cross_platform_sharing": "never",
+    "training_use": "prohibited",
+    "analytics": "prohibited",
+    "override_rights": "user-only",
+    "data_requests": "honored-immediately"
+  },
+  "agency": {
+    "task_initiation": "user-initiated",
+    "ai_suggestions": "proactive",
+    "interruptibility": "urgent-only",
+    "action_confirmation": "destructive-only",
+    "override_authority": "user-final"
+  },
+  "ethical_pillars": [
+    "Agency",
+    "Data Dignity",
+    "Transparency",
+    "Cognitive Integrity",
+    "Non-Discrimination"
+  ]
+}
