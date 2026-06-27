@@ -157,7 +157,7 @@ export function createA2AAgentCard(
       otoi: context.effectivePolicy
         ? {
             version: context.charter?.$otoi,
-            agents: context.effectivePolicy.agents.map((agent) => agent.id),
+            agents: context.effectivePolicy.agents.map((agent: any) => agent.id),
             tiers: context.effectivePolicy.tiers,
             enforcement: { ...context.effectivePolicy.enforcement },
             conflicts: context.effectivePolicy.conflicts.length,

@@ -19,10 +19,9 @@ import { pathToFileURL } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { AsfdkHarness, canExposeSensitiveGovernanceTools } from "./harness.js";
+import { AsfdkHarness, InteractionType, canExposeSensitiveGovernanceTools } from "./harness.js";
 import { summarizeFoundationResponse } from "./harness.js";
 import { reviewToolCall, type ToolPolicyDecision } from "./policy.js";
-import { InteractionType } from "@neurolift-technologies/asfdk";
 import {
   buildGovernanceAuthorityInfo,
   buildGovernanceRawData,

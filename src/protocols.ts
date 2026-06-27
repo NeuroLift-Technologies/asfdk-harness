@@ -1,12 +1,12 @@
-import { otoi, toi } from "@neurolift-technologies/asfdk";
 import { access, readFile } from "node:fs/promises";
 import { constants as fsConstants } from "node:fs";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadAsfdk } from "./asfdk-runtime.js";
 
-type ToiDocument = ReturnType<typeof toi.parseToi>;
-type OtoiCharter = ReturnType<typeof otoi.parseCharter>;
-type EffectivePolicy = Awaited<ReturnType<typeof otoi.honor>>;
+type ToiDocument = any;
+type OtoiCharter = any;
+type EffectivePolicy = any;
 
 export type IntegrationProtocol =
   | "local-toi-file"
@@ -79,6 +79,7 @@ export interface GovernanceProtocolSnapshot {
 }
 
 export async function loadGovernanceProtocols(options: ProtocolLoadOptions = {}): Promise<GovernanceProtocolContext> {
+  const { otoi, toi } = await loadAsfdk();
   const cwd = resolve(options.cwd ?? process.cwd());
   const configuredToiPath = options.toiPath ?? process.env.ASFDK_TOI_PATH;
   const toiPath = configuredToiPath
@@ -160,7 +161,7 @@ export function createProtocolSnapshot(context: GovernanceProtocolContext): Gove
     otoi: context.effectivePolicy
       ? {
           version: context.charter?.$otoi,
-          agents: context.effectivePolicy.agents.map((agent) => agent.id),
+            agents: context.effectivePolicy.agents.map((agent: any) => agent.id),
           tiers: context.effectivePolicy.tiers,
           enforcement: { ...context.effectivePolicy.enforcement },
           conflicts: context.effectivePolicy.conflicts.length,

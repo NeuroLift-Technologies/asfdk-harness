@@ -1,7 +1,10 @@
-import { InteractionType } from "@neurolift-technologies/asfdk";
 import { Type, type Static } from "typebox";
 import type { AsfdkHarness } from "./harness.js";
-import { canExposeSensitiveGovernanceTools, summarizeFoundationResponse } from "./harness.js";
+import {
+  InteractionType,
+  canExposeSensitiveGovernanceTools,
+  summarizeFoundationResponse,
+} from "./harness.js";
 import {
   createProtocolSnapshot,
   formatProtocolSystemPrompt,

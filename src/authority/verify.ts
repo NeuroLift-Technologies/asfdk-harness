@@ -1,4 +1,4 @@
-import { otoi, toi } from "@neurolift-technologies/asfdk";
+import { loadAsfdk } from "../asfdk-runtime.js";
 
 export type GovernanceVerdictStatus = "verified" | "valid-unsigned" | "invalid" | "absent";
 export type GovernanceVerdictKind = "toi" | "otoi" | "bundle" | "unknown";
@@ -38,7 +38,7 @@ export function isGovernanceAbsent(input: GovernanceVerifyInput): boolean {
   );
 }
 
-export function verifyGovernance(input: GovernanceVerifyInput): GovernanceVerdict {
+export async function verifyGovernance(input: GovernanceVerifyInput): Promise<GovernanceVerdict> {
   const checkedAt = input.checkedAt ?? new Date().toISOString();
   const source = input.source;
 
@@ -55,8 +55,9 @@ export function verifyGovernance(input: GovernanceVerifyInput): GovernanceVerdic
     };
   }
 
-  const toiCheck = checkToi(input.toi);
-  const otoiCheck = checkOtoi(input.otoi);
+  const { otoi, toi } = await loadAsfdk();
+  const toiCheck = checkToi(input.toi, toi);
+  const otoiCheck = checkOtoi(input.otoi, otoi);
   const checks = [toiCheck, otoiCheck].filter((check) => check.present);
   const errors = checks.flatMap((check) => check.errors);
   const warnings = checks.flatMap((check) => check.warnings);
@@ -110,7 +111,7 @@ export function shouldSoftHaltGovernance(verdict: GovernanceVerdict, mode: Gover
   return verdict.status === "invalid" || (verdict.status === "absent" && mode === "strict");
 }
 
-function checkToi(candidate: unknown): ContractCheck {
+function checkToi(candidate: unknown, toi: any): ContractCheck {
   if (candidate === undefined || candidate === null) return absentCheck();
 
   try {
@@ -159,7 +160,7 @@ function checkToi(candidate: unknown): ContractCheck {
   }
 }
 
-function checkOtoi(candidate: unknown): ContractCheck {
+function checkOtoi(candidate: unknown, otoi: any): ContractCheck {
   if (candidate === undefined || candidate === null) return absentCheck();
 
   try {

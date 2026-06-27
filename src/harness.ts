@@ -1,11 +1,3 @@
-import {
-  createFoundation,
-  FoundationMode,
-  InteractionType,
-  type FoundationResponse,
-  type HealthCheckResult,
-  type NeuroLiftFoundation,
-} from "@neurolift-technologies/asfdk";
 import { randomUUID } from "node:crypto";
 import {
   createProtocolSnapshot,
@@ -15,6 +7,27 @@ import {
   type GovernanceProtocolSnapshot,
 } from "./protocols.js";
 import { createA2AAgentCard, type A2AAgentCard } from "./a2a.js";
+import { loadAsfdk } from "./asfdk-runtime.js";
+
+export const FoundationMode = {
+  UNIFIED: "unified",
+  CRISIS_ONLY: "crisis-only",
+  CONTINUITY_ONLY: "continuity-only",
+  FRAMEWORK_ONLY: "framework-only",
+  DEVELOPMENT: "development",
+} as const;
+export type FoundationMode = (typeof FoundationMode)[keyof typeof FoundationMode];
+export const InteractionType = {
+  EMOTIONAL_ASSESSMENT: "emotional_assessment",
+  CRISIS_ALERT: "crisis_alert",
+  PREFERENCE_UPDATE: "preference_update",
+  OPTIMIZATION_REQUEST: "optimization_request",
+  STATUS_INQUIRY: "status_inquiry",
+  EMERGENCY_ESCALATION: "emergency_escalation",
+} as const;
+export type FoundationResponse = any;
+export type HealthCheckResult = any;
+type NeuroLiftFoundation = any;
 
 export interface AsfdkHarnessOptions {
   userId?: string;
@@ -56,7 +69,8 @@ export class AsfdkHarness {
 
   async start(): Promise<void> {
     if (this.#foundation) return;
-    this.#foundation = await createFoundation(this.userId, this.mode);
+    const { createFoundation } = await loadAsfdk();
+    this.#foundation = await createFoundation(this.userId, this.mode as never);
   }
 
   async shutdown(): Promise<void> {
@@ -96,7 +110,7 @@ export class AsfdkHarness {
   }
 
   async processInteraction(
-    interactionType: InteractionType,
+    interactionType: string,
     data: Record<string, unknown>,
     context: Record<string, unknown> = {},
   ): Promise<FoundationResponse> {

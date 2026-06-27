@@ -113,7 +113,7 @@ ASFDK Solidarity Layer is active. Treat preflight context as governance context.
       this.env.GOVERNANCE,
       this.getIdentity(),
     );
-    const governanceVerdict = verifyGovernance(governanceInput);
+    const governanceVerdict = await verifyGovernance(governanceInput);
     const mode = this.governanceMode();
     const governanceSummary = formatGovernanceVerdict(governanceVerdict);
 
