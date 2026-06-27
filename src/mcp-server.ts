@@ -226,7 +226,7 @@ Examples:
         const result = await harness.assessText(input.text, input.context ?? {});
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
-          structuredContent: result as Record<string, unknown>,
+          structuredContent: result as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return toolError(error, "Ensure the harness is healthy (call asfdk_status) and that text is a non-empty string.");
@@ -325,7 +325,7 @@ the mode/session data that asfdk_status includes.`,
         const health = await harness.healthCheck();
         return {
           content: [{ type: "text", text: JSON.stringify(health, null, 2) }],
-          structuredContent: health as Record<string, unknown>,
+          structuredContent: health as unknown as Record<string, unknown>,
         };
       } catch (error) {
         return toolError(error, "If the health check itself fails, the harness may need to be restarted.");

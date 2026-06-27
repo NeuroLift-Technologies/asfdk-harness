@@ -99,6 +99,7 @@ export { AsfdkHarness } from "./harness.js";
 export { createAsfdkTools } from "./tools.js";
 export { reviewToolCall } from "./policy.js";
 export { createMcpServer, MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./mcp-server.js";
+export { createMcpHttpServer } from "./mcp-http-server.js";
 export {
   createProtocolSnapshot,
   formatProtocolSystemPrompt,
