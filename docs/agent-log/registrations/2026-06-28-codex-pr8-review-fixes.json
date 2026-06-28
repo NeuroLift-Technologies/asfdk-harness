@@ -1,0 +1,25 @@
+{
+  "agent_registration": {
+    "agent_name": "Codex",
+    "platform": "Codex CLI",
+    "version": "GPT-5",
+    "session_id": "2026-06-28-codex-pr8-review-fixes",
+    "entry_date": "2026-06-28T18:15:27Z",
+    "entry_point": "User requested PR #8 comment fixes and merge-conflict resolution",
+    "acknowledged_otoi": true,
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "working_repo": "NeuroLift-Technologies/asfdk-harness",
+    "working_branch": "codex/fix-governance-tool-gating",
+    "capabilities_self_reported": [
+      "TypeScript maintenance",
+      "GitHub PR review triage",
+      "Cloudflare Worker validation",
+      "Node test and build execution"
+    ],
+    "known_limitations": [
+      "Does not resolve or reply to GitHub review threads without explicit user instruction",
+      "Depends on GitHub check results for remote CodeQL/GitGuardian status"
+    ],
+    "preferred_handoff_format": "Structured JSON plus concise PR summary"
+  }
+}

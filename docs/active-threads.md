@@ -2,7 +2,7 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-06-28T00:00:00Z
+**Last updated:** 2026-06-28T18:15:27Z
 
 ---
 
@@ -89,6 +89,20 @@
 ---
 
 ## Resolved Threads
+
+### THREAD-008 — PR #8 review fixes and conflict resolution
+| Field | Value |
+|---|---|
+| **Thread ID** | THREAD-008 |
+| **Status** | 🟢 Complete |
+| **Started** | 2026-06-28 |
+| **Owner** | Codex |
+| **Branch** | `codex/fix-governance-tool-gating` |
+| **Task** | Address PR #8 review comments, resolve the merge conflict with `origin/main`, and keep checks green. |
+| **Scope** | `src/server.ts`, `src/mcp-http-server.ts`, `src/tools.ts`, `src/protocols.ts`, `src/harness.ts`, focused tests, merge-conflict resolution |
+| **Blockers** | None. |
+| **Related PR** | #8 |
+| **Notes** | Resolved merge conflicts against `origin/main`; moved Worker auth before `/mcp`; memoized MCP transports in Node and Worker entrypoints; standardized `asfdk_authority_chain`; restored OTOI-first resolution for `.toi.default`; made path redaction preserve HTTP(S) URLs; made Pi extension-load test self-contained; fixed CodeQL test assertions. Local `npm test` and `npm run build` passed before final docs-only bookkeeping. Remote PR checks passed on commit `3757f5c`; final bookkeeping pushed separately. |
 
 ### THREAD-007 — Architecture reframe: ASFDK Harness as control plane, Pi as first runtime
 | Field | Value |

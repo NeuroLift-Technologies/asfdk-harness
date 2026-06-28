@@ -1,0 +1,43 @@
+{
+  "handoff_record": {
+    "session_id": "2026-06-28-codex-pr8-review-fixes",
+    "agent_name": "Codex",
+    "date": "2026-06-28T18:15:27Z",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "codex/fix-governance-tool-gating",
+    "work_completed": [
+      "Checked out PR #8 and fetched thread-aware review comments",
+      "Merged origin/main into the PR branch and resolved conflicts in .gitignore and src/server.ts",
+      "Moved Worker bearer authentication before /mcp routing",
+      "Memoized MCP server/transport creation in both Node HTTP and Cloudflare Worker entrypoints",
+      "Renamed live src/tools.ts authority tool surfaces from asfdk_authority_chan to asfdk_authority_chain",
+      "Changed .toi.default resolution so OTOI effective policy is not bypassed",
+      "Updated path redaction to preserve HTTP(S) URLs while redacting filesystem paths",
+      "Made the Pi extension-load test self-contained via additionalExtensionPaths",
+      "Fixed CodeQL alerts raised by URL assertions in the new path-redaction test",
+      "Pushed PR #8 updates through commit 3757f5c and verified PR mergeability/checks before bookkeeping"
+    ],
+    "work_in_progress": [],
+    "blockers": [],
+    "decisions_made": [
+      "Did not resolve or reply to GitHub review threads because the user did not explicitly request GitHub write actions",
+      "Kept pre-existing untracked workspace files untouched"
+    ],
+    "decisions_pending": [
+      "Joshua or a maintainer may manually resolve remaining review threads after inspecting the applied fixes"
+    ],
+    "escalations": [],
+    "next_agent_notes": "PR #8 was mergeable and all checks passed on commit 3757f5c before final docs-only bookkeeping. Re-poll PR checks after the bookkeeping commit lands.",
+    "files_modified": [
+      "docs/active-threads.md",
+      "docs/agent-log/registrations/2026-06-28-codex-pr8-review-fixes.json",
+      "docs/agent-log/handoffs/2026-06-28-codex-pr8-review-fixes.json"
+    ],
+    "tests_run": [
+      "npm test",
+      "npm run build",
+      "gh pr checks 8 --repo NeuroLift-Technologies/asfdk-harness"
+    ],
+    "tests_passing": true
+  }
+}
