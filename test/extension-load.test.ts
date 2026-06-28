@@ -82,14 +82,18 @@ test("before_agent_start injects the governance system prompt and a hidden prefl
   }
 });
 
-// --- Integration: loads through Pi's real resource loader the way Pi does in this repo.
-// Requires this repo to be a registered Pi user package (it is, via ~/.pi/agent/settings.json). ---
+// --- Integration: loads through Pi's real resource loader with this repo's extension path.
+// Keep this self-contained instead of depending on machine-local Pi package registration.
 
 test("Pi auto-discovers and loads the integrated extension with zero errors", async () => {
   const cwd = process.cwd();
   const sessionDir = mkdtempSync(join(tmpdir(), "asfdk-harness-test-"));
   try {
-    const rl = new DefaultResourceLoader({ cwd, agentDir: getAgentDir() });
+    const rl = new DefaultResourceLoader({
+      cwd,
+      agentDir: getAgentDir(),
+      additionalExtensionPaths: ["./src/index.ts"],
+    });
     await rl.reload();
     const res = await createAgentSession({
       cwd,

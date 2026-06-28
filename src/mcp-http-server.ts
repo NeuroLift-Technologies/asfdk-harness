@@ -32,6 +32,12 @@ async function readJsonBody(request: http.IncomingMessage): Promise<unknown | un
 }
 
 function createMcpHttpServer(harness: AsfdkHarness) {
+  const server = createMcpServer(harness);
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: undefined,
+  });
+  const connectPromise = server.connect(transport);
+
   return http.createServer(async (req, res) => {
     try {
       const requestUrl = new URL(req.url ?? "/", `http://${req.headers.host ?? `${MCP_HTTP_HOST}:${MCP_HTTP_PORT}`}`);
@@ -42,12 +48,7 @@ function createMcpHttpServer(harness: AsfdkHarness) {
         return;
       }
 
-      const server = createMcpServer(harness);
-      const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: undefined,
-      });
-
-      await server.connect(transport);
+      await connectPromise;
 
       const parsedBody = req.method === "POST" ? await readJsonBody(req) : undefined;
       await transport.handleRequest(req as http.IncomingMessage & { auth?: AuthInfo }, res, parsedBody);

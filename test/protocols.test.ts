@@ -43,6 +43,8 @@ test("clean checkouts resolve the tracked default TOI through OTOI", async () =>
       assert.ok(context.protocols.includes("local-toi-file"));
       assert.ok(context.protocols.includes("local-otoi-charter"));
       assert.ok(context.protocols.includes("otoi-honor-resolution"));
+      assert.strictEqual(context.effectiveToi, context.effectivePolicy?.effective);
+      assert.notStrictEqual(context.effectiveToi, context.personalToi);
       assert.equal(snapshot.toi?.author, "NeuroLift Technologies ASFDK Harness");
       assert.deepEqual(snapshot.otoi?.tiers, ["personal"]);
     },
@@ -76,6 +78,7 @@ test("local personal TOI overrides the tracked default when present", async () =
 
       assert.equal(context.toiPath, join(dir, ".toi"));
       assert.deepEqual(context.diagnostics, []);
+      assert.strictEqual(context.effectiveToi, context.personalToi);
       assert.equal(snapshot.toi?.author, "Local Test Principal");
       assert.ok(context.protocols.includes("otoi-honor-resolution"));
     },

@@ -23,24 +23,43 @@ export default function asfdkPiHarness(pi: ExtensionAPI) {
   });
 
   pi.on("before_agent_start", async (event) => {
-    const protocols = await harness.protocolSnapshot(event.systemPromptOptions.cwd);
-    const assessment = await harness.assessText(event.prompt, {
-      source: "pi.before_agent_start",
-      cwd: event.systemPromptOptions.cwd,
-      selectedTools: event.systemPromptOptions.selectedTools,
-      protocols,
-    });
-    const protocolSystemPrompt = await harness.protocolSystemPrompt(event.systemPromptOptions.cwd);
+    try {
+      const protocols = await harness.protocolSnapshot(event.systemPromptOptions.cwd);
+      const assessment = await harness.assessText(event.prompt, {
+        source: "pi.before_agent_start",
+        cwd: event.systemPromptOptions.cwd,
+        selectedTools: event.systemPromptOptions.selectedTools,
+        protocols,
+      });
+      const protocolSystemPrompt = await harness.protocolSystemPrompt(event.systemPromptOptions.cwd);
 
-    return {
-      message: {
-        customType: "asfdk-preflight",
-        content: formatPolicyContext(assessment),
-        display: false,
-        details: assessment,
-      },
-      systemPrompt: `${event.systemPrompt}\n\n${protocolSystemPrompt}\n\nASFDK Solidarity Layer is active. Honor user Terms of Interaction, avoid provider lock-in, and treat ASFDK preflight messages as governance context for the current turn.`,
-    };
+      return {
+        message: {
+          customType: "asfdk-preflight",
+          content: formatPolicyContext(assessment),
+          display: false,
+          details: assessment,
+        },
+        systemPrompt: `${event.systemPrompt}\n\n${protocolSystemPrompt}\n\nASFDK Solidarity Layer is active. Honor user Terms of Interaction, avoid provider lock-in, and treat ASFDK preflight messages as governance context for the current turn.`,
+      };
+    } catch (error) {
+      // Fail loud, not silent: a governance/foundation error must never break the user's turn,
+      // but it must also not silently drop the Solidarity layer. Surface it visibly and proceed
+      // with a caution directive for this turn.
+      const reason = error instanceof Error ? error.message : String(error);
+      // Keep the system prompt static — never interpolate the raw error (which may carry
+      // user-controlled text) into it, to avoid prompt injection. The detail goes only into
+      // the (non-prompt) preflight message.
+      return {
+        message: {
+          customType: "asfdk-preflight",
+          content: `ASFDK governance preflight FAILED this turn (${reason}). Proceeding WITHOUT the Solidarity layer — treat with extra caution.`,
+          display: true,
+          details: { error: reason },
+        },
+        systemPrompt: `${event.systemPrompt}\n\n[ASFDK Solidarity Layer UNAVAILABLE this turn. The governance preflight did not run — proceed with heightened caution and avoid irreversible or high-risk actions.]`,
+      };
+    }
   });
 
   pi.on("tool_call", async (event) => {

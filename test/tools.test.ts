@@ -2,7 +2,7 @@ import "./setup.ts";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { AsfdkHarness } from "../src/harness.ts";
-import { createAsfdkTools } from "../src/tools.ts";
+import { ASFDK_TOOL_SKILLS, createAsfdkTools, isSensitiveGovernanceToolName } from "../src/tools.ts";
 import { cleanupSwpStorage } from "./setup.ts";
 
 let harness: AsfdkHarness;
@@ -35,6 +35,13 @@ test("creates exactly the six ASFDK tools", () => {
     "asfdk_status",
     "asfdk_update_preferences",
   ]);
+});
+
+test("authority chain uses the canonical tool name", () => {
+  assert.equal(isSensitiveGovernanceToolName("asfdk_authority_chain"), true);
+  assert.equal(isSensitiveGovernanceToolName("asfdk_authority_chan"), false);
+  assert.ok(ASFDK_TOOL_SKILLS.some((skill) => skill.toolName === "asfdk_authority_chain"));
+  assert.equal(ASFDK_TOOL_SKILLS.some((skill) => skill.toolName === "asfdk_authority_chan"), false);
 });
 
 test("every tool satisfies the Pi tool contract shape", () => {

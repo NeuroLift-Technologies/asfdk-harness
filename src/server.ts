@@ -8,6 +8,7 @@ export { AsfdkGovernanceAgent } from "../agents/asfdk-governance/agent.js";
 const MCP_PATH = "/mcp";
 
 let mcpHarnessPromise: Promise<AsfdkHarness> | undefined;
+let mcpTransportPromise: Promise<WebStandardStreamableHTTPServerTransport> | undefined;
 
 function authorizeRequest(request: Request, env: Env): string | Response {
   const expectedToken = (env as Env & { ASFDK_API_TOKEN?: string }).ASFDK_API_TOKEN;
@@ -35,22 +36,32 @@ async function getMcpHarness(): Promise<AsfdkHarness> {
   return mcpHarnessPromise;
 }
 
-export default {
-  async fetch(request: Request, env: Env) {
-    const url = new URL(request.url);
-
-    if (url.pathname === MCP_PATH) {
+async function getMcpTransport(): Promise<WebStandardStreamableHTTPServerTransport> {
+  if (!mcpTransportPromise) {
+    mcpTransportPromise = (async () => {
       const server = createMcpServer(await getMcpHarness());
       const transport = new WebStandardStreamableHTTPServerTransport({
         sessionIdGenerator: undefined,
       });
       await server.connect(transport);
-      return transport.handleRequest(request);
-    }
+      return transport;
+    })();
+  }
 
+  return mcpTransportPromise;
+}
+
+export default {
+  async fetch(request: Request, env: Env) {
     const authorized = authorizeRequest(request, env);
     if (authorized instanceof Response) {
       return authorized;
+    }
+
+    const url = new URL(request.url);
+    if (url.pathname === MCP_PATH) {
+      const transport = await getMcpTransport();
+      return transport.handleRequest(request);
     }
 
     return (
