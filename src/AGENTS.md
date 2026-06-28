@@ -21,7 +21,7 @@ Pi (coding agent platform) and the model, enforcing Solidarity Framework / OTOI 
 
 | File / Dir | Role |
 |---|---|
-| `index.ts` | Pi extension entrypoint — hooks, tools, slash commands |
+| `index.ts` | Runtime extension entrypoint (Pi = first supported runtime) — hooks, tools, slash commands |
 | `harness.ts` | Core `AsfdkHarness` wrapper around `@neurolift-technologies/asfdk` |
 | `tools.ts` | 9 Pi tool definitions + `ASFDK_TOOL_SKILLS` canonical mapping |
 | `policy.ts` | Hard block list — destructive shell commands + sensitive path access |

@@ -1,11 +1,11 @@
 ---
 name: asfdk-harness
-description: Use when working in Pi with the ASFDK Solidarity Layer enabled, including governance preflight, ASFDK tool use, and escalation boundaries.
+description: Use when working with the ASFDK Solidarity Layer enabled — governance preflight, ASFDK tool use, and escalation boundaries. Compatible with NeuroLift agent runtimes (Pi = first supported).
 ---
 
-# ASFDK Harness for Pi
+# ASFDK Harness
 
-Use this skill when working inside Pi with the ASFDK Solidarity Layer enabled.
+Use this skill when working with the ASFDK Solidarity Layer enabled. This harness is the Solidarity Framework runtime/control plane governing agent sessions, A2A delegation, MCP/tool surfaces, TOI/OTOI resolution, preflight checks, and escalation across NeuroLift agent runtimes. Pi is the first supported cofounder-agent runtime.
 
 ## Operating model
 

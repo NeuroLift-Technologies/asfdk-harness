@@ -1,0 +1,59 @@
+{
+  "handoff_record": {
+    "session_id": "asfdk-harness-arch-reframe-2026-06-28",
+    "agent_name": "opencode (deepseek-v4-flash-free)",
+    "date": "2026-06-28",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "codex/fix-governance-tool-gating",
+    "work_completed": [
+      "Reframed README.md — ASFDK Harness is now the Solidarity Framework runtime/control plane; Pi is first supported runtime",
+      "Reframed CLAUDE.md — purpose paragraph, three integration points, key paths depi-ified",
+      "Reframed AGENTS.md (root) — description from Pi-based harness to control plane",
+      "Updated package.json description to reflect control-plane framing",
+      "Changed harness.ts defaults: pi-user → asfdk-user, PI_SESSION_ID → ASFDK_SESSION_ID",
+      "Updated src/cli.ts help text: ASFDK Pi Harness → ASFDK Harness — control plane",
+      "Updated src/AGENTS.md module map entry for index.ts",
+      "Updated src/CLAUDE.md — /src as control plane, three surfaces depi-ified",
+      "Updated src/README.md — data flow User → Agent runtime (Pi, ...), module table depi-ified",
+      "Updated skills/asfdk-harness/SKILL.md — title/description: Pi is first supported runtime",
+      "Updated .otoi — agent id pi-asfdk-harness → asfdk-harness, role expanded to control plane definition",
+      "Updated nltotoi.json — purpose from Pi-based harness to control plane",
+      "Self-registered in docs/agent-log/registrations/",
+      "Updated docs/active-threads.md with THREAD-007"
+    ],
+    "work_in_progress": [
+      "THREAD-007 — architecture reframe is complete but awaiting PR review/merge from codex/fix-governance-tool-gating"
+    ],
+    "blockers": [],
+    "decisions_made": [
+      "ASFDK Harness is the control plane; Pi is one runtime among many — this affects all docs and code framing",
+      "harness.ts defaults changed to runtime-agnostic env vars (ASFDK_USER_ID, ASFDK_SESSION_ID)",
+      ".otoi agent id renamed from pi-asfdk-harness to asfdk-harness to reflect broader scope"
+    ],
+    "decisions_pending": [
+      "Whether additional runtime abstraction layers are needed for non-Pi runtimes (Claude Code, Cursor, etc.) is deferred"
+    ],
+    "escalations": [],
+    "next_agent_notes": "The architecture reframe is complete across 11 files and 3 governance artifacts. Feature branch is codex/fix-governance-tool-gating. All 45 tests pass, tsc and cf:check clean. No new runtime abstraction was built — the harness.ts class was already runtime-agnostic in its interface; only the defaults and documentation needed updating. PR should be created from this branch for review.",
+    "files_modified": [
+      "README.md",
+      "CLAUDE.md",
+      "AGENTS.md",
+      "package.json",
+      "src/harness.ts",
+      "src/cli.ts",
+      "src/AGENTS.md",
+      "src/CLAUDE.md",
+      "src/README.md",
+      "skills/asfdk-harness/SKILL.md",
+      ".otoi",
+      "nltotoi.json",
+      "docs/active-threads.md",
+      "docs/agent-log/registrations/2026-06-28-opencode-arch-reframe.json"
+    ],
+    "tests_run": [
+      "npm test (check + cf:check + test:unit) — 45/45 pass"
+    ],
+    "tests_passing": true
+  }
+}

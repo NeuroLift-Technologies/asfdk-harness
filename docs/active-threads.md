@@ -2,7 +2,7 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-06-26T12:00:00Z
+**Last updated:** 2026-06-28T18:15:27Z
 
 ---
 
@@ -89,6 +89,36 @@
 ---
 
 ## Resolved Threads
+
+### THREAD-008 — PR #8 review fixes and conflict resolution
+| Field | Value |
+|---|---|
+| **Thread ID** | THREAD-008 |
+| **Status** | 🟢 Complete |
+| **Started** | 2026-06-28 |
+| **Owner** | Codex |
+| **Branch** | `codex/fix-governance-tool-gating` |
+| **Task** | Address PR #8 review comments, resolve the merge conflict with `origin/main`, and keep checks green. |
+| **Scope** | `src/server.ts`, `src/mcp-http-server.ts`, `src/tools.ts`, `src/protocols.ts`, `src/harness.ts`, focused tests, merge-conflict resolution |
+| **Blockers** | None. |
+| **Related PR** | #8 |
+| **Notes** | Resolved merge conflicts against `origin/main`; moved Worker auth before `/mcp`; memoized MCP transports in Node and Worker entrypoints; standardized `asfdk_authority_chain`; restored OTOI-first resolution for `.toi.default`; made path redaction preserve HTTP(S) URLs; made Pi extension-load test self-contained; fixed CodeQL test assertions. Local `npm test` and `npm run build` passed before final docs-only bookkeeping. Remote PR checks passed on commit `3757f5c`; final bookkeeping pushed separately. |
+
+### THREAD-007 — Architecture reframe: ASFDK Harness as control plane, Pi as first runtime
+| Field | Value |
+|---|---|
+| **Thread ID** | THREAD-007 |
+| **Status** | 🟡 In Progress |
+| **Started** | 2026-06-28 |
+| **Owner** | opencode |
+| **Branch** | `codex/fix-governance-tool-gating` |
+| **Task** | Reframe ASFDK Harness from "Pi package and SDK runner" to "Solidarity Framework runtime/control plane governing agent sessions, A2A delegation, MCP/tool surfaces, TOI/OTOI resolution, preflight checks, receipts, and escalation across NeuroLift agent runtimes. Pi is the first supported cofounder-agent runtime, not the boundary." |
+| **Scope** | `README.md`, `CLAUDE.md`, `AGENTS.md`, `package.json`, `src/harness.ts`, `src/cli.ts`, `src/AGENTS.md`, `src/CLAUDE.md`, `src/README.md`, `skills/asfdk-harness/SKILL.md`, `.otoi`, `nltotoi.json` |
+| **Blockers** | None. |
+| **Related PR** | TBD from `codex/fix-governance-tool-gating` |
+| **Notes** | Updated 11 files to depi-ify the framing and reposition the harness as a runtime-agnostic control plane. Changed `harness.ts` defaults from `pi-user`/`PI_SESSION_ID` to `asfdk-user`/`ASFDK_SESSION_ID`. Updated `.otoi` agent id from `pi-asfdk-harness` to `asfdk-harness` with expanded role. All 45 tests pass, `tsc` and `cf:check` clean. |
+
+---
 
 ### THREAD-006 — Zed repo walkthrough
 | Field | Value |

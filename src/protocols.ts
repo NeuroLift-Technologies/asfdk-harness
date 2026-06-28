@@ -121,7 +121,8 @@ export async function loadGovernanceProtocols(options: ProtocolLoadOptions = {})
     }
   }
 
-  const effectiveToi = personalToi ?? effectivePolicy?.effective;
+  const isDefaultToi = toiPath.endsWith(".toi.default");
+  const effectiveToi = !isDefaultToi && personalToi != null ? personalToi : effectivePolicy?.effective ?? personalToi;
   const devOtoi = extractDevOtoi(charter, effectiveToi);
 
   return {

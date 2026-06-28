@@ -58,8 +58,8 @@ export class AsfdkHarness {
   #protocolContext: GovernanceProtocolContext | undefined;
 
   constructor(options: AsfdkHarnessOptions = {}) {
-    this.userId = options.userId ?? process.env.ASFDK_USER_ID ?? "pi-user";
-    this.sessionId = options.sessionId ?? process.env.PI_SESSION_ID ?? randomUUID();
+    this.userId = options.userId ?? process.env.ASFDK_USER_ID ?? "asfdk-user";
+    this.sessionId = options.sessionId ?? process.env.ASFDK_SESSION_ID ?? randomUUID();
     this.mode = options.mode ?? parseFoundationMode(process.env.ASFDK_MODE) ?? FoundationMode.UNIFIED;
     this.cwd = options.cwd ?? process.cwd();
     this.toiPath = options.toiPath ?? process.env.ASFDK_TOI_PATH;
@@ -216,11 +216,9 @@ export class AsfdkHarness {
     // Don't redact in development mode
     if (this.mode === FoundationMode.DEVELOPMENT) return text;
 
-    // Simple path pattern matching - this could be more sophisticated
-    // Look for common path patterns and replace them
     return text
-      .replace(/\b(\/[^\s]+|[A-Za-z]:\\[^\s]+|\/[^\s]+)/g, "[REDACTED_PATH]")
-      .replace(/\b(\/\w+(\/\w+)+)/g, "[REDACTED_PATH]");
+      .replace(/(^|[\s([{:;,"'])((?:\/[A-Za-z0-9._-]+){2,})(?=$|[\s)\]}:;,"'])/g, "$1[REDACTED_PATH]")
+      .replace(/\b[A-Za-z]:\\[A-Za-z0-9._-]+(?:\\[A-Za-z0-9._-]+)+\b/g, "[REDACTED_PATH]");
   }
 }
 

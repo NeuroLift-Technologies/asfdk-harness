@@ -1,13 +1,13 @@
 # asfdk-harness
 
-ASFDK Harness is a Pi package and SDK runner that puts `@neurolift-technologies/asfdk` on top of Pi as governance middleware.
+ASFDK Harness is the Solidarity Framework runtime / control plane for governing agent sessions, A2A delegation, MCP/tool surfaces, TOI/OTOI resolution, preflight checks, receipts, and escalation across NeuroLift agent runtimes.
 
-It adds Solidarity Framework hooks around Pi sessions so prompts and tool calls can pass through ASFDK-adjacent governance checks before execution.
+It adds Solidarity Framework hooks around agent runtime sessions so prompts and tool calls can pass through ASFDK-adjacent governance checks before execution.
 
 ## What it provides
 
-- **Pi extension package** via `pi.extensions`
-- **ASFDK tools** registered in Pi:
+- **Pi cofounder-agent extension** (first supported runtime) via `pi.extensions`
+- **ASFDK tools** registered in the active runtime:
   - `asfdk_a2a_agent_card`
   - `asfdk_status`
   - `asfdk_protocol_status`
@@ -84,7 +84,8 @@ The Cloudflare Worker now also serves `/mcp` behind the same bearer token gate a
 ## Environment
 
 ```bash
-ASFDK_USER_ID=pi-user
+ASFDK_USER_ID=asfdk-user
+ASFDK_SESSION_ID=auto  # auto-generated UUID if unset
 ASFDK_MODE=unified # unified | crisis_only | continuity | framework | development
 ASFDK_TOI_PATH=.toi # optional; defaults to .toi when present, otherwise .toi.default
 ASFDK_OTOI_PATH=.otoi
@@ -92,7 +93,7 @@ ASFDK_OTOI_PATH=.otoi
 
 ## Non-MCP protocols
 
-The harness integrates through local files, Pi extension hooks, Pi tools, slash commands, and the SDK/CLI runner. It also tracks third-party interoperability targets such as A2A, AG-UI, and ACP, and can generate an A2A Agent Card from the active governance snapshot. MCP work is handled separately under `THREAD-002`.
+The harness integrates through local files, runtime extension hooks (e.g. Pi), runtime tools, slash commands, and the SDK/CLI runner. Pi is the first supported cofounder-agent runtime. It also tracks third-party interoperability targets such as A2A, AG-UI, and ACP, and can generate an A2A Agent Card from the active governance snapshot. MCP work is handled separately under `THREAD-002`.
 
 See [docs/non-mcp-integration-protocols.md](docs/non-mcp-integration-protocols.md).
 See [docs/third-party-protocols.md](docs/third-party-protocols.md).
@@ -100,20 +101,22 @@ See [docs/third-party-protocols.md](docs/third-party-protocols.md).
 ## Architecture
 
 ```text
-User / Pi prompt
+User / agent runtime prompt (Pi, Claude Code, ...)
       ↓
-Pi extension lifecycle hooks
+Runtime extension lifecycle hooks
       ↓
 Local .toi/.toi.default + .otoi protocol resolution
       ↓
-ASFDK Harness
+ASFDK Harness (Solidarity Framework control plane)
       ↓
 @neurolift-technologies/asfdk
   • TOI / OTOI governance
   • RRT Advocate signals
   • Sleepwalker continuity signals
       ↓
-Pi model + tools
+Runtime model + tools
 ```
+
+Pi is the first supported cofounder-agent runtime. The harness is designed to support additional NeuroLift agent runtimes with the same governance middleware.
 
 The default posture is advisory/observe. The harness only blocks obviously high-risk local tool patterns by default.

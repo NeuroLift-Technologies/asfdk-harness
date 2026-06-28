@@ -3,7 +3,7 @@
   "document_id": "ORG-DEV-OTOI-1.0.2",
   "repository": {
     "name": "NeuroLift-Technologies/asfdk-harness",
-    "purpose": "Pi-based ASFDK agent harness with NLT governance stubs",
+    "purpose": "ASFDK Harness — Solidarity Framework runtime/control plane. Pi is the first supported cofounder-agent runtime.",
     "mode": "development",
     "visibility": "private",
     "audience": "internal-coding-agents"

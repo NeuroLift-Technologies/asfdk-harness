@@ -39,7 +39,7 @@ export interface AsfdkToolSkill {
 
 export const SENSITIVE_GOVERNANCE_TOOL_NAMES = new Set([
   "asfdk_governance_summary",
-  "asfdk_authority_chan",
+  "asfdk_authority_chain",
   "asfdk_governance_raw",
 ]);
 
@@ -104,8 +104,8 @@ export const ASFDK_TOOL_SKILLS: AsfdkToolSkill[] = [
     mcpResourceAlias: "asfdk-governance://summary",
   },
   {
-    toolName: "asfdk_authority_chan",
-    id: "asfdk.authority_chan",
+    toolName: "asfdk_authority_chain",
+    id: "asfdk.authority_chain",
     name: "ASFDK authority chain",
     description: "Inspect the current authority chain, decision makers, and escalation paths. Use governance file before file search.",
     tags: ["asfdk", "authority", "escalation", "governance"],
@@ -269,12 +269,12 @@ export function createAsfdkTools(harness: AsfdkHarness) {
       },
     },
     {
-      name: "asfdk_authority_chan",
+      name: "asfdk_authority_chain",
       label: "ASFDK Authority Chain",
       description: "Inspect the current authority chain, decision makers, and escalation paths.",
       promptSnippet: "Inspect the ASFDK authority chain, final decision makers, and escalation rules.",
       promptGuidelines: [
-        "Use asfdk_authority_chan when the user asks about authority, escalation paths, or decision-making processes.",
+        "Use asfdk_authority_chain when the user asks about authority, escalation paths, or decision-making processes.",
       ],
       parameters: Type.Object({}),
       async execute() {

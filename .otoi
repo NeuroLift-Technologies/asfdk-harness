@@ -7,11 +7,13 @@
   },
   "agents": [
     {
-      "id": "pi-asfdk-harness",
-      "role": "Pi extension and standalone SDK runner",
+      "id": "asfdk-harness",
+      "role": "Solidarity Framework runtime/control plane — governs agent sessions, A2A delegation, MCP/tool surfaces, TOI/OTOI resolution, preflight checks, receipts, and escalation. Pi is the first supported cofounder-agent runtime.",
       "modalities": [
         "coding-agent",
-        "local-tools"
+        "local-tools",
+        "mcp-server",
+        "control-plane"
       ],
       "affordances": [
         "asfdk_status",

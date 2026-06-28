@@ -81,6 +81,18 @@ test("summarizeFoundationResponse emits stable JSON fields", async () => {
   assert.ok("componentsInvolved" in parsed);
 });
 
+test("redactPathInString preserves URLs while redacting filesystem paths", () => {
+  const h = new AsfdkHarness({ mode: FoundationMode.UNIFIED });
+  const redacted = h.redactPathInString(
+    "Failed at /home/joshd/Desktop/nlt-repos/asfdk-harness/.otoi; see https://github.com/NeuroLift-Technologies/asfdk-harness/pull/8 and C:\\Users\\Josh\\secret.txt",
+  );
+
+  assert.equal(
+    redacted,
+    "Failed at [REDACTED_PATH]; see https://github.com/NeuroLift-Technologies/asfdk-harness/pull/8 and [REDACTED_PATH]",
+  );
+});
+
 test("shutdown is idempotent (safe to call twice)", async () => {
   const h = new AsfdkHarness();
   await h.start();
