@@ -81,6 +81,17 @@ It listens on `http://127.0.0.1:8788/mcp` by default. Override `MCP_HTTP_HOST`, 
 
 The Cloudflare Worker now also serves `/mcp` behind the same bearer token gate as the agent route. After deploy, the MCP URL is the Worker origin plus `/mcp`.
 
+#### Verify the endpoint
+
+Test the deployed MCP endpoint with a real handshake. Put the token in an env var and keep the command on **one line** — splitting it with a `\` can wrap a space into the URL and produce `curl: (3) URL rejected: Malformed input to a URL function` (a client-side URL-parse error, not a server fault):
+
+```bash
+export ASFDK_TOKEN="cfat_...your_token..."
+curl -sS -X POST https://<your-worker-origin>/mcp -H "Authorization: Bearer $ASFDK_TOKEN" -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" --data '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"diag","version":"0.0.0"}}}'
+```
+
+A healthy server returns HTTP 200 and an SSE event containing `"serverInfo":{"name":"asfdk-harness",...}`. A missing/invalid token returns `401 Unauthorized`.
+
 ## Environment
 
 ```bash
