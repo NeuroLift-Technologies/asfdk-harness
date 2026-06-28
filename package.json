@@ -1,7 +1,7 @@
 {
   "name": "asfdk-harness",
   "version": "0.1.0",
-  "description": "ASFDK harness on top of Pi: Solidarity Framework governance hooks, tools, prompts, and a standalone SDK runner.",
+  "description": "ASFDK Harness — Solidarity Framework runtime/control plane for governing agent sessions, A2A delegation, MCP/tool surfaces, TOI/OTOI resolution, preflight checks, receipts, and escalation across NeuroLift agent runtimes.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

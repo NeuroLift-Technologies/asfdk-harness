@@ -1,0 +1,25 @@
+{
+  "agent_registration": {
+    "agent_name": "opencode (deepseek-v4-flash-free)",
+    "platform": "opencode CLI",
+    "version": "deepseek-v4-flash-free",
+    "session_id": "asfdk-harness-arch-reframe-2026-06-28",
+    "entry_date": "2026-06-28",
+    "entry_point": "Joshua W. Dorsey, Sr. requested architecture reframe: ASFDK Harness is the Solidarity Framework runtime/control plane; Pi is the first supported cofounder-agent runtime, not the boundary.",
+    "acknowledged_otoi": true,
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "working_repo": "NeuroLift-Technologies/asfdk-harness",
+    "working_branch": "codex/fix-governance-tool-gating",
+    "capabilities_self_reported": [
+      "file editing across multiple paths",
+      "TypeScript/Node understanding",
+      "governance document comprehension"
+    ],
+    "known_limitations": [
+      "Cannot push to protected branches",
+      "Cannot deploy or approve PRs",
+      "No access to GitHub workflow scope"
+    ],
+    "preferred_handoff_format": "structured JSON handoff record per Section 5"
+  }
+}

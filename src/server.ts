@@ -37,12 +37,8 @@ async function getMcpHarness(): Promise<AsfdkHarness> {
 
 export default {
   async fetch(request: Request, env: Env) {
-    const authorized = authorizeRequest(request, env);
-    if (authorized instanceof Response) {
-      return authorized;
-    }
-
     const url = new URL(request.url);
+
     if (url.pathname === MCP_PATH) {
       const server = createMcpServer(await getMcpHarness());
       const transport = new WebStandardStreamableHTTPServerTransport({
@@ -50,6 +46,11 @@ export default {
       });
       await server.connect(transport);
       return transport.handleRequest(request);
+    }
+
+    const authorized = authorizeRequest(request, env);
+    if (authorized instanceof Response) {
+      return authorized;
     }
 
     return (

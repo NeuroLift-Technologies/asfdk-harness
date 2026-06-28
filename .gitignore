@@ -151,6 +151,9 @@ vite.config.ts.timestamp-*
 .toi.backup-*
 *-personal.toi
 
+# OpenCode configuration
+.opencode.jsonc
+
 # Cloudflare Workers
 .wrangler/
 .dev.vars

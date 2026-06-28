@@ -58,8 +58,8 @@ export class AsfdkHarness {
   #protocolContext: GovernanceProtocolContext | undefined;
 
   constructor(options: AsfdkHarnessOptions = {}) {
-    this.userId = options.userId ?? process.env.ASFDK_USER_ID ?? "pi-user";
-    this.sessionId = options.sessionId ?? process.env.PI_SESSION_ID ?? randomUUID();
+    this.userId = options.userId ?? process.env.ASFDK_USER_ID ?? "asfdk-user";
+    this.sessionId = options.sessionId ?? process.env.ASFDK_SESSION_ID ?? randomUUID();
     this.mode = options.mode ?? parseFoundationMode(process.env.ASFDK_MODE) ?? FoundationMode.UNIFIED;
     this.cwd = options.cwd ?? process.cwd();
     this.toiPath = options.toiPath ?? process.env.ASFDK_TOI_PATH;

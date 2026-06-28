@@ -32,10 +32,10 @@ All agent-authored work must go through a feature branch and Pull Request. Never
 
 ## Repository context
 
-`asfdk-harness` is a Pi-based harness for `@neurolift-technologies/asfdk`.
+`asfdk-harness` is the ASFDK Solidarity Framework runtime/control plane for `@neurolift-technologies/asfdk`. Pi is the first supported cofounder-agent runtime.
 
-- Pi extension entrypoint: `src/index.ts`
-- Standalone SDK CLI: `src/cli.ts`
+- Runtime extension entrypoint (Pi = first supported): `src/index.ts`
+- Standalone CLI: `src/cli.ts`
 - ASFDK wrapper: `src/harness.ts`
 - Pi skills/prompts: `skills/`, `prompts/`
 - Canonical Claude Code governance template copied from `.github-private`: `.claude/`

@@ -8,7 +8,7 @@ import {
 import asfdkPiHarness from "./index.js";
 
 function usage(): never {
-  console.log(`ASFDK Pi Harness\n\nUsage:\n  asfdk-harness "prompt"          Run one prompt through Pi with ASFDK hooks\n  asfdk-harness --cwd <path> ...   Set working directory\n\nEnvironment:\n  ASFDK_USER_ID  User id for ASFDK foundation (default: pi-user)\n  ASFDK_MODE     unified | crisis_only | continuity | framework | development\n`);
+  console.log(`ASFDK Harness — Solidarity Framework control plane\n\nUsage:\n  asfdk-harness "prompt"          Run one prompt through the harness with ASFDK governance\n  asfdk-harness --cwd <path> ...   Set working directory\n\nEnvironment:\n  ASFDK_USER_ID     User id for ASFDK foundation (default: asfdk-user)\n  ASFDK_SESSION_ID  Session id (default: auto-generated UUID)\n  ASFDK_MODE        unified | crisis_only | continuity | framework | development\n`);
   process.exit(0);
 }
 

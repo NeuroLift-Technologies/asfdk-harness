@@ -12,11 +12,12 @@
 
 ## What /src is
 
-`/src` is the entire governance middleware stack for `asfdk-harness`. It sits between the
-coding agent (Pi) and model execution, enforcing Solidarity Framework / OTOI rules.
+`/src` is the entire governance middleware stack for `asfdk-harness` — the Solidarity Framework
+runtime/control plane. It sits between NeuroLift agent runtimes and model execution, enforcing
+Solidarity Framework / OTOI rules.
 
 Three integration surfaces are built here:
-- **Pi extension** (`index.ts`) — hooks, tools, slash commands inside Pi
+- **Runtime extension** (`index.ts`) — hooks, tools, slash commands (Pi = first supported runtime)
 - **Standalone CLI** (`cli.ts`) — one-shot governance-wrapped prompt runner (`asfdk-harness`)
 - **MCP server** (`mcp-server.ts`) — exposes ASFDK tools over Model Context Protocol
 
@@ -26,9 +27,9 @@ Three integration surfaces are built here:
 
 | File | Role |
 |---|---|
-| `index.ts` | Pi extension entrypoint — registers tools, lifecycle hooks, slash commands |
+| `index.ts` | Runtime extension entrypoint (Pi = first supported runtime) — registers tools, lifecycle hooks, slash commands |
 | `harness.ts` | Core `AsfdkHarness` class — wraps `@neurolift-technologies/asfdk`, manages init/shutdown, protocol loading, A2A card generation |
-| `tools.ts` | 9 Pi tool definitions + `ASFDK_TOOL_SKILLS` (canonical tool→skill mapping) |
+| `tools.ts` | 9 tool definitions (Pi runtime) + `ASFDK_TOOL_SKILLS` (canonical tool→skill mapping) |
 | `policy.ts` | Hard block list — destructive shell commands and sensitive path access |
 | `protocols.ts` | Loads `.toi`/`.otoi` files, builds `GovernanceProtocolContext`, catalogs third-party interop targets |
 | `a2a.ts` | Converts governance context into A2A Agent Card for peer-agent discovery |
@@ -66,7 +67,7 @@ Interaction, not source code.
 
 Routine feature work, bug fixes, and type improvements on:
 - `harness.ts`, `protocols.ts`, `a2a.ts`, `cli.ts`, `mcp-server.ts`, `server.ts`
-- Adding or updating Pi tools in `tools.ts` (but escalate if changing `ASFDK_TOOL_SKILLS`)
+- Adding or updating tools in `tools.ts` (but escalate if changing `ASFDK_TOOL_SKILLS`)
 - `index.ts` hook wiring (escalate if removing or reordering existing lifecycle hooks)
 
 Always: feature branch → PR → no direct push to `main`.
