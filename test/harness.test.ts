@@ -87,9 +87,10 @@ test("redactPathInString preserves URLs while redacting filesystem paths", () =>
     "Failed at /home/joshd/Desktop/nlt-repos/asfdk-harness/.otoi; see https://github.com/NeuroLift-Technologies/asfdk-harness/pull/8 and C:\\Users\\Josh\\secret.txt",
   );
 
-  assert.match(redacted, /Failed at \[REDACTED_PATH\]/);
-  assert.equal((redacted.match(/\[REDACTED_PATH\]/g) ?? []).length, 2);
-  assert.equal(redacted.includes("https://github.com/NeuroLift-Technologies/asfdk-harness/pull/8"), true);
+  assert.equal(
+    redacted,
+    "Failed at [REDACTED_PATH]; see https://github.com/NeuroLift-Technologies/asfdk-harness/pull/8 and [REDACTED_PATH]",
+  );
 });
 
 test("shutdown is idempotent (safe to call twice)", async () => {
