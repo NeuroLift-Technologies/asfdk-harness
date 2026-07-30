@@ -8,7 +8,6 @@ export { AsfdkGovernanceAgent } from "../agents/asfdk-governance/agent.js";
 const MCP_PATH = "/mcp";
 
 let mcpHarnessPromise: Promise<AsfdkHarness> | undefined;
-let mcpTransportPromise: Promise<WebStandardStreamableHTTPServerTransport> | undefined;
 
 function authorizeRequest(request: Request, env: Env): string | Response {
   const expectedToken = (env as Env & { ASFDK_API_TOKEN?: string }).ASFDK_API_TOKEN;
@@ -36,19 +35,20 @@ async function getMcpHarness(): Promise<AsfdkHarness> {
   return mcpHarnessPromise;
 }
 
-async function getMcpTransport(): Promise<WebStandardStreamableHTTPServerTransport> {
-  if (!mcpTransportPromise) {
-    mcpTransportPromise = (async () => {
-      const server = createMcpServer(await getMcpHarness());
-      const transport = new WebStandardStreamableHTTPServerTransport({
-        sessionIdGenerator: undefined,
-      });
-      await server.connect(transport);
-      return transport;
-    })();
-  }
-
-  return mcpTransportPromise;
+// Stateless Streamable HTTP requires a fresh server + transport per request;
+// the SDK throws "Stateless transport cannot be reused across requests" otherwise.
+// Only the harness (expensive ASFDK init) is memoized and shared.
+async function handleMcpRequest(request: Request): Promise<Response> {
+  const server = createMcpServer(await getMcpHarness());
+  const transport = new WebStandardStreamableHTTPServerTransport({
+    sessionIdGenerator: undefined,
+  });
+  await server.connect(transport);
+  // Do not close() here: handleRequest returns a streamed Response whose body is
+  // still being produced after this returns. Closing would abort the stream and
+  // truncate the body. The per-request server/transport are GC'd once the
+  // response completes.
+  return transport.handleRequest(request);
 }
 
 export default {
@@ -60,8 +60,7 @@ export default {
 
     const url = new URL(request.url);
     if (url.pathname === MCP_PATH) {
-      const transport = await getMcpTransport();
-      return transport.handleRequest(request);
+      return handleMcpRequest(request);
     }
 
     return (
