@@ -128,6 +128,9 @@ export class AsfdkHarness {
         sessionId: this.sessionId,
         context,
       });
+      if (interaction?.content?.error) {
+        interaction.success = false;
+      }
       return { interaction, emotionalState };
     } catch (error) {
       return {
