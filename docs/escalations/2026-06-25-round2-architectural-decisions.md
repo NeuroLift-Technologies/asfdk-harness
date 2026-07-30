@@ -5,7 +5,7 @@
 **Date:** 2026-06-25T17:46:12-04:00
 **Agent:** Claude Code (claude-opus-4-8)
 **Session:** `round-2-consolidation`
-**OTOI Version:** ORG-DEV-OTOI-1.0.2
+**OTOI Version:** ORG-DEV-OTOI-1.0.3
 **Escalation Target:** Joshua W. Dorsey, Sr.
 **Priority:** high
 

@@ -1,6 +1,6 @@
 # AGENTS.md — NeuroLift Technologies / asfdk-harness
 
-> Internal agent coordination gateway for this repository. Canonical organization governance remains `NLT-DEV-OTOI.md` / `ORG-DEV-OTOI-1.0.2`.
+> Internal agent coordination gateway for this repository. Canonical organization governance remains `NLT-DEV-OTOI.md` / `ORG-DEV-OTOI-1.0.3`.
 
 ## Mandatory reading order
 
@@ -48,4 +48,4 @@ Before ending significant work:
 2. Write a handoff record in `docs/agent-log/handoffs/`.
 3. Record escalations in `docs/escalations/` if any.
 
-Governed by Solidarity Framework | HAIEF | ORG-DEV-OTOI-1.0.2
+Governed by Solidarity Framework | HAIEF | ORG-DEV-OTOI-1.0.3

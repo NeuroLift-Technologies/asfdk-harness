@@ -4,7 +4,7 @@
 **Version:** 1.1.0
 **Scope:** Setting up governance stubs in a new or existing NLT repository
 **Authority:** Joshua W. Dorsey, Sr.
-**Governed by:** ORG-DEV-OTOI-1.0.2
+**Governed by:** ORG-DEV-OTOI-1.0.3
 
 ---
 
@@ -63,7 +63,7 @@ You are working in a NeuroLift Technologies repository.
 deployment, UX, and strategic decisions. Escalate. Do not guess.
 
 **Governed by:** Solidarity Framework | HAIEF | https://elevaitionfoundation.org
-**OTOI Version:** ORG-DEV-OTOI-1.0.2
+**OTOI Version:** ORG-DEV-OTOI-1.0.3
 ```
 
 Replace `[REPO NAME]` with the actual repository name. Add any project-specific context (build commands, gotchas, code paths) below the mandatory reading section.
@@ -137,13 +137,13 @@ Coding agents must be able to read the governance files in `.github-private`. If
 Commit using the format:
 
 ```
-[AGENT_NAME] chore(governance): add repo governance stubs (ORG-DEV-OTOI-1.0.2)
+[AGENT_NAME] chore(governance): add repo governance stubs (ORG-DEV-OTOI-1.0.3)
 ```
 
 ### Step 7: Verify
 
 Confirm the following exist and contain correct content:
-- [ ] `CLAUDE.md` references `NLT-DEV-OTOI` and `ORG-DEV-OTOI-1.0.2`
+- [ ] `CLAUDE.md` references `NLT-DEV-OTOI` and `ORG-DEV-OTOI-1.0.3`
 - [ ] `docs/active-threads.md` exists and is readable
 - [ ] `docs/agent-log/` directory structure created
 - [ ] GitHub App has access to `.github-private` (or public mirror fallback is in place)
@@ -154,7 +154,7 @@ The `.claude/` directory holds the canonical Claude Code session configuration: 
 
 > **Current automation state.** As of SOP-NLT-002 v1.1.0, the live `governance-auto-propagate.yml` workflow in `.github-private` syncs `CLAUDE.md`, `docs/active-threads.md`, `docs/agent-log/README.md`, and the canonical `.claude/` template. Repo-specific overrides still belong in `.claude/settings.local.json`, which the workflow never overwrites.
 
-**A. Automated.** The nightly `governance-auto-propagate.yml` run (05:00 UTC) opens a PR in each affected repo combined with any other governance stub remediation. Title pattern: `[GOVERNANCE] Add mandatory NLT governance stubs (ORG-DEV-OTOI-1.0.2)`. The PR body lists the `.claude/` files synced. Review and merge.
+**A. Automated.** The nightly `governance-auto-propagate.yml` run (05:00 UTC) opens a PR in each affected repo combined with any other governance stub remediation. Title pattern: `[GOVERNANCE] Add mandatory NLT governance stubs (ORG-DEV-OTOI-1.0.3)`. The PR body lists the `.claude/` files synced. Review and merge.
 
 ```bash
 # Manual trigger (from .github-private repo, only useful after the extension is applied)
@@ -198,4 +198,4 @@ For a product repo, the same script can be run locally if `.nltotoi/` is provisi
 
 ---
 
-*SOP-NLT-002 v1.1.0 | NeuroLift Technologies | ORG-DEV-OTOI-1.0.2*
+*SOP-NLT-002 v1.1.0 | NeuroLift Technologies | ORG-DEV-OTOI-1.0.3*

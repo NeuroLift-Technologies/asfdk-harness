@@ -35,7 +35,7 @@
     }
   ],
   "vars": {
-    "ASFDK_VERSION": "ORG-DEV-OTOI-1.0.2",
+    "ASFDK_VERSION": "ORG-DEV-OTOI-1.0.3",
     "GOVERNANCE_MODEL": "@cf/meta/llama-4-scout-17b-16e-instruct",
     "ASFDK_GOVERNANCE_MODE": "lenient"
   }
