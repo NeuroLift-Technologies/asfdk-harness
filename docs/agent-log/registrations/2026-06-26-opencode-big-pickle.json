@@ -1,0 +1,28 @@
+{
+  "agent_registration": {
+    "agent_name": "opencode (big-pickle)",
+    "platform": "opencode CLI",
+    "version": "big-pickle",
+    "session_id": "auto-2026-06-26",
+    "entry_date": "2026-06-26",
+    "entry_point": "User said 'working in asfdk-harness repo'",
+    "acknowledged_otoi": true,
+    "otoi_version": "ORG-DEV-OTOI-1.0.2",
+    "working_repo": "NeuroLift-Technologies/asfdk-harness",
+    "working_branch": "codex/fix-governance-tool-gating",
+    "capabilities_self_reported": [
+      "File editing and creation",
+      "Code reading and analysis",
+      "Bash command execution",
+      "Web search and fetch",
+      "Task orchestration with subagents",
+      "TypeScript/Node.js development"
+    ],
+    "known_limitations": [
+      "Cannot push to protected branches",
+      "Cannot make architectural decisions without Joshua",
+      "Cannot deploy to production"
+    ],
+    "preferred_handoff_format": "structured JSON"
+  }
+}
