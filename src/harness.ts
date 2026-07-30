@@ -1,4 +1,6 @@
 import { randomUUID } from "node:crypto";
+import { mkdirSync } from "node:fs";
+import { join } from "node:path";
 import {
   createProtocolSnapshot,
   formatProtocolSystemPrompt,
@@ -69,6 +71,20 @@ export class AsfdkHarness {
 
   async start(): Promise<void> {
     if (this.#foundation) return;
+    // Pre-create .swp_storage so the sleepwalker-protocol's ContinuityManager
+    // doesn't throw EPERM on a read-only assessment. The external package tries
+    // mkdir on construction; handle permission denial gracefully by falling back
+    // to a temp directory.
+    try {
+      mkdirSync(join(this.cwd, ".swp_storage"), { recursive: true });
+    } catch {
+      try {
+        mkdirSync("/tmp/.swp_storage", { recursive: true });
+      } catch {
+        // Neither CWD nor /tmp is writable — assessment will degrade
+        // gracefully via the processInteraction error boundary.
+      }
+    }
     const { createFoundation } = await loadAsfdk();
     this.#foundation = await createFoundation(this.userId, this.mode as never);
   }
@@ -96,17 +112,35 @@ export class AsfdkHarness {
 
   async assessText(text: string, context: Record<string, unknown> = {}): Promise<TextAssessment> {
     const foundation = await this.foundation();
-    const emotionalState = await foundation.assessEmotionalState(text, context);
-    const interaction = await foundation.processInteraction({
-      timestamp: new Date(),
-      interactionType: InteractionType.EMOTIONAL_ASSESSMENT,
-      data: { text, emotionalState },
-      userId: this.userId,
-      sessionId: this.sessionId,
-      context,
-    });
+    let emotionalState: unknown = null;
+    try {
+      emotionalState = await foundation.assessEmotionalState(text, context);
+    } catch (error) {
+      emotionalState = { error: "emotional-assessment-unavailable", detail: String(error) };
+    }
 
-    return { interaction, emotionalState };
+    try {
+      const interaction = await foundation.processInteraction({
+        timestamp: new Date(),
+        interactionType: InteractionType.EMOTIONAL_ASSESSMENT,
+        data: { text, emotionalState },
+        userId: this.userId,
+        sessionId: this.sessionId,
+        context,
+      });
+      return { interaction, emotionalState };
+    } catch (error) {
+      return {
+        interaction: {
+          success: false,
+          responseType: InteractionType.EMOTIONAL_ASSESSMENT,
+          componentsInvolved: ["asfdk_foundation"],
+          content: { error: { component: "asfdk_foundation", message: String(error) }, data: { text } },
+          timestamp: new Date().toISOString(),
+        },
+        emotionalState,
+      };
+    }
   }
 
   async processInteraction(
@@ -115,14 +149,33 @@ export class AsfdkHarness {
     context: Record<string, unknown> = {},
   ): Promise<FoundationResponse> {
     const foundation = await this.foundation();
-    return foundation.processInteraction({
-      timestamp: new Date(),
-      interactionType,
-      data,
-      userId: this.userId,
-      sessionId: this.sessionId,
-      context,
-    });
+    try {
+      const response = await foundation.processInteraction({
+        timestamp: new Date(),
+        interactionType,
+        data,
+        userId: this.userId,
+        sessionId: this.sessionId,
+        context,
+      });
+      // Bug B: set success=false when any component reported an error
+      if (response?.content?.error) {
+        return { ...response, success: false };
+      }
+      return response;
+    } catch (error) {
+      // Bug A: return structured response instead of throwing on foundation failure
+      return {
+        success: false,
+        responseType: interactionType,
+        componentsInvolved: ["asfdk_foundation"],
+        content: {
+          error: { component: "asfdk_foundation", message: String(error) },
+          data,
+        },
+        timestamp: new Date().toISOString(),
+      };
+    }
   }
 
   async updatePreferences(preferences: Record<string, unknown>): Promise<void> {

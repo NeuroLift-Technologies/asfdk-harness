@@ -42,7 +42,11 @@ export async function processPipeline(
     { userId: req.userId, message: req.message },
     env.AI,
     env.GOVERNANCE_MODEL,
-  );
+  ).catch((error: Error): AssessResponse => ({
+    level: "ORANGE",
+    intervention: `Crisis assessment unavailable — escalating for human review as a precaution. (${error.message})`,
+    escalate: true,
+  }));
 
   if (assessment.level === "BLACK") {
     return {
@@ -64,7 +68,11 @@ export async function processPipeline(
     },
     env.AI,
     env.GOVERNANCE_MODEL,
-  );
+  ).catch((): GovernResponse => ({
+    advisoryResponse: req.agentResponse,
+    advisoryFlags: ["governance-review-unavailable"],
+    advisoryOnly: true,
+  }));
 
   await handleContinuity(
     {
@@ -77,7 +85,7 @@ export async function processPipeline(
       },
     },
     env.SESSION,
-  );
+  ).catch((): ContinuityResponse => ({ saved: false }));
 
   return {
     assessment,
