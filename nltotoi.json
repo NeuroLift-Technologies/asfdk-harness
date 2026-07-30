@@ -1,6 +1,6 @@
 {
-  "nltotoi_version": "1.0.2",
-  "document_id": "ORG-DEV-OTOI-1.0.2",
+  "nltotoi_version": "1.0.3",
+  "document_id": "ORG-DEV-OTOI-1.0.3",
   "repository": {
     "name": "NeuroLift-Technologies/asfdk-harness",
     "purpose": "ASFDK Harness — Solidarity Framework runtime/control plane. Pi is the first supported cofounder-agent runtime.",
@@ -40,7 +40,7 @@
   },
   "metadata": {
     "created": "2026-06-25",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "last_updated": "2026-06-25"
   },
   "source_contracts": {
@@ -52,7 +52,7 @@
     "org_developer_otoi": {
       "repo": "NeuroLift-Technologies/.github-private",
       "path": "NLT-DEV-OTOI.md",
-      "document_id": "ORG-DEV-OTOI-1.0.2",
+      "document_id": "ORG-DEV-OTOI-1.0.3",
       "sha256": "e365bb0e6b0bd0331a2e41c45874726ddd003eb24e9691674b04e2ea5a3e239e"
     }
   }

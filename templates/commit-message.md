@@ -67,4 +67,4 @@ Commit format is defined in **SOP-NLT-001 Step 7** and validated automatically o
 
 ---
 
-*ORG-DEV-OTOI-1.0.2 | templates/commit-message.md*
+*ORG-DEV-OTOI-1.0.3 | templates/commit-message.md*

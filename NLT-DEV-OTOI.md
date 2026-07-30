@@ -1,6 +1,6 @@
 # NLT-DEV-OTOI — Organization-Wide Developer Orchestrated Terms of Interaction
 
-**Document ID:** ORG-DEV-OTOI-1.0.2
+**Document ID:** ORG-DEV-OTOI-1.0.3
 **Scope:** Organization-Wide (NeuroLift Technologies)
 **Repository:** `NeuroLift-Technologies/asfdk-harness`
 **Maintained by:** Joshua W. Dorsey, Sr. — Final authority on all architectural, deployment, and strategic decisions
@@ -71,7 +71,7 @@ Every agent beginning a session in any NLT repo should self-register using the f
     "entry_date":         "[ISO 8601 date, e.g. 2026-03-31]",
     "entry_point":        "[Which file, task, or conversation brought you in]",
     "acknowledged_otoi":  true,
-    "otoi_version":       "ORG-DEV-OTOI-1.0.2",
+    "otoi_version":       "ORG-DEV-OTOI-1.0.3",
     "working_repo":       "[e.g. NeuroLift-Technologies/some-repo]",
     "working_branch":     "[e.g. feature/my-feature]",
     "capabilities_self_reported": [
@@ -93,7 +93,7 @@ The standalone template is also available at `templates/agent-registration.json`
 
 ### 4.1 Session Start Protocol
 
-1. Read this document (ORG-DEV-OTOI-1.0.2)
+1. Read this document (ORG-DEV-OTOI-1.0.3)
 2. Read the repo-level CLAUDE.md (if present)
 3. Read `docs/active-threads.md` in the working repo (if present)
 4. Self-register (Section 3)
@@ -287,10 +287,10 @@ Agents may not self-amend this document.
 
 | Version | Date | Authorized By | Summary |
 |---|---|---|---|
-| ORG-DEV-OTOI-1.0.2 | 2026-06-01 | Joshua W. Dorsey, Sr. | Corrected full-name expansion of TOI and OTOI across all governance documents. TOI = "Terms of Interaction"; OTOI = "Orchestrated Terms of Interaction". Previous incorrect expansion ("Developer Operations & Team Orientation Index") removed from document title, agent-log README, skills reference copy, and contracts namespace. Synchronized `skills/nlt-otoi/references/NLT-DEV-OTOI.md` with root contract (added Section 4.1 step 6, Section 4.2 PR-only enforcement paragraph, Section 4.4 Pull Request guardrail). Implemented by Claude Code acting on behalf of Joshua W. Dorsey, Sr. |
+| ORG-DEV-OTOI-1.0.3 | 2026-06-01 | Joshua W. Dorsey, Sr. | Corrected full-name expansion of TOI and OTOI across all governance documents. TOI = "Terms of Interaction"; OTOI = "Orchestrated Terms of Interaction". Previous incorrect expansion ("Developer Operations & Team Orientation Index") removed from document title, agent-log README, skills reference copy, and contracts namespace. Synchronized `skills/nlt-otoi/references/NLT-DEV-OTOI.md` with root contract (added Section 4.1 step 6, Section 4.2 PR-only enforcement paragraph, Section 4.4 Pull Request guardrail). Implemented by Claude Code acting on behalf of Joshua W. Dorsey, Sr. |
 | ORG-DEV-OTOI-1.0.1 | 2026-05-28 | Joshua W. Dorsey, Sr. | Added PR-only workflow guardrail (Section 4.4), updated Session Start Protocol to require feature branch (Section 4.1 step 6), clarified commit format to explicitly require PR delivery (Section 4.2). |
 | ORG-DEV-OTOI-1.0.0 | 2026-03-31 | Joshua W. Dorsey, Sr. | Initial release of org-wide governance contract. |
 
 ---
 
-*ORG-DEV-OTOI-1.0.2 | NeuroLift Technologies | Governed by Solidarity Framework & HAIEF*
+*ORG-DEV-OTOI-1.0.3 | NeuroLift Technologies | Governed by Solidarity Framework & HAIEF*

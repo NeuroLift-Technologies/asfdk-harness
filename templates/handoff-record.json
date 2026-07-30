@@ -4,7 +4,7 @@
     "agent_name":         "[Agent name / platform]",
     "date":               "[ISO 8601 date, e.g. 2026-03-31]",
     "timestamp":          "[ISO 8601 timestamp, e.g. 2026-03-31T14:22:11Z]",
-    "otoi_version":       "ORG-DEV-OTOI-1.0.2",
+    "otoi_version":       "ORG-DEV-OTOI-1.0.3",
     "repo":               "[Repository worked in, e.g. NeuroLift-Technologies/some-repo]",
     "branch":             "[Branch name]",
     "work_completed": [

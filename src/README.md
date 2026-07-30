@@ -51,7 +51,7 @@ User → Agent runtime (Pi, ...) → index.ts (hooks/tools)
 
 ## Governance
 
-This repo is governed by **ORG-DEV-OTOI-1.0.2** (Solidarity Framework / HAIEF).
+This repo is governed by **ORG-DEV-OTOI-1.0.3** (Solidarity Framework / HAIEF).
 
 - Agent guidance: `AGENTS.md` (this directory) and `../AGENTS.md` (repo root)
 - Claude Code guidance: `CLAUDE.md` (this directory) and `../CLAUDE.md` (repo root)
