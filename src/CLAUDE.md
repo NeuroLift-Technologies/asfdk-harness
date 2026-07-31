@@ -2,7 +2,7 @@
 
 > **You are inside the source layer of a governed NLT repository.**
 > Root governance applies here. Read in order before touching any file:
-> 1. `../NLT-DEV-OTOI.md` — org-level agent contract (ORG-DEV-OTOI-1.0.2)
+> 1. `../NLT-DEV-OTOI.md` — org-level agent contract (ORG-DEV-OTOI-1.0.3)
 > 2. `../CLAUDE.md` — repo context, commands, key paths
 > 3. `../docs/active-threads.md` — current open work
 >

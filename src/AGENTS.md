@@ -4,7 +4,7 @@
 
 ## Mandatory reading order
 
-1. `../NLT-DEV-OTOI.md` — org-level coding agent contract (ORG-DEV-OTOI-1.0.2)
+1. `../NLT-DEV-OTOI.md` — org-level coding agent contract (ORG-DEV-OTOI-1.0.3)
 2. `../AGENTS.md` — repo gateway (commit format, guardrails, handoff protocol)
 3. `../docs/active-threads.md` — current open work
 
@@ -60,4 +60,4 @@ Types: `feat`, `fix`, `docs`, `refactor`, `chore`, `test`, `ci`
 
 Feature branch → Pull Request only. Never push directly to `main`.
 
-Governed by Solidarity Framework | HAIEF | ORG-DEV-OTOI-1.0.2
+Governed by Solidarity Framework | HAIEF | ORG-DEV-OTOI-1.0.3
