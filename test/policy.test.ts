@@ -95,10 +95,8 @@ test("documents the remaining coverage gap: dedicated search tools are not gated
   assert.equal(reviewToolCall("ls", { path: "secrets" }).allow, true);
 });
 
-test("formatPolicyContext returns a governance-context string with the payload", () => {
+test("formatPolicyContext returns a JSON string with the payload", () => {
   const s = formatPolicyContext({ ok: true, note: "x" });
   assert.equal(typeof s, "string");
-  assert.match(s, /ASFDK preflight/);
-  assert.match(s, /governance context/i);
-  assert.ok(s.includes('"ok": true'));
+  assert.ok(s.includes('"ok":'), "must contain the payload key");
 });

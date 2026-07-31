@@ -36,6 +36,10 @@ export interface ProtocolLoadOptions {
   cwd?: string;
   toiPath?: string;
   otoiPath?: string;
+  /** Inline TOI JSON string — bypasses filesystem read (used in Workers environment). */
+  toiContent?: string;
+  /** Inline OTOI JSON string — bypasses filesystem read (used in Workers environment). */
+  otoiContent?: string;
 }
 
 export interface GovernanceProtocolContext {
@@ -50,6 +54,8 @@ export interface GovernanceProtocolContext {
   effectiveToi?: ToiDocument;
   devOtoi?: Record<string, unknown>;
 }
+
+export type PromptMode = "compact" | "full";
 
 export interface GovernanceProtocolSnapshot {
   cwd: string;
@@ -93,7 +99,7 @@ export async function loadGovernanceProtocols(options: ProtocolLoadOptions = {})
   let charter: OtoiCharter | undefined;
   let effectivePolicy: EffectivePolicy | undefined;
 
-  const toiText = await readOptionalFile(toiPath);
+  const toiText = options.toiContent ?? (await readOptionalFile(toiPath));
   if (toiText === undefined) {
     diagnostics.push(`No .toi document found at ${toiPath}`);
   } else {
@@ -105,7 +111,7 @@ export async function loadGovernanceProtocols(options: ProtocolLoadOptions = {})
     }
   }
 
-  const otoiText = await readOptionalFile(otoiPath);
+  const otoiText = options.otoiContent ?? (await readOptionalFile(otoiPath));
   if (otoiText === undefined) {
     diagnostics.push(`No .otoi charter found at ${otoiPath}`);
   } else {
@@ -113,7 +119,14 @@ export async function loadGovernanceProtocols(options: ProtocolLoadOptions = {})
       charter = otoi.parseCharter(JSON.parse(otoiText));
       protocols.push("local-otoi-charter");
       effectivePolicy = await otoi.honor(charter, {
-        loadSource: (uri) => readFile(resolveSourceUri(dirname(otoiPath), uri), "utf8"),
+        loadSource: (uri) => {
+          // When inline TOI content is available, serve it for any .toi source URI
+          // instead of hitting the filesystem (required in Workers environment).
+          if (options.toiContent && (uri.endsWith(".toi") || uri.endsWith(".toi.default"))) {
+            return Promise.resolve(options.toiContent);
+          }
+          return readFile(resolveSourceUri(dirname(otoiPath), uri), "utf8");
+        },
       });
       protocols.push("otoi-honor-resolution");
     } catch (error) {
@@ -173,8 +186,45 @@ export function createProtocolSnapshot(context: GovernanceProtocolContext): Gove
   };
 }
 
-export function formatProtocolSystemPrompt(context: GovernanceProtocolContext): string {
+export function formatProtocolSystemPrompt(
+  context: GovernanceProtocolContext,
+  promptMode: PromptMode = "compact",
+): string {
   const snapshot = createProtocolSnapshot(context);
+
+  if (promptMode === "compact") {
+    const compactLines: string[] = [
+      `ASFDK protocol layer active. Protocols: ${snapshot.protocols.join(", ")}.`,
+    ];
+
+    if (snapshot.toi) {
+      compactLines.push(
+        `TOI: author=${snapshot.toi.author ?? "unknown"}, tier=${snapshot.toi.tier ?? "unspecified"}`,
+      );
+    }
+
+    if (snapshot.otoi) {
+      const enforcement = snapshot.otoi.enforcement?.mode ?? "enforced";
+      compactLines.push(
+        `OTOI: agents=[${snapshot.otoi.agents.join(", ")}], enforcement=${enforcement}`,
+      );
+    }
+
+    const guardrails = stringArray(asRecord(context.devOtoi)?.guardrails);
+    if (guardrails.length) {
+      compactLines.push(`Developer OTOI: ${guardrails.length} guardrails active`);
+    }
+
+    const authority = asRecord(asRecord(context.devOtoi)?.authority);
+    const finalDecisionMaker = stringValue(authority?.final_decision_maker);
+    const principle = stringValue(authority?.principle) ?? stringValue(authority?.escalation_rule);
+    if (finalDecisionMaker) {
+      compactLines.push(`Authority: ${finalDecisionMaker} — ${principle ?? "escalate instead of guessing"}`);
+    }
+
+    return compactLines.join("\n");
+  }
+
   const lines = [
     "ASFDK local and third-party protocol registry layer is active.",
     "Use local file, Pi extension, SDK/CLI, ASFDK tool-policy, and approved third-party interop protocols. MCP work is owned by a separate active thread and should not be modified from this layer.",

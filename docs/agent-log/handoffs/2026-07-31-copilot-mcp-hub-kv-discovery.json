@@ -1,0 +1,75 @@
+{
+  "handoff_record": {
+    "session_id": "copilot-mcp-hub-2026-07-31",
+    "agent_name": "Copilot (GitHub Copilot CLI — claude-sonnet-4.6)",
+    "date": "2026-07-31",
+    "repos_touched": [
+      "Desktop/asfdk-agents",
+      "Desktop/nlt-repos/asfdk-harness"
+    ],
+    "work_completed": [
+      "Installed asfdk-harness MCP server into ~/.copilot/mcp.json (Cloudflare Worker URL + bearer token)",
+      "Verified Cloudflare Worker MCP endpoint healthy (6 tools, asfdk_status → unified mode)",
+      "Added ASFDK_TOI_CONTENT / ASFDK_OTOI_CONTENT Wrangler secrets (fallback path)",
+      "Uploaded .toi and .otoi contents to GOVERNANCE KV namespace (keys: 'toi', 'otoi') as primary source",
+      "Added toiContent/otoiContent options to AsfdkHarnessOptions and ProtocolLoadOptions in harness.ts + protocols.ts",
+      "Updated protocols.ts loadSource callback to serve inline TOI content when honoring OTOI (fixes readFile failure in Workers)",
+      "Updated server.ts getMcpHarness() to read from GOVERNANCE KV first, secrets as fallback",
+      "Added handleMcpRequest(env) signature to pass KV-loaded content through",
+      "Verified: diagnostics cleared, TOI author=Joshua Dorsey, OTOI agents=[asfdk-harness, codex], otoi-honor-resolution protocol active",
+      "Added asfdk_discovery_hub tool + asfdk-discovery://hub resource to mcp-server.ts — advertises hub URL to all connecting agents",
+      "Added asfdk-a2a-hub MCP server entry to ~/.copilot/mcp.json",
+      "Rewrote asfdk-agents/src/index.ts as live A2A Discovery Hub (was: static hardcoded card server)",
+      "Hub features: POST /a2a/register, DELETE /a2a/register/:id, GET /a2a/agents, GET /a2a/agents/:id, POST /mcp",
+      "MCP tools: register_agent, deregister_agent, list_agents, get_agent",
+      "Added file persistence: agents/registry.json written on every register/deregister, loaded on startup",
+      "Added agent directory scaffolding: agents/<id>/profile.md + log.md auto-created on first registration (mirrors senior-dev-hub pattern)",
+      "Registered asfdk-harness in the hub with its live TOI/OTOI-derived A2A card",
+      "Deployed updated asfdk-harness Worker (version cc75da2c, then e925c9e1)",
+      "Verified hub survives restart — asfdk-harness reloads from disk"
+    ],
+    "work_in_progress": [],
+    "blockers": [],
+    "decisions_made": [
+      "TOI/OTOI storage: GOVERNANCE KV (primary, updatable without redeploy) with Wrangler secrets as fallback — not filesystem paths",
+      "asfdk-agents is the live upgraded replacement for senior-dev-hub's static agent registry — same agent dir pattern but API/MCP-driven and persistent",
+      "asfdk_discovery_hub tool in asfdk-harness MCP ensures every connecting agent automatically learns the hub exists",
+      "Hub registry is in-memory + file-backed (agents/registry.json) — not a database",
+      "Agent directories are scaffolded at registration time with profile.md (from A2A card) and log.md (blank journal)"
+    ],
+    "decisions_pending": [
+      "Should the hub be deployed to Cloudflare (persistent, remote) or stay local-only?",
+      "Should agent log.md updates be part of a future /a2a/log endpoint?",
+      "Auth for the hub — currently open, no bearer token"
+    ],
+    "escalations": [],
+    "files_modified": {
+      "Desktop/nlt-repos/asfdk-harness/src/harness.ts": "Added toiContent, otoiContent fields to AsfdkHarnessOptions and AsfdkHarness class",
+      "Desktop/nlt-repos/asfdk-harness/src/protocols.ts": "Added toiContent, otoiContent to ProtocolLoadOptions; inline content bypasses readFile; loadSource serves inline TOI for OTOI honor",
+      "Desktop/nlt-repos/asfdk-harness/src/server.ts": "getMcpHarness reads from GOVERNANCE KV first; passes content to harness; handleMcpRequest takes env",
+      "Desktop/nlt-repos/asfdk-harness/src/mcp-server.ts": "Added asfdk_discovery_hub tool + asfdk-discovery://hub resource",
+      "Desktop/asfdk-agents/src/index.ts": "Full rewrite — live registry hub with persistence, agent dir scaffolding, REST + MCP API",
+      "~/.copilot/mcp.json": "Created — asfdk-harness (Cloudflare) + asfdk-a2a-hub (localhost:3001)"
+    },
+    "wrangler_secrets_set": [
+      "ASFDK_TOI_CONTENT (fallback, content of .toi)",
+      "ASFDK_OTOI_CONTENT (fallback, content of .otoi)"
+    ],
+    "kv_keys_set": [
+      "GOVERNANCE KV / 'toi' — full .toi JSON",
+      "GOVERNANCE KV / 'otoi' — full .otoi JSON"
+    ],
+    "worker_versions_deployed": [
+      "cc75da2c-f076-45e4-adcf-08670dc6f611 (KV loading + server.ts env wiring)",
+      "e925c9e1-9d16-4f14-a822-b0ab78bb5b76 (asfdk_discovery_hub tool)"
+    ],
+    "hub_state": {
+      "url": "http://localhost:3001",
+      "registered_agents": ["asfdk-harness"],
+      "registry_file": "Desktop/asfdk-agents/agents/registry.json",
+      "agent_dirs": ["Desktop/asfdk-agents/agents/asfdk-harness/"]
+    },
+    "next_agent_notes": "Hub is running at localhost:3001 (npm run dev in Desktop/asfdk-agents). asfdk-harness is registered. Any new agent that connects to the asfdk-harness MCP will get the hub URL via asfdk_discovery_hub, then can call register_agent on the hub to join and get their own directory. The local MCP server (npm run mcp in asfdk-harness) still works off .toi/.otoi from disk — no changes there.",
+    "otoi_version": "ORG-DEV-OTOI-1.0.2"
+  }
+}

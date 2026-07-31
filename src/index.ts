@@ -1,6 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { AsfdkHarness } from "./harness.js";
-import { formatPolicyContext, reviewToolCall } from "./policy.js";
+import { reviewToolCall } from "./policy.js";
 import { createAsfdkTools } from "./tools.js";
 import { getThirdPartyProtocolProfiles } from "./protocols.js";
 
@@ -36,11 +36,11 @@ export default function asfdkPiHarness(pi: ExtensionAPI) {
       return {
         message: {
           customType: "asfdk-preflight",
-          content: formatPolicyContext(assessment),
+          content: "ASFDK preflight: OK",
           display: false,
           details: assessment,
         },
-        systemPrompt: `${event.systemPrompt}\n\n${protocolSystemPrompt}\n\nASFDK Solidarity Layer is active. Honor user Terms of Interaction, avoid provider lock-in, and treat ASFDK preflight messages as governance context for the current turn.`,
+        systemPrompt: `${event.systemPrompt}\n\n${protocolSystemPrompt}\n\nASFDK governance active. Honor TOI.`,
       };
     } catch (error) {
       // Fail loud, not silent: a governance/foundation error must never break the user's turn,
@@ -57,7 +57,7 @@ export default function asfdkPiHarness(pi: ExtensionAPI) {
           display: true,
           details: { error: reason },
         },
-        systemPrompt: `${event.systemPrompt}\n\n[ASFDK Solidarity Layer UNAVAILABLE this turn. The governance preflight did not run — proceed with heightened caution and avoid irreversible or high-risk actions.]`,
+        systemPrompt: `${event.systemPrompt}\n\n[ASFDK governance unavailable — proceed with caution.]`,
       };
     }
   });

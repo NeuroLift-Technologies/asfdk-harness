@@ -716,6 +716,86 @@ Do NOT expose this raw output directly to end users without redacting sensitive 
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Tool: asfdk_discovery_hub
+  // Advertises the A2A discovery hub so every client that connects to this MCP
+  // server automatically knows where agents register and find each other.
+  // ---------------------------------------------------------------------------
+  const hubUrl = process.env.ASFDK_A2A_HUB_URL ?? "http://localhost:3001";
+
+  server.registerTool(
+    "asfdk_discovery_hub",
+    {
+      title: "ASFDK Discovery Hub",
+      description: `Return connection details for the ASFDK A2A discovery hub.
+
+The hub is the central registry where governed MCP servers register their A2A Agent
+Cards and agents discover each other.
+
+Use this tool to:
+  - Find the hub URL before calling register_agent or list_agents on the hub.
+  - Confirm the hub is reachable before peer-agent discovery.
+  - Share hub coordinates with another agent during A2A delegation.
+
+Returns:
+  {
+    url:         string,   // Base URL of the hub
+    mcp:         string,   // MCP endpoint (POST)
+    register:    string,   // A2A registration endpoint (POST)
+    agents:      string,   // Agent list endpoint (GET)
+    health:      string,   // Health check endpoint (GET)
+    description: string
+  }
+
+Do NOT use this tool to actually register or query agents — use the hub's own MCP
+tools (register_agent, list_agents, get_agent) for that.`,
+      inputSchema: {},
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async () => {
+      const info = {
+        url: hubUrl,
+        mcp: `${hubUrl}/mcp`,
+        register: `${hubUrl}/a2a/register`,
+        agents: `${hubUrl}/a2a/agents`,
+        health: `${hubUrl}/health`,
+        description: "ASFDK A2A Discovery Hub — register and discover governed agents",
+      };
+      return {
+        content: [{ type: "text", text: JSON.stringify(info, null, 2) }],
+        structuredContent: info,
+      };
+    }
+  );
+
+  // Resource alias for the hub config
+  server.registerResource(
+    "asfdk-discovery-hub",
+    "asfdk-discovery://hub",
+    {
+      description: "ASFDK A2A Discovery Hub — connection details for agent registration and discovery",
+      mimeType: "application/json",
+    },
+    async () => ({
+      contents: [{
+        uri: "asfdk-discovery://hub",
+        mimeType: "application/json",
+        text: JSON.stringify({
+          url: hubUrl,
+          mcp: `${hubUrl}/mcp`,
+          register: `${hubUrl}/a2a/register`,
+          agents: `${hubUrl}/a2a/agents`,
+          health: `${hubUrl}/health`,
+        }, null, 2),
+      }],
+    })
+  );
+
   return server;
 }
 
