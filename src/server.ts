@@ -23,10 +23,19 @@ function authorizeRequest(request: Request, env: Env): string | Response {
   return presentedToken;
 }
 
-async function getMcpHarness(): Promise<AsfdkHarness> {
+async function getMcpHarness(env: Env): Promise<AsfdkHarness> {
   if (!mcpHarnessPromise) {
     mcpHarnessPromise = (async () => {
-      const harness = new AsfdkHarness();
+      const extEnv = env as Env & { ASFDK_TOI_CONTENT?: string; ASFDK_OTOI_CONTENT?: string };
+      // Prefer KV-stored content (updatable without redeploy); fall back to secrets.
+      const [kvToi, kvOtoi] = await Promise.all([
+        (env as Env & { GOVERNANCE: KVNamespace }).GOVERNANCE.get("toi"),
+        (env as Env & { GOVERNANCE: KVNamespace }).GOVERNANCE.get("otoi"),
+      ]);
+      const harness = new AsfdkHarness({
+        toiContent: kvToi ?? extEnv.ASFDK_TOI_CONTENT,
+        otoiContent: kvOtoi ?? extEnv.ASFDK_OTOI_CONTENT,
+      });
       await harness.start();
       return harness;
     })();
@@ -38,8 +47,8 @@ async function getMcpHarness(): Promise<AsfdkHarness> {
 // Stateless Streamable HTTP requires a fresh server + transport per request;
 // the SDK throws "Stateless transport cannot be reused across requests" otherwise.
 // Only the harness (expensive ASFDK init) is memoized and shared.
-async function handleMcpRequest(request: Request): Promise<Response> {
-  const server = createMcpServer(await getMcpHarness());
+async function handleMcpRequest(request: Request, env: Env): Promise<Response> {
+  const server = createMcpServer(await getMcpHarness(env));
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
   });
@@ -60,7 +69,7 @@ export default {
 
     const url = new URL(request.url);
     if (url.pathname === MCP_PATH) {
-      return handleMcpRequest(request);
+      return handleMcpRequest(request, env);
     }
 
     return (

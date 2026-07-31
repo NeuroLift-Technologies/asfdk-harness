@@ -67,10 +67,5 @@ export function reviewToolCall(toolName: string, input: Record<string, unknown>)
 }
 
 export function formatPolicyContext(assessment: unknown): string {
-  return [
-    "ASFDK preflight completed for this turn.",
-    "Treat this as governance context, not as user-visible diagnosis.",
-    "Assessment payload:",
-    JSON.stringify(assessment, null, 2),
-  ].join("\n");
+  return JSON.stringify(assessment);
 }

@@ -7,6 +7,7 @@ import {
   loadGovernanceProtocols,
   type GovernanceProtocolContext,
   type GovernanceProtocolSnapshot,
+  type PromptMode,
 } from "./protocols.js";
 import { createA2AAgentCard, type A2AAgentCard } from "./a2a.js";
 import { loadAsfdk } from "./asfdk-runtime.js";
@@ -38,8 +39,14 @@ export interface AsfdkHarnessOptions {
   cwd?: string;
   toiPath?: string;
   otoiPath?: string;
+  /** Inline TOI JSON string — bypasses filesystem read (used in Workers environment). */
+  toiContent?: string;
+  /** Inline OTOI JSON string — bypasses filesystem read (used in Workers environment). */
+  otoiContent?: string;
   /** Public A2A service endpoint URL advertised on the generated Agent Card. */
   a2aUrl?: string;
+  /** Protocol system prompt verbosity: compact (default, ~5 lines) or full (verbose). */
+  promptMode?: PromptMode;
 }
 
 export interface TextAssessment {
@@ -54,7 +61,10 @@ export class AsfdkHarness {
   readonly cwd: string;
   readonly toiPath: string | undefined;
   readonly otoiPath: string | undefined;
+  readonly toiContent: string | undefined;
+  readonly otoiContent: string | undefined;
   readonly a2aUrl: string | undefined;
+  readonly promptMode: PromptMode;
 
   #foundation: NeuroLiftFoundation | undefined;
   #protocolContext: GovernanceProtocolContext | undefined;
@@ -66,7 +76,10 @@ export class AsfdkHarness {
     this.cwd = options.cwd ?? process.cwd();
     this.toiPath = options.toiPath ?? process.env.ASFDK_TOI_PATH;
     this.otoiPath = options.otoiPath ?? process.env.ASFDK_OTOI_PATH;
+    this.toiContent = options.toiContent ?? process.env.ASFDK_TOI_CONTENT;
+    this.otoiContent = options.otoiContent ?? process.env.ASFDK_OTOI_CONTENT;
     this.a2aUrl = options.a2aUrl ?? process.env.ASFDK_A2A_URL;
+    this.promptMode = options.promptMode ?? parsePromptMode(process.env.ASFDK_PROMPT_MODE) ?? "compact";
   }
 
   async start(): Promise<void> {
@@ -193,6 +206,8 @@ export class AsfdkHarness {
       cwd: targetCwd,
       toiPath: this.toiPath,
       otoiPath: this.otoiPath,
+      toiContent: this.toiContent,
+      otoiContent: this.otoiContent,
     });
     return this.#protocolContext;
   }
@@ -201,8 +216,8 @@ export class AsfdkHarness {
     return createProtocolSnapshot(await this.protocolContext(cwd));
   }
 
-  async protocolSystemPrompt(cwd?: string): Promise<string> {
-    return formatProtocolSystemPrompt(await this.protocolContext(cwd));
+  async protocolSystemPrompt(cwd?: string, promptMode?: PromptMode): Promise<string> {
+    return formatProtocolSystemPrompt(await this.protocolContext(cwd), promptMode ?? this.promptMode);
   }
 
   async a2aAgentCard(cwd?: string): Promise<A2AAgentCard> {
@@ -286,6 +301,13 @@ export function parseFoundationMode(value: string | undefined): FoundationMode |
   if (!value) return undefined;
   const normalized = value.trim().toLowerCase();
   return Object.values(FoundationMode).find((mode) => mode === normalized);
+}
+
+export function parsePromptMode(value: string | undefined): PromptMode | undefined {
+  if (!value) return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "compact" || normalized === "full") return normalized;
+  return undefined;
 }
 
 export function summarizeFoundationResponse(response: FoundationResponse): string {

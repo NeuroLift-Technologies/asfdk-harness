@@ -74,7 +74,7 @@ test("before_agent_start injects the governance system prompt and a hidden prefl
       systemPromptOptions: { cwd: process.cwd(), selectedTools: [] },
     });
     assert.ok(res?.systemPrompt.startsWith("BASE_PROMPT"), "must preserve the base system prompt");
-    assert.match(res.systemPrompt, /ASFDK Solidarity Layer/, "must inject the Solidarity governance note");
+    assert.match(res.systemPrompt, /ASFDK governance active/, "must inject the governance note");
     assert.equal(res.message.customType, "asfdk-preflight");
     assert.equal(res.message.display, false, "preflight context must be hidden from the user");
   } finally {
