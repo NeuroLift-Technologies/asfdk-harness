@@ -2,6 +2,14 @@ import { randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import {
+  Channel,
+  FoundationMode,
+  InteractionType,
+  type FoundationResponse,
+  type HealthCheckResult,
+  type NeuroLiftFoundation,
+} from "@neurolift-technologies/asfdk";
+import {
   createProtocolSnapshot,
   formatProtocolSystemPrompt,
   loadGovernanceProtocols,
@@ -12,25 +20,10 @@ import {
 import { createA2AAgentCard, type A2AAgentCard } from "./a2a.js";
 import { loadAsfdk } from "./asfdk-runtime.js";
 
-export const FoundationMode = {
-  UNIFIED: "unified",
-  CRISIS_ONLY: "crisis-only",
-  CONTINUITY_ONLY: "continuity-only",
-  FRAMEWORK_ONLY: "framework-only",
-  DEVELOPMENT: "development",
-} as const;
-export type FoundationMode = (typeof FoundationMode)[keyof typeof FoundationMode];
-export const InteractionType = {
-  EMOTIONAL_ASSESSMENT: "emotional_assessment",
-  CRISIS_ALERT: "crisis_alert",
-  PREFERENCE_UPDATE: "preference_update",
-  OPTIMIZATION_REQUEST: "optimization_request",
-  STATUS_INQUIRY: "status_inquiry",
-  EMERGENCY_ESCALATION: "emergency_escalation",
-} as const;
-export type FoundationResponse = any;
-export type HealthCheckResult = any;
-type NeuroLiftFoundation = any;
+// Re-export the shared provenance surface so tools.ts / mcp-server.ts / tests
+// consume ONE canonical enum set from the harness boundary (plan C5/L1).
+export { Channel, FoundationMode, InteractionType };
+export type { FoundationResponse, HealthCheckResult };
 
 export interface AsfdkHarnessOptions {
   userId?: string;
@@ -72,7 +65,18 @@ export class AsfdkHarness {
   constructor(options: AsfdkHarnessOptions = {}) {
     this.userId = options.userId ?? process.env.ASFDK_USER_ID ?? "asfdk-user";
     this.sessionId = options.sessionId ?? process.env.ASFDK_SESSION_ID ?? randomUUID();
-    this.mode = options.mode ?? parseFoundationMode(process.env.ASFDK_MODE) ?? FoundationMode.UNIFIED;
+    const envMode = process.env.ASFDK_MODE;
+    const resolvedOption = parseFoundationMode(options.mode as string | undefined);
+    const resolvedEnv = parseFoundationMode(envMode);
+    // T16 fail-loud: an explicit but unrecognized ASFDK_MODE must not silently
+    // degrade to UNIFIED — surfacing the misconfiguration beats running with
+    // the wrong Solidarity posture.
+    if (envMode && !resolvedEnv) {
+      throw new Error(
+        `Unrecognized foundation mode: '${envMode}'. Valid modes: ${Object.values(FoundationMode).join(", ")}`,
+      );
+    }
+    this.mode = resolvedOption ?? resolvedEnv ?? FoundationMode.UNIFIED;
     this.cwd = options.cwd ?? process.cwd();
     this.toiPath = options.toiPath ?? process.env.ASFDK_TOI_PATH;
     this.otoiPath = options.otoiPath ?? process.env.ASFDK_OTOI_PATH;
@@ -99,7 +103,7 @@ export class AsfdkHarness {
       }
     }
     const { createFoundation } = await loadAsfdk();
-    this.#foundation = await createFoundation(this.userId, this.mode as never);
+    this.#foundation = await createFoundation(this.userId, this.mode);
   }
 
   async shutdown(): Promise<void> {
@@ -123,11 +127,12 @@ export class AsfdkHarness {
     return { ...status, protocols: redactedProtocols };
   }
 
-  async assessText(text: string, context: Record<string, unknown> = {}): Promise<TextAssessment> {
+  async assessText(text: string, context: Record<string, unknown> = {}, channel?: Channel): Promise<TextAssessment> {
     const foundation = await this.foundation();
+    const resolvedChannel = resolveChannel(channel);
     let emotionalState: unknown = null;
     try {
-      emotionalState = await foundation.assessEmotionalState(text, context);
+      emotionalState = await foundation.assessEmotionalState(text, context, resolvedChannel);
     } catch (error) {
       emotionalState = { error: "emotional-assessment-unavailable", detail: String(error) };
     }
@@ -140,6 +145,7 @@ export class AsfdkHarness {
         userId: this.userId,
         sessionId: this.sessionId,
         context,
+        channel: resolvedChannel,
       });
       if (interaction?.content?.error) {
         interaction.success = false;
@@ -152,7 +158,7 @@ export class AsfdkHarness {
           responseType: InteractionType.EMOTIONAL_ASSESSMENT,
           componentsInvolved: ["asfdk_foundation"],
           content: { error: { component: "asfdk_foundation", message: String(error) }, data: { text } },
-          timestamp: new Date().toISOString(),
+          timestamp: new Date(),
         },
         emotionalState,
       };
@@ -160,9 +166,10 @@ export class AsfdkHarness {
   }
 
   async processInteraction(
-    interactionType: string,
+    interactionType: InteractionType,
     data: Record<string, unknown>,
     context: Record<string, unknown> = {},
+    channel?: Channel,
   ): Promise<FoundationResponse> {
     const foundation = await this.foundation();
     try {
@@ -173,6 +180,7 @@ export class AsfdkHarness {
         userId: this.userId,
         sessionId: this.sessionId,
         context,
+        channel: resolveChannel(channel),
       });
       // Bug B: set success=false when any component reported an error
       if (response?.content?.error) {
@@ -189,7 +197,7 @@ export class AsfdkHarness {
           error: { component: "asfdk_foundation", message: String(error) },
           data,
         },
-        timestamp: new Date().toISOString(),
+        timestamp: new Date(),
       };
     }
   }
@@ -297,10 +305,50 @@ export function canExposeSensitiveGovernanceTools(mode: FoundationMode): boolean
   return mode === FoundationMode.DEVELOPMENT || process.env.ASFDK_GOVERNANCE_TOOLS === "approved";
 }
 
+const LEGACY_FOUNDATION_MODES: Record<string, FoundationMode> = {
+  "crisis-only": FoundationMode.CRISIS_ONLY,
+  "continuity-only": FoundationMode.CONTINUITY_ONLY,
+  "framework-only": FoundationMode.FRAMEWORK_ONLY,
+};
+
 export function parseFoundationMode(value: string | undefined): FoundationMode | undefined {
   if (!value) return undefined;
   const normalized = value.trim().toLowerCase();
-  return Object.values(FoundationMode).find((mode) => mode === normalized);
+  if ((Object.values(FoundationMode) as string[]).includes(normalized)) {
+    return normalized as FoundationMode;
+  }
+  // Legacy 0.1.x dashed spellings map onto the canonical foundation enum (H4/I4).
+  return LEGACY_FOUNDATION_MODES[normalized];
+}
+
+const CHANNEL_VALUES = new Set<string>(Object.values(Channel) as string[]);
+
+/**
+ * Coerces an arbitrary runtime value to the shared Channel enum. Exact closed
+ * members pass through; every malformed value collapses to UNKNOWN. Never
+ * elevates (D2/D4) — mirrors the foundation's normalizeChannel so the harness
+ * boundary enforces the same invariant even though the package does not export
+ * that helper.
+ */
+function resolveChannel(value: unknown): Channel {
+  return typeof value === "string" && CHANNEL_VALUES.has(value) ? (value as Channel) : Channel.UNKNOWN;
+}
+
+/**
+ * Tool-seam channel resolver (D4). Tools run on behalf of the model, never the
+ * user, so USER_INPUT must not be assertable at a tool seam: it is rejected
+ * loudly with warn telemetry. Every other value resolves through resolveChannel
+ * (malformed → UNKNOWN, never elevated).
+ */
+export function resolveToolSeamChannel(channel: unknown, warn: (message: string) => void = console.warn): Channel {
+  const resolved = resolveChannel(channel);
+  if (resolved === Channel.USER_INPUT) {
+    warn("ASFDK D4: tool-seam channel 'user_input' rejected — tools must not assert user input provenance.");
+    throw new Error(
+      "Tool-seam channel 'user_input' is not allowed (D4): user_input provenance is assignable only at harness-code seams (e.g. /asfdk-assess).",
+    );
+  }
+  return resolved;
 }
 
 export function parsePromptMode(value: string | undefined): PromptMode | undefined {

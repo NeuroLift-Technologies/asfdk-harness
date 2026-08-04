@@ -88,6 +88,23 @@
 
 ---
 
+### THREAD-009 — ASFDK provenance defense: channel classification (C5 harness wiring)
+| Field | Value |
+|---|---|
+| **Thread ID** | THREAD-009 |
+| **Status** | 🟡 In Progress |
+| **Started** | 2026-08-04 |
+| **Owner** | OpenCode CTO Orchestrator (background lane) |
+| **Branch** | `nlt/asfdk-harness-provenance-defense` (base `origin/main` @ `55c71e6`) |
+| **Task** | Implement plan `asfdk-provenance-defense` C5 (tasks 9-11): seam-assign channel provenance at the harness control-plane boundary — typed boundaries replacing `any`, channel pass-through (absent → `unknown`), mode-string normalization/fail-loud (T16), D4-restricted tool schemas (MCP/Pi/HTTP seams reject `user_input`), `index.ts` system/user_input tags — plus mandatory tests/build (`npm run check` / `npm run build` / `npm test`). |
+| **Scope** | `src/harness.ts`, `src/mcp-server.ts`, `src/index.ts`, `src/tools.ts`, `test/harness.test.ts`, `test/tools.test.ts`, `test/asfdk-wiring.test.ts`, this file (append) |
+| **Overlap scan (per plan §Current evidence)** | THREAD-001 (bootstrap — `src/` broad), THREAD-002 (MCP server — `src/mcp-server.ts`), THREAD-003 (interop protocols — `src/harness.ts`, `src/tools.ts`, `src/index.ts`) all scope C5 files. CROSS-REFERENCE: this thread's C5 edits are additive (optional `channel` params, legacy mode aliases, D4 validation on the `asfdk_assess_text`/`asfdk_process_interaction` schemas) and do NOT change the MCP tool set, protocol/A2A surfaces, or governance behavior. MCP ownership (THREAD-002) and protocol registry (THREAD-003) remain with those threads. THREAD-007 (control-plane reframe) unaffected. |
+| **Blockers** | None. Requires `@neurolift-technologies/asfdk` 0.2.2 local tarball install (unpublished window, D8). |
+| **Related PR** | TBD (tasks 13-14 are a separate lane — this lane makes NO commits/pushes) |
+| **Notes** | Plan tasks 9-11 only. Escalate-list untouched: `governance/*`, `authority/verify.ts`, `policy.ts`, `ASFDK_TOOL_SKILLS`, `src/cli.ts`, separate `GovernanceMode`/`ASFDK_GOVERNANCE_MODE` env. Verification: `npm run check` / `npm run build` / `npm test` green; `asfdk-wiring.test.ts` asserts asfdk >= 0.2.2 with file:-resolved allowed (D8, dated TODO to restore registry assertion on 0.2.2 publish). HTTP seams (`src/server.ts` `/mcp`, `src/mcp-http-server.ts`) covered via shared `createMcpServer` schemas — enumerated, not edited (H5). |
+
+---
+
 ## Resolved Threads
 
 ### THREAD-008 — PR #8 review fixes and conflict resolution

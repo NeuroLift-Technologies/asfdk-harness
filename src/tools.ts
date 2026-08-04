@@ -1,8 +1,10 @@
 import { Type, type Static } from "typebox";
 import type { AsfdkHarness } from "./harness.js";
 import {
+  Channel,
   InteractionType,
   canExposeSensitiveGovernanceTools,
+  resolveToolSeamChannel,
   summarizeFoundationResponse,
 } from "./harness.js";
 import {
@@ -15,6 +17,18 @@ import {
 export const AssessTextParams = Type.Object({
   text: Type.String({ description: "Free-text content to assess through ASFDK." }),
   context: Type.Optional(Type.Record(Type.String(), Type.Unknown(), { description: "Optional contextual metadata." })),
+  channel: Type.Optional(
+    Type.Union(
+      [
+        Type.Literal(Channel.USER_INPUT),
+        Type.Literal(Channel.MODEL_OUTPUT),
+        Type.Literal(Channel.TOOL_RESULT),
+        Type.Literal(Channel.SYSTEM),
+        Type.Literal(Channel.UNKNOWN),
+      ],
+      { description: "Channel the assessment arrives on (D4). user_input is rejected at the tool seam." },
+    ),
+  ),
 });
 
 export const PreferencesParams = Type.Object({
@@ -227,7 +241,8 @@ export function createAsfdkTools(harness: AsfdkHarness) {
       ],
       parameters: AssessTextParams,
       async execute(_toolCallId: string, params: AssessTextInput) {
-        const result = await harness.assessText(params.text, params.context ?? {});
+        const channel = resolveToolSeamChannel(params.channel, console.warn);
+        const result = await harness.assessText(params.text, params.context ?? {}, channel);
         return {
           content: [{ type: "text" as const, text: JSON.stringify(result, null, 2) }],
           details: result as unknown as Record<string, unknown>,
