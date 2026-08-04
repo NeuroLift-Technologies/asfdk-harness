@@ -1,0 +1,87 @@
+{
+  "handoff_record": {
+    "session_id": "ses_034c5e854ffeP20Omx3y2OdOfV",
+    "agent_name": "OpenCode CTO Orchestrator (big-pickle)",
+    "date": "2026-08-04",
+    "timestamp": "2026-08-04T06:00:00Z",
+    "otoi_version": "ORG-DEV-OTOI-1.0.3",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "nlt/asfdk-harness-provenance-defense",
+    "work_completed": [
+      "Executed plan `asfdk-provenance-defense` C5 (tasks 9-11): harness control-plane wiring — typed boundaries replacing `any` in harness.ts, channel pass-through (absent → `unknown`) in assessText/processInteraction, mode-string normalization/fail-loud (T16: `crisis-only` → `crisis_only`, `continuity-only` → `continuity`, `framework-only` → `framework`, unmatched → throw in non-DEVELOPMENT), D4-restricted tool schemas on mcp-server.ts + tools.ts (user_input rejected at tool seams with validation error + warn telemetry, default `unknown`), index.ts system/user_input channel tags",
+      "D8 dependency bump: @neurolift-technologies/asfdk ^0.2.0 → ^0.2.2 (package.json + package-lock.json)",
+      "asfdk-wiring.test.ts amended (D8): allow file:-resolved asfdk during unpublished window (dated TODO restore on publish) + assert version ≥ 0.2.2",
+      "Mandatory new coverage (M5): harness.test.ts + tools.test.ts + asfdk-wiring.test.ts extended for channel param, mode normalization, D4 restriction",
+      "67/67 npm test green; npm run check + npm run build clean (npm toolchain per CLAUDE.md)",
+      "Installed 0.2.2 --no-save into harness node_modules (verified real dir, NOT symlink); post-restart control plane verified live (foundation-ready + message-assessment channel=model_output, log run 4520e8d3; asfdk_status/asfdk_health_check healthy)",
+      "Committed + pushed branch; opened PR #20 (https://github.com/NeuroLift-Technologies/asfdk-harness/pull/20)",
+      "docs/active-threads.md THREAD-009 marked ✅ Complete with PR link"
+    ],
+    "work_in_progress": [
+      "None — PR #20 awaiting review/merge (merge order: asfdk PR #24 first, then harness #20)"
+    ],
+    "blockers": [
+      "None. D8 tarball install completed (step-12 sign-off recorded in ledger)"
+    ],
+    "decisions_made": [
+      {
+        "decision": "Typed boundaries replacing `any` in harness.ts (harness.ts:31-33); channel pass-through on assessText/processInteraction",
+        "rationale": "D4 trust assignment must be seam-visible at the harness boundary; any types hid the channel provenance from the control plane",
+        "made_by": "OpenCode CTO Orchestrator (plan C5)"
+      },
+      {
+        "decision": "Mode-string normalization/fail-loud (T16): `crisis-only` → `crisis_only`, `continuity-only` → `continuity`, `framework-only` → `framework`, unmatched → throw in non-DEVELOPMENT",
+        "rationale": "Repairs latent inconsistency where cli.ts documents ASFDK_MODE values the old harness parser silently rejected; never silent all-off",
+        "made_by": "OpenCode CTO Orchestrator (swe H4 fold)"
+      },
+      {
+        "decision": "D4-restricted tool schemas: user_input rejected at MCP/Pi/HTTP seams (validation error + warn telemetry, default unknown)",
+        "rationale": "Tool seams may NOT assert user_input per D4; only harness-code seams (/asfdk-assess) can",
+        "made_by": "OpenCode CTO Orchestrator (plan C5 + D4)"
+      }
+    ],
+    "decisions_pending": [
+      {
+        "decision": "npm publish of @neurolift-technologies/asfdk 0.2.2 (restores registry-only assertion in asfdk-wiring.test.ts; dated TODO to restore)",
+        "owner": "Joshua W. Dorsey, Sr.",
+        "urgency": "MEDIUM"
+      },
+      {
+        "decision": "Python parity timeline + owner (asfdk AGENTS.md calls Python core 'Main product') — deferred",
+        "owner": "Joshua W. Dorsey, Sr.",
+        "urgency": "LOW"
+      }
+    ],
+    "escalations": [
+      {
+        "topic": "None — no escalations raised during this lane",
+        "status": "not-required",
+        "issue_url": null
+      }
+    ],
+    "next_agent_notes": "PR #20 is decision-complete, fully verified (67/67 tests, npm check/build clean, live runtime proof in log run 4520e8d3). Merge AFTER asfdk PR #24 (harness wiring test asserts asfdk >= 0.2.2; file:-resolved allowed during unpublished window). After merge: no follow-up work required in this repo until Enforce phase. Escalate-list untouched: governance/*, authority/verify.ts, policy.ts, ASFDK_TOOL_SKILLS, src/cli.ts. Rollback: revert PR #20 + asfdk PR #24, reinstall 0.2.0/0.2.1 into harness node_modules, restart.",
+    "files_modified": [
+      "docs/active-threads.md",
+      "package.json",
+      "package-lock.json",
+      "src/harness.ts",
+      "src/index.ts",
+      "src/mcp-server.ts",
+      "src/tools.ts",
+      "test/asfdk-wiring.test.ts",
+      "test/harness.test.ts",
+      "test/tools.test.ts"
+    ],
+    "files_created": [],
+    "files_deleted": [],
+    "tests_run": [
+      "npm test (asfdk-harness) — 67/67 green",
+      "npm run check + npm run build — clean"
+    ],
+    "tests_passing": true,
+    "pr_url": "https://github.com/NeuroLift-Technologies/asfdk-harness/pull/20",
+    "commit_shas": [
+      "e6fc7c6"
+    ]
+  }
+}
