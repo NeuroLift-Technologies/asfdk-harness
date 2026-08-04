@@ -15,13 +15,15 @@
       "67/67 npm test green; npm run check + npm run build clean (npm toolchain per CLAUDE.md)",
       "Installed 0.2.2 --no-save into harness node_modules (verified real dir, NOT symlink); post-restart control plane verified live (foundation-ready + message-assessment channel=model_output, log run 4520e8d3; asfdk_status/asfdk_health_check healthy)",
       "Committed + pushed branch; opened PR #20 (https://github.com/NeuroLift-Technologies/asfdk-harness/pull/20)",
+      "PR #20 MERGED at e3bc1b6 (2026-08-04T11:29:57Z)",
+      "npm publish @neurolift-technologies/asfdk@0.2.2 to registry — SUCCESS (asfdk PR #24 prerequisite landed first)",
       "docs/active-threads.md THREAD-009 marked ✅ Complete with PR link"
     ],
     "work_in_progress": [
-      "None — PR #20 awaiting review/merge (merge order: asfdk PR #24 first, then harness #20)"
+      "None — all PRs merged, npm publish complete"
     ],
     "blockers": [
-      "None. D8 tarball install completed (step-12 sign-off recorded in ledger)"
+      "None"
     ],
     "decisions_made": [
       {
@@ -42,11 +44,6 @@
     ],
     "decisions_pending": [
       {
-        "decision": "npm publish of @neurolift-technologies/asfdk 0.2.2 (restores registry-only assertion in asfdk-wiring.test.ts; dated TODO to restore)",
-        "owner": "Joshua W. Dorsey, Sr.",
-        "urgency": "MEDIUM"
-      },
-      {
         "decision": "Python parity timeline + owner (asfdk AGENTS.md calls Python core 'Main product') — deferred",
         "owner": "Joshua W. Dorsey, Sr.",
         "urgency": "LOW"
@@ -59,7 +56,7 @@
         "issue_url": null
       }
     ],
-    "next_agent_notes": "PR #20 is decision-complete, fully verified (67/67 tests, npm check/build clean, live runtime proof in log run 4520e8d3). Merge AFTER asfdk PR #24 (harness wiring test asserts asfdk >= 0.2.2; file:-resolved allowed during unpublished window). After merge: no follow-up work required in this repo until Enforce phase. Escalate-list untouched: governance/*, authority/verify.ts, policy.ts, ASFDK_TOOL_SKILLS, src/cli.ts. Rollback: revert PR #20 + asfdk PR #24, reinstall 0.2.0/0.2.1 into harness node_modules, restart.",
+    "next_agent_notes": "PR #20 MERGED at e3bc1b6 (2026-08-04T11:29:57Z). npm publish @neurolift-technologies/asfdk@0.2.2 SUCCESS. asfdk PR #24 merged at a5cc746 (2026-08-04T11:28:47Z) — prerequisite landed first. All verification passed (asfdk 32/32, harness 67/67, wrangler dev healthy). No follow-up work required in this repo until Enforce phase. Escalate-list untouched: governance/*, authority/verify.ts, policy.ts, ASFDK_TOOL_SKILLS, src/cli.ts. Rollback: revert PR #20 + asfdk PR #24, reinstall 0.2.0/0.2.1 into harness node_modules, restart.",
     "files_modified": [
       "docs/active-threads.md",
       "package.json",
@@ -81,7 +78,8 @@
     "tests_passing": true,
     "pr_url": "https://github.com/NeuroLift-Technologies/asfdk-harness/pull/20",
     "commit_shas": [
-      "e6fc7c6"
+      "e6fc7c6",
+      "e3bc1b6f53a586d4b20a256b7e20b23583d1bd7b"
     ]
   }
 }
