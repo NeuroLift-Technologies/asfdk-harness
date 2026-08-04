@@ -19,7 +19,7 @@ import { pathToFileURL } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { AsfdkHarness, InteractionType, canExposeSensitiveGovernanceTools } from "./harness.js";
+import { AsfdkHarness, Channel, InteractionType, canExposeSensitiveGovernanceTools, resolveToolSeamChannel } from "./harness.js";
 import { summarizeFoundationResponse } from "./harness.js";
 import { reviewToolCall, type ToolPolicyDecision } from "./policy.js";
 import {
@@ -196,6 +196,8 @@ Parameters:
   text    (required) - The content to assess. Pass the raw string; do not pre-filter.
   context (optional) - Arbitrary key-value metadata that helps ASFDK components contextualise
                        the text (e.g. { "source": "user_message", "threadId": "abc123" }).
+  channel (optional) - Provenance channel the assessment arrives on (D4). user_input is
+                       rejected at the tool seam; absent defaults to unknown.
 
 Returns a JSON object whose schema depends on the active components, but always includes:
   { signals: string[], flags: string[], componentResults: Record<string, unknown>, safe: boolean }
@@ -212,6 +214,10 @@ Examples:
           .record(z.string(), z.unknown())
           .optional()
           .describe("Optional contextual metadata (e.g. { source, threadId })."),
+        channel: z
+          .nativeEnum(Channel)
+          .optional()
+          .describe("Channel the assessment arrives on (D4). user_input is rejected at the tool seam."),
       }).strict(),
       annotations: {
         readOnlyHint: true,
@@ -222,7 +228,8 @@ Examples:
     },
     async (input) => {
       try {
-        const result = await harness.assessText(input.text, input.context ?? {});
+        const channel = resolveToolSeamChannel(input.channel, console.warn);
+        const result = await harness.assessText(input.text, input.context ?? {}, channel);
         return {
           content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
           structuredContent: result as unknown as Record<string, unknown>,

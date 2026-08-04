@@ -1,8 +1,13 @@
 import "./setup.ts";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { FoundationMode } from "@neurolift-technologies/asfdk";
-import { AsfdkHarness, parseFoundationMode, summarizeFoundationResponse } from "../src/harness.ts";
+import { Channel, FoundationMode, InteractionType } from "@neurolift-technologies/asfdk";
+import {
+  AsfdkHarness,
+  parseFoundationMode,
+  resolveToolSeamChannel,
+  summarizeFoundationResponse,
+} from "../src/harness.ts";
 import { cleanupSwpStorage, TEST_USER } from "./setup.ts";
 
 let harness: AsfdkHarness;
@@ -99,4 +104,95 @@ test("shutdown is idempotent (safe to call twice)", async () => {
   await h.shutdown();
   await assert.doesNotReject(() => h.shutdown(), "double shutdown must not throw");
   cleanupSwpStorage();
+});
+
+// ---------------------------------------------------------------------------
+// C5 channel provenance (plan asfdk-provenance-defense, D2/D4/D5)
+// ---------------------------------------------------------------------------
+
+test("assessText passes an explicit user_input channel through as trusted", async () => {
+  const r = await harness.assessText("I am feeling calm and focused today.", {}, Channel.USER_INPUT);
+  assert.equal(r.interaction.content.channel, Channel.USER_INPUT);
+  assert.equal(r.interaction.content.trusted, true);
+  assert.equal(r.interaction.content.gateUp, false);
+});
+
+test("assessText with no channel records unknown + untrusted (never elevates)", async () => {
+  const r = await harness.assessText("I am feeling calm and focused today.");
+  assert.equal(r.interaction.content.channel, Channel.UNKNOWN);
+  assert.equal(r.interaction.content.trusted, false);
+});
+
+test("processInteraction passes a tool-seam channel through and records it untrusted", async () => {
+  const resp = await harness.processInteraction(
+    InteractionType.STATUS_INQUIRY,
+    { probe: true },
+    {},
+    Channel.TOOL_RESULT,
+  );
+  assert.equal(resp.content.channel, Channel.TOOL_RESULT);
+  assert.equal(resp.content.trusted, false);
+  assert.equal(resp.content.gateUp, false);
+});
+
+test("untrusted channel + emergency escalation gates up; trusted channel does not (D5)", async () => {
+  const untrusted = await harness.processInteraction(
+    InteractionType.EMERGENCY_ESCALATION,
+    { text: "urgent distress" },
+    {},
+    Channel.MODEL_OUTPUT,
+  );
+  assert.equal(untrusted.content.channel, Channel.MODEL_OUTPUT);
+  assert.equal(untrusted.content.trusted, false);
+  assert.equal(untrusted.content.gateUp, true);
+
+  const trusted = await harness.processInteraction(
+    InteractionType.EMERGENCY_ESCALATION,
+    { text: "urgent distress" },
+    {},
+    Channel.USER_INPUT,
+  );
+  assert.equal(trusted.content.channel, Channel.USER_INPUT);
+  assert.equal(trusted.content.trusted, true);
+  assert.equal(trusted.content.gateUp, false);
+});
+
+test("resolveToolSeamChannel rejects user_input and never elevates (D4)", () => {
+  const noWarn = () => {};
+  assert.throws(() => resolveToolSeamChannel(Channel.USER_INPUT, noWarn), /user_input/);
+  assert.equal(resolveToolSeamChannel(Channel.MODEL_OUTPUT, noWarn), Channel.MODEL_OUTPUT);
+  assert.equal(resolveToolSeamChannel(Channel.TOOL_RESULT, noWarn), Channel.TOOL_RESULT);
+  assert.equal(resolveToolSeamChannel(undefined, noWarn), Channel.UNKNOWN);
+  // Malformed values must collapse to unknown — never elevate to user_input.
+  assert.equal(resolveToolSeamChannel("USER_INPUT", noWarn), Channel.UNKNOWN);
+  assert.equal(resolveToolSeamChannel("tool_result ", noWarn), Channel.UNKNOWN);
+});
+
+// ---------------------------------------------------------------------------
+// C5 mode-string normalization + fail-loud (plan H4/I4, T16)
+// ---------------------------------------------------------------------------
+
+test("parseFoundationMode normalizes legacy dashed modes to the foundation enum", () => {
+  assert.equal(parseFoundationMode("crisis-only"), FoundationMode.CRISIS_ONLY);
+  assert.equal(parseFoundationMode("continuity-only"), FoundationMode.CONTINUITY_ONLY);
+  assert.equal(parseFoundationMode("framework-only"), FoundationMode.FRAMEWORK_ONLY);
+  assert.equal(parseFoundationMode("crisis_only"), FoundationMode.CRISIS_ONLY);
+  assert.equal(parseFoundationMode("continuity"), FoundationMode.CONTINUITY_ONLY);
+  assert.equal(parseFoundationMode("framework"), FoundationMode.FRAMEWORK_ONLY);
+});
+
+test("harness constructor normalizes a legacy dashed mode option", () => {
+  const h = new AsfdkHarness({ mode: "crisis-only" as unknown as FoundationMode });
+  assert.equal(h.mode, FoundationMode.CRISIS_ONLY);
+});
+
+test("unrecognized ASFDK_MODE fails loud instead of silently defaulting (T16)", () => {
+  const prev = process.env.ASFDK_MODE;
+  process.env.ASFDK_MODE = "definitely-not-a-mode";
+  try {
+    assert.throws(() => new AsfdkHarness(), /Unrecognized foundation mode/);
+  } finally {
+    if (prev === undefined) delete process.env.ASFDK_MODE;
+    else process.env.ASFDK_MODE = prev;
+  }
 });

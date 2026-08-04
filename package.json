@@ -71,7 +71,7 @@
     "@cloudflare/shell": "^0.4.0",
     "@cloudflare/think": "^0.10.0",
     "@modelcontextprotocol/sdk": "^1.30.0",
-    "@neurolift-technologies/asfdk": "^0.2.0",
+    "@neurolift-technologies/asfdk": "^0.2.2",
     "agents": "^0.20.1",
     "ai": "^6.0.211",
     "workers-ai-provider": "^3.2.1",

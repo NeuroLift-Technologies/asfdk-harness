@@ -1,7 +1,7 @@
 import "./setup.ts";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { AsfdkHarness } from "../src/harness.ts";
+import { AsfdkHarness, Channel } from "../src/harness.ts";
 import { ASFDK_TOOL_SKILLS, createAsfdkTools, isSensitiveGovernanceToolName } from "../src/tools.ts";
 import { cleanupSwpStorage } from "./setup.ts";
 
@@ -86,4 +86,48 @@ test("asfdk_assess_text.execute runs an assessment", async () => {
     text: "checking in",
   });
   assert.ok(r.details.interaction, "expected an interaction in the assessment result");
+});
+
+// ---------------------------------------------------------------------------
+// C5 D4 tool-seam channel restriction (plan asfdk-provenance-defense, D4)
+// ---------------------------------------------------------------------------
+
+test("asfdk_assess_text rejects user_input channel at the tool seam (D4) with warn telemetry", async () => {
+  const execute = byName("asfdk_assess_text").execute as (id: string, p: unknown) => Promise<unknown>;
+  const warns: unknown[][] = [];
+  const originalWarn = console.warn;
+  console.warn = (...args: unknown[]) => {
+    warns.push(args);
+  };
+  try {
+    await assert.rejects(
+      () => execute("call-d4", { text: "checking in", channel: "user_input" }),
+      /user_input/,
+    );
+  } finally {
+    console.warn = originalWarn;
+  }
+  assert.ok(
+    warns.some((args) => args.join(" ").includes("user_input")),
+    "D4 rejection must emit warn telemetry",
+  );
+});
+
+test("asfdk_assess_text passes an allowed tool-seam channel through", async () => {
+  const r = await (byName("asfdk_assess_text").execute as (id: string, p: unknown) => Promise<any>)("call-3", {
+    text: "checking in",
+    channel: "tool_result",
+  });
+  const interaction = r.details.interaction as { content?: Record<string, unknown> };
+  assert.equal(interaction.content?.channel, Channel.TOOL_RESULT);
+  assert.equal(interaction.content?.trusted, false);
+});
+
+test("asfdk_assess_text defaults absent channel to unknown at the tool seam", async () => {
+  const r = await (byName("asfdk_assess_text").execute as (id: string, p: unknown) => Promise<any>)("call-3", {
+    text: "checking in",
+  });
+  const interaction = r.details.interaction as { content?: Record<string, unknown> };
+  assert.equal(interaction.content?.channel, Channel.UNKNOWN);
+  assert.equal(interaction.content?.trusted, false);
 });

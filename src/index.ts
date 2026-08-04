@@ -1,5 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { AsfdkHarness } from "./harness.js";
+import { AsfdkHarness, Channel } from "./harness.js";
 import { reviewToolCall } from "./policy.js";
 import { createAsfdkTools } from "./tools.js";
 import { getThirdPartyProtocolProfiles } from "./protocols.js";
@@ -25,12 +25,16 @@ export default function asfdkPiHarness(pi: ExtensionAPI) {
   pi.on("before_agent_start", async (event) => {
     try {
       const protocols = await harness.protocolSnapshot(event.systemPromptOptions.cwd);
-      const assessment = await harness.assessText(event.prompt, {
-        source: "pi.before_agent_start",
-        cwd: event.systemPromptOptions.cwd,
-        selectedTools: event.systemPromptOptions.selectedTools,
-        protocols,
-      });
+      const assessment = await harness.assessText(
+        event.prompt,
+        {
+          source: "pi.before_agent_start",
+          cwd: event.systemPromptOptions.cwd,
+          selectedTools: event.systemPromptOptions.selectedTools,
+          protocols,
+        },
+        Channel.SYSTEM,
+      );
       const protocolSystemPrompt = await harness.protocolSystemPrompt(event.systemPromptOptions.cwd);
 
       return {
@@ -85,7 +89,7 @@ export default function asfdkPiHarness(pi: ExtensionAPI) {
         ctx.ui.notify("Usage: /asfdk-assess <text>", "warning");
         return;
       }
-      const assessment = await harness.assessText(args, { source: "pi.command" });
+      const assessment = await harness.assessText(args, { source: "pi.command" }, Channel.USER_INPUT);
       ctx.ui.notify(JSON.stringify(assessment, null, 2), "info");
     },
   });
