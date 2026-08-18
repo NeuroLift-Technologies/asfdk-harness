@@ -2,7 +2,7 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-06-28T18:15:27Z
+**Last updated:** 2026-08-17T19:15:00Z
 
 ---
 
@@ -85,6 +85,22 @@
 | **Blockers** | None. Vibe fixed the MCP `structuredContent` bug in-tree (uncommitted); a functional `mcp-server.ts` test can be added once that fix lands on `main`. |
 | **Related PR** | #1 — merged to `main` (`822582b`) |
 | **Notes** | Confirmed Pi v0.80.2 loads the integrated extension with zero errors (5 ASFDK tools) and the ASFDK foundation runs (TOI/OTOI, Sleepwalker, RRT all active). Verified **and guarded** the asfdk npm wiring (asfdk@0.2.0 + 4 pillars resolve from registry.npmjs.org with integrity, not a local link) via `test/asfdk-wiring.test.ts`. Added a hermetic, zero-dependency test suite (`node:test` + `tsx`) — now **27 tests**, wired into `npm test` (= check + units), mutation-verified non-vacuous; gitignored the runtime `.swp_storage/`. Ran a read-only adversarial review of the four-agent merge: **21/21 findings confirmed**. Routed: **CRITICAL** — `src/mcp-server.ts` declares `outputSchema` but returns `{content, details}` with no `structuredContent`, so under `@modelcontextprotocol/sdk@1.29.0` **every MCP tool call fails output validation** (→ THREAD-002 / Vibe). MEDIUM — `protocols.ts readOptionalFile` can crash `before_agent_start` (→ THREAD-003 / Codex); `index.ts` governance is silently fail-open (→ Joshua). Escalated to Joshua: the `bash` sensitive-path policy bypass is a real safety hole (threshold change held pending his decision). Full detail: `docs/agent-log/handoffs/2026-06-25-claude-code-harness-hardening.json`. Did not modify other agents' threads or source. **Continuation (2026-06-25T15:46:28-04:00):** PR #1 merged to `main`; brought my own agent-log docs into ISO 8601 timestamp compliance per the new standard; opened the canonical timestamp standard as `.github-private` PR #166. Merged `main` still ships the MCP bug (Vibe's fix is in-tree, uncommitted, pending a round-2 PR); also corrected a malformed `Last updated` timestamp. |
+
+---
+
+### THREAD-010 — A2A Infrastructure: Discovery Hub + Translation Proxy + Message Routing
+| Field | Value |
+|---|---|
+| **Thread ID** | THREAD-010 |
+| **Status** | 🟢 Complete |
+| **Started** | 2026-08-17 |
+| **Owner** | AI CTO Agent |
+| **Branch** | `main` |
+| **Task** | Build A2A discovery hub, A2A-to-OpenCode translation proxy, message routing, and systemd services to enable governed agent-to-agent delegation. |
+| **Scope** | `src/discovery-hub.ts`, `src/a2a-proxy.ts`, `src/mcp-server.ts`, `package.json`, systemd services |
+| **Blockers** | None. |
+| **Related PR** | TBD |
+| **Notes** | **Complete A2A infrastructure operational.** (1) Discovery hub at port 3001 with REST API + MCP tools for agent registration/discovery. (2) A2A-to-OpenCode proxy at port 4097 with inbound endpoint for receiving routed messages. (3) Message routing via `POST /a2a/message` on hub — forwards messages to target agent's registered URL. (4) Three systemd user services. **Key discovery**: OpenCode's HTTP API doesn't trigger agent processing — must use `opencode run --attach --agent <name>` via stdin. **End-to-end flow verified**: Agent → Hub (`POST /a2a/message`) → Proxy (`/a2a/inbound`) → OpenCode (build agent) → Task completed. Session `ses_fee1bdca8ffe` created with tokens consumed (49 input, 4 output, 135 reasoning). |
 
 ---
 

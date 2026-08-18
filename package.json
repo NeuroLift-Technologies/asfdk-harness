@@ -7,7 +7,9 @@
   "types": "./dist/index.d.ts",
   "bin": {
     "asfdk-harness": "./dist/cli.js",
-    "asfdk-harness-mcp": "./dist/mcp-server.js"
+    "asfdk-harness-mcp": "./dist/mcp-server.js",
+    "asfdk-discovery-hub": "./dist/discovery-hub.js",
+    "asfdk-a2a-proxy": "./dist/a2a-proxy.js"
   },
   "exports": {
     ".": {
@@ -24,6 +26,10 @@
     "harness": "tsx src/cli.ts",
     "mcp": "tsx src/mcp-server.ts",
     "mcp:http": "tsx src/mcp-http-server.ts",
+    "hub": "tsx src/discovery-hub.ts",
+    "dev:hub": "tsx src/discovery-hub.ts",
+    "a2a": "tsx src/a2a-proxy.ts",
+    "dev:a2a": "tsx src/a2a-proxy.ts",
     "test": "npm run check && npm run cf:check && npm run test:unit",
     "test:unit": "node --import tsx --test test/*.test.ts",
     "prepack": "npm run build",
