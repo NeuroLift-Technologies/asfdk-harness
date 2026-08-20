@@ -25,7 +25,7 @@
 import http from "node:http";
 import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
-import { pathToFileURL } from "node:url";
+import { isMainModule } from "./entrypoint.js";
 
 // ---------------------------------------------------------------------------
 // Config
@@ -457,7 +457,7 @@ async function main() {
 }
 
 // Run if executed directly
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isMainModule(import.meta.url)) {
   main().catch((error) => {
     console.error("[a2a-proxy] Fatal error:", error);
     process.exit(1);

@@ -54,7 +54,10 @@ From the repo root:
 ```bash
 npm install
 npm run build
+npm link
 ```
+
+`npm link` puts the `asfdk-harness-mcp` command on your PATH, which the extension uses as its fallback launch command.
 
 Then in Zed:
 

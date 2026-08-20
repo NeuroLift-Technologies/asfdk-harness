@@ -15,10 +15,10 @@
  *  - Added TODO comment for before_agent_start fail-open/fail-closed decision
  */
 
-import { pathToFileURL } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
+import { isMainModule } from "./entrypoint.js";
 import { AsfdkHarness, Channel, InteractionType, canExposeSensitiveGovernanceTools, resolveToolSeamChannel } from "./harness.js";
 import { summarizeFoundationResponse } from "./harness.js";
 import { reviewToolCall, type ToolPolicyDecision } from "./policy.js";
@@ -860,7 +860,7 @@ async function main() {
   }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isMainModule(import.meta.url)) {
   main().catch((error) => {
     console.error(`[${MCP_SERVER_NAME}] Fatal error:`, error);
     process.exit(1);
