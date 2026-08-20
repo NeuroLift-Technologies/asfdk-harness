@@ -1,0 +1,25 @@
+{
+  "id": "asfdk-deploy",
+  "name": "ASFDK Deploy (Monitor-Only)",
+  "description": "MONITOR-ONLY integration of the ASFDK Solidarity Layer into OpenClaw. Observes agent turns, tool calls, and messages through TOI/OTOI, RRT Advocate, and Sleepwalker Protocol. Logs escalation signals but does NOT block or modify actions. For enforcement mode, use the full ASFDK harness extension.",
+  "version": "0.1.0",
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": []
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "maxAssessLength": {
+        "type": "number",
+        "default": 4000,
+        "minimum": 100,
+        "maximum": 10000,
+        "description": "Maximum text length to assess (characters)."
+      }
+    },
+    "additionalProperties": false
+  }
+}

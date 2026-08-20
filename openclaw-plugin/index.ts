@@ -1,5 +1,5 @@
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
-import { createFoundation, FoundationMode, InteractionType, Channel } from "@neurolift-technologies/asfdk";
+import { createFoundation, FoundationMode, InteractionType, Channel, type NeuroLiftFoundation, type FoundationResponse } from "@neurolift-technologies/asfdk";
 
 // ---------------------------------------------------------------------------
 // OpenClaw peer dependency check

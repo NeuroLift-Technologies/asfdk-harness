@@ -164,3 +164,6 @@ worker-configuration.d.ts
 # Compiled agent output (build artifacts; .ts source is tracked)
 agents/**/*.js
 agents/**/*.js.map
+
+# Poolside local settings (not repo content)
+.poolside/
