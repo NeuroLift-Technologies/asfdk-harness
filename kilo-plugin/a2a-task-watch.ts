@@ -18,6 +18,7 @@ interface A2ATaskWatchOptions {
   tasksPath?: string;
   maxInputLength?: number;
   logPrefix?: string;
+  fetchTimeoutMs?: number;
 }
 
 const DEFAULT_OPTIONS: Required<A2ATaskWatchOptions> = {
@@ -31,14 +32,8 @@ const DEFAULT_OPTIONS: Required<A2ATaskWatchOptions> = {
   tasksPath: "",
   maxInputLength: 4000,
   logPrefix: "a2a-task-watch",
+  fetchTimeoutMs: 10000,
 };
-
-interface HubInfo {
-  url: string;
-  health: string;
-  agents: string;
-  register: string;
-}
 
 export default async function a2aTaskWatch(_input: PluginInput, options: PluginOptions = {}): Promise<Hooks> {
   const opts = { ...DEFAULT_OPTIONS, ...options } as Required<A2ATaskWatchOptions>;
@@ -51,7 +46,13 @@ export default async function a2aTaskWatch(_input: PluginInput, options: PluginO
 
   let foundation: NeuroLiftFoundation | undefined;
   let timer: ReturnType<typeof setInterval> | undefined;
+  let disposed = false;
+  let polling = false;
   const knownAgents = new Set<string>();
+  const inProgress = new Set<string>();
+  const completed = new Set<string>();
+  const completedOrder: string[] = [];
+  const COMPLETED_CAP = 1000;
 
   async function foundationReady(): Promise<NeuroLiftFoundation | undefined> {
     if (foundation) return foundation;
@@ -67,18 +68,26 @@ export default async function a2aTaskWatch(_input: PluginInput, options: PluginO
   }
 
   async function json(url: string, init?: RequestInit): Promise<unknown> {
-    const response = await fetch(url, {
-      ...init,
-      headers: { "content-type": "application/json", ...(init?.headers ?? {}) },
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status} from ${url}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), opts.fetchTimeoutMs);
+    try {
+      const response = await fetch(url, {
+        ...init,
+        signal: controller.signal,
+        headers: { "content-type": "application/json", ...(init?.headers ?? {}) },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status} from ${url}`);
+      }
+      const text = await response.text();
+      return text ? JSON.parse(text) : null;
+    } finally {
+      clearTimeout(timeout);
     }
-    const text = await response.text();
-    return text ? JSON.parse(text) : null;
   }
 
   async function registerAgent(): Promise<void> {
+    if (!hubUrl) return;
     try {
       const body = {
         kind: "a2a-agent-card",
@@ -101,6 +110,7 @@ export default async function a2aTaskWatch(_input: PluginInput, options: PluginO
   }
 
   async function pollAgents(): Promise<void> {
+    if (!hubUrl) return;
     try {
       const result = (await json(hubUrl.replace(/\/$/, "") + "/agents")) as
         | Array<{ id?: string; name?: string }>
@@ -119,28 +129,43 @@ export default async function a2aTaskWatch(_input: PluginInput, options: PluginO
   }
 
   async function pollTasks(): Promise<void> {
+    if (disposed) return;
     const foundationInstance = await foundationReady();
     if (!foundationInstance) return;
+    if (!hubUrl) return;
     try {
       const url = hubUrl.replace(/\/$/, "") + tasksPath;
       const result = (await json(url)) as Array<{ id?: string; message?: string; text?: string }>;
       if (!Array.isArray(result)) return;
       for (const task of result) {
-        if (!task?.id || !remember(task.id)) continue;
+        if (!task?.id) continue;
+        if (completed.has(task.id) || inProgress.has(task.id)) continue;
+        inProgress.add(task.id);
         const text = String(task.message ?? task.text ?? "").slice(0, opts.maxInputLength);
-        if (!text) continue;
+        if (!text) {
+          inProgress.delete(task.id);
+          continue;
+        }
         try {
+          const emotionalState = await foundationInstance.assessEmotionalState(text, { source: `a2a:${task.id}` }, Channel.UNKNOWN);
           const interaction = await foundationInstance.processInteraction({
             timestamp: new Date(),
             interactionType: InteractionType.EMOTIONAL_ASSESSMENT,
-            data: { text, source: `a2a:${task.id}` },
+            data: { text, emotionalState, source: `a2a:${task.id}` },
             userId: opts.userId,
             sessionId: opts.sessionId,
             channel: Channel.UNKNOWN,
           });
           log("task-assessment", `task=${task.id} success=${interaction?.success ?? false}`);
+          completed.add(task.id);
+          completedOrder.push(task.id);
+          if (completedOrder.length > COMPLETED_CAP) {
+            completed.delete(completedOrder.shift() as string);
+          }
         } catch (error) {
           log("task-assessment-error", `task=${task.id} ${String(error)}`);
+        } finally {
+          inProgress.delete(task.id);
         }
       }
     } catch (error) {
@@ -148,34 +173,30 @@ export default async function a2aTaskWatch(_input: PluginInput, options: PluginO
     }
   }
 
-  const seen = new Set<string>();
-  const seenOrder: string[] = [];
-
-  function remember(id: string): boolean {
-    if (seen.has(id)) return false;
-    seen.add(id);
-    seenOrder.push(id);
-    if (seenOrder.length > 1000) {
-      seen.delete(seenOrder.shift() as string);
-    }
-    return true;
-  }
-
   async function watch(): Promise<void> {
     if (!hubUrl) {
       log("disabled", "no hub URL (set options.hubUrl or ASFDK_A2A_HUB_URL)");
       return;
     }
-    await foundationReady();
+    if (disposed) return;
+    const ready = await foundationReady();
+    if (disposed || !ready) return;
     await registerAgent();
+    if (disposed) return;
     await pollAgents();
+    if (disposed) return;
     await pollTasks();
+    if (disposed) return;
     timer = setInterval(async () => {
+      if (disposed || polling) return;
+      polling = true;
       try {
         await pollAgents();
         await pollTasks();
       } catch (error) {
         log("watch-error", String(error));
+      } finally {
+        polling = false;
       }
     }, opts.intervalMs);
   }
@@ -184,6 +205,7 @@ export default async function a2aTaskWatch(_input: PluginInput, options: PluginO
 
   return {
     dispose: async () => {
+      disposed = true;
       if (timer) clearInterval(timer);
       log("dispose", "a2a-task-watch shutting down");
     },

@@ -58,30 +58,40 @@ export default async function asfdkDeploy(_input: PluginInput, options: PluginOp
   }
 
   let foundation: NeuroLiftFoundation | undefined;
+  let initPromise: Promise<NeuroLiftFoundation | undefined> | undefined;
 
-  async function foundationReady(): Promise<NeuroLiftFoundation | undefined> {
+  async function foundationReady(sessionId?: string): Promise<NeuroLiftFoundation | undefined> {
     if (foundation) return foundation;
-    try {
-      foundation = await createFoundation({ userId: opts.userId, mode: opts.mode });
-      await foundation.initialize();
-      if (opts.verbose) {
-        log("foundation-ready", `mode=${opts.mode} status=${JSON.stringify(foundation.getSystemStatus())}`);
-      }
-    } catch (error) {
-      log("foundation-error", String(error));
-      return undefined;
+    if (!initPromise) {
+      initPromise = (async () => {
+        try {
+          const instance = await createFoundation({ userId: opts.userId, mode: opts.mode });
+          await instance.initialize();
+          foundation = instance;
+          if (opts.verbose) {
+            log("foundation-ready", `mode=${opts.mode} status=${JSON.stringify(foundation.getSystemStatus())}`);
+          }
+          return foundation;
+        } catch (error) {
+          log("foundation-error", String(error));
+          return undefined;
+        } finally {
+          initPromise = undefined;
+        }
+      })();
     }
-    return foundation;
+    return initPromise;
   }
 
-  async function assess(text: string, channel: Channel, source: string, dedupKey?: string): Promise<void> {
+  async function assess(text: string, channel: Channel, source: string, dedupKey?: string, sessionId?: string): Promise<void> {
     if (!text) return;
     if (dedupKey && !remember(dedupKey)) return;
 
-    const foundationInstance = await foundationReady();
+    const foundationInstance = await foundationReady(sessionId);
     if (!foundationInstance) return;
 
     const sample = text.slice(0, opts.maxInputLength);
+    const resolvedSessionId = sessionId ?? opts.sessionId;
     let emotionalState: unknown = null;
     try {
       emotionalState = await foundationInstance.assessEmotionalState(sample, { source }, channel);
@@ -95,7 +105,7 @@ export default async function asfdkDeploy(_input: PluginInput, options: PluginOp
         interactionType: InteractionType.EMOTIONAL_ASSESSMENT,
         data: { text: sample, emotionalState, source },
         userId: opts.userId,
-        sessionId: opts.sessionId,
+        sessionId: resolvedSessionId,
         channel,
       });
       const gateUp = Boolean(interaction?.content?.gateUp);
@@ -111,16 +121,14 @@ export default async function asfdkDeploy(_input: PluginInput, options: PluginOp
   }
 
   return {
-    "chat.message": async (_input, output) => {
+    "chat.message": async (input) => {
       try {
-        const role = (output.message as unknown as { role?: string }).role ?? "user";
-        const channel = role === "assistant" ? Channel.MODEL_OUTPUT : Channel.USER_INPUT;
-        const text = extractText(output.parts as ReadonlyArray<{ type?: string; text?: unknown }>);
-        const dedupKey = output.parts
+        const text = extractText(input.parts as ReadonlyArray<{ type?: string; text?: unknown }>);
+        const dedupKey = input.parts
           .map((part) => (part as { id?: string }).id)
           .filter(Boolean)
           .join("+");
-        await assess(text, channel, `chat:${role}`, dedupKey);
+        await assess(text, Channel.USER_INPUT, `chat:user`, dedupKey, input.sessionID);
       } catch (error) {
         log("hook-error", "chat.message", String(error));
       }
@@ -129,7 +137,7 @@ export default async function asfdkDeploy(_input: PluginInput, options: PluginOp
       if (!opts.enableToolAssessment) return;
       try {
         const text = String(output.output ?? "").slice(0, opts.maxInputLength);
-        await assess(text, Channel.TOOL_RESULT, `tool:${input.tool}`, `tool:${input.callID}`);
+        await assess(text, Channel.TOOL_RESULT, `tool:${input.tool}`, `tool:${input.callID}`, input.sessionID);
       } catch (error) {
         log("hook-error", "tool.execute.after", String(error));
       }
