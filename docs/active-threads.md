@@ -2,7 +2,7 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-08-20T00:00:00Z
+**Last updated:** 2026-08-20T13:47:50Z
 
 ---
 
@@ -20,7 +20,7 @@
 | **Scope** | `zed-extension/` (new), `README.md`, `.gitignore`, `docs/active-threads.md`, `docs/agent-log/*` |
 | **Blockers** | None. |
 | **Related PR** | TBD |
-| **Notes** | Added a Rust-based Zed extension wrapper with `extension.toml`, `Cargo.toml`, and `src/lib.rs`. The extension resolves command startup with this order: (1) local dev build `../dist/mcp-server.js` via Zed's Node runtime, (2) fallback to `asfdk-harness-mcp` on PATH, (3) optional user override via `context_servers.asfdk-harness.command` settings. Added usage docs in `zed-extension/README.md` and root `README.md`. |
+| **Notes** | Added a Rust-based Zed extension wrapper with `extension.toml`, `Cargo.toml`, and `src/lib.rs`. The extension resolves command startup with this order: (1) local dev build `../dist/mcp-server.js` via Zed's Node runtime, (2) fallback to `asfdk-harness-mcp` on PATH, (3) optional user override via `context_servers.asfdk-harness.command` settings. Added usage docs in `zed-extension/README.md` and root `README.md`. **Update (session 2):** User hit "failed to compile rust extension" — root cause was no default rustup toolchain for the account running Zed's background process; fixed by `rustup default 1.95.0-x86_64-unknown-linux-gnu` plus a new `zed-extension/rust-toolchain.toml` pin. **Update (session 3):** Compile actually succeeded on every subsequent attempt (verified in `~/.local/share/zed/logs/Zed.log`); the real failure was `asfdk-harness context server failed to start: Context server request timeout` — the `../dist/mcp-server.js` auto-detect via `std::env::current_dir()` does not reliably resolve inside Zed's WASM sandbox (it can reflect the installed-extension copy rather than the dev checkout), and the `asfdk-harness-mcp` PATH fallback was never `npm link`-ed. Fixed by adding an explicit absolute-path `command` override to the user's `~/.config/zed/settings.json` (`context_servers.asfdk-harness.command` → absolute nvm `node` path + absolute `dist/mcp-server.js` path); verified the exact command answers a raw MCP `initialize` handshake instantly via stdio. Documented root cause and fix as a Troubleshooting section in `zed-extension/README.md`. |
 
 ---
 
