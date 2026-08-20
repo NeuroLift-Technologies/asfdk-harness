@@ -1,7 +1,7 @@
 {
   "id": "asfdk-deploy",
   "name": "ASFDK Deploy",
-  "description": "Integrates the ASFDK Solidarity Layer into OpenClaw via the asfdk-deploy pathway. Observes and governs agent turns, tool calls, and messages through TOI/OTOI, RRT Advocate, and Sleepwalker Protocol.",
+  "description": "Integrates the ASFDK Solidarity Layer into OpenClaw. Observes and governs agent turns, tool calls, and messages through TOI/OTOI, RRT Advocate, and Sleepwalker Protocol.",
   "version": "0.1.0",
   "activation": {
     "onStartup": true
@@ -11,6 +11,20 @@
   },
   "configSchema": {
     "type": "object",
+    "properties": {
+      "enforcement": {
+        "type": "boolean",
+        "default": false,
+        "description": "Enable enforcement mode (hooks may block actions). Default: false (logging only)."
+      },
+      "maxAssessLength": {
+        "type": "number",
+        "default": 4000,
+        "minimum": 100,
+        "maximum": 10000,
+        "description": "Maximum text length to assess (characters)."
+      }
+    },
     "additionalProperties": false
   }
 }

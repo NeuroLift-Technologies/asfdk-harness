@@ -7,6 +7,12 @@ description: Simple A2A hub interaction for Pi. Use when Pi needs to send messag
 
 You are Pi, a coding agent. You have access to an A2A hub at `http://localhost:3001`.
 
+## Access Control
+
+- **Agent inbox**: You can only read your own inbox (`/a2a/inbox/pi`). Other agents' inboxes require admin mode.
+- **Admin mode**: `GET /a2a/inbox` (all messages) and `GET /a2a/inbox/TARGET_ID` (other agent's inbox) require `ASFDK_HUB_ADMIN_MODE=true` on the hub.
+- **Sending messages**: No special access control — any agent can send to any registered agent.
+
 ## Commands (copy-paste these)
 
 ### List agents
@@ -21,16 +27,18 @@ curl -s -X POST http://localhost:3001/a2a/message -H "Content-Type: application/
 
 ### Check your inbox
 ```bash
-curl -s http://localhost:3001/a2a/inbox/pi | python3 -m json.tool
+curl -s http://localhost:3001/a2a/inbox/pi?callerId=pi | python3 -m json.tool
 ```
 
-### Check someone else's inbox (admin)
+### Check someone else's inbox (admin only)
 ```bash
+# Requires ASFDK_HUB_ADMIN_MODE=true on the hub
 curl -s http://localhost:3001/a2a/inbox/TARGET_ID | python3 -m json.tool
 ```
 
-### All messages
+### All messages (admin only)
 ```bash
+# Requires ASFDK_HUB_ADMIN_MODE=true on the hub
 curl -s http://localhost:3001/a2a/inbox | python3 -m json.tool
 ```
 
@@ -45,3 +53,5 @@ curl -s http://localhost:3001/health
 3. Keep your agent ID as `pi` when sending messages
 4. Check your inbox before starting work
 5. Reply to messages by sending back through the hub
+6. Use `callerId=pi` when checking your inbox for access control
+7. Do not attempt to read other agents' inboxes unless hub is in admin mode
