@@ -13,6 +13,7 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { randomUUID } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -26,9 +27,26 @@ import { z } from "zod";
 const STATE_FILE = process.env.ASFDK_HUB_STATE_FILE
   ?? path.join(process.cwd(), ".asfdk-hub-state.json");
 
+// Message retention: max messages and TTL in milliseconds (default: 1000 messages, 7 days)
+const MAX_MESSAGES = Number(process.env.ASFDK_HUB_MAX_MESSAGES ?? "1000");
+const MESSAGE_TTL_MS = Number(process.env.ASFDK_HUB_MESSAGE_TTL_MS ?? String(7 * 24 * 60 * 60 * 1000));
+
+interface PersistedMessage {
+  id: string;
+  from: string;
+  to: string;
+  type: "task" | "message" | "event";
+  payload: Record<string, unknown>;
+  timestamp: string;
+  replyTo?: string;
+  delivered: boolean;
+  deliveredAt?: string;
+}
+
 interface PersistedState {
   agents: [string, RegisteredAgent][];
   stats: HubStats;
+  messages: PersistedMessage[];
 }
 
 function saveState() {
@@ -36,6 +54,7 @@ function saveState() {
     const state: PersistedState = {
       agents: Array.from(agents.entries()),
       stats,
+      messages,
     };
     fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2), "utf8");
   } catch (err) {
@@ -46,7 +65,7 @@ function saveState() {
 function loadState() {
   try {
     if (!fs.existsSync(STATE_FILE)) {
-      console.error(`[discovery-hub] No state file found at ${STATE_FILE} — starting fresh`);
+      console.log(`[discovery-hub] No state file found at ${STATE_FILE} — starting fresh`);
       return;
     }
     const raw = fs.readFileSync(STATE_FILE, "utf8");
@@ -56,13 +75,18 @@ function loadState() {
         agents.set(id, agent);
       }
     }
+    if (Array.isArray(state.messages)) {
+      for (const msg of state.messages) {
+        messages.push(msg);
+      }
+    }
     if (state.stats) {
       stats = { ...stats, ...state.stats, startedAt: new Date().toISOString() };
     }
-    console.error(`[discovery-hub] Loaded ${agents.size} agent(s) from ${STATE_FILE}`);
+    console.log(`[discovery-hub] Loaded ${agents.size} agent(s), ${messages.length} message(s) from ${STATE_FILE}`);
   } catch (err) {
     console.error(`[discovery-hub] Failed to load state from ${STATE_FILE}:`, err);
-    console.error(`[discovery-hub] Starting with empty registry`);
+    console.log(`[discovery-hub] Starting with empty registry`);
   }
 }
 
@@ -114,10 +138,12 @@ interface HubStats {
 }
 
 // ---------------------------------------------------------------------------
-// In-memory agent registry
+// In-memory agent registry + message inbox
 // ---------------------------------------------------------------------------
 
 const agents = new Map<string, RegisteredAgent>();
+const messages: PersistedMessage[] = [];
+const messageIndex = new Map<string, number>(); // messageId → index in messages array
 let stats: HubStats = {
   totalRegistrations: 0,
   totalDeregistrations: 0,
@@ -176,6 +202,51 @@ function deregisterAgent(id: string): boolean {
   stats.totalDeregistrations++;
   saveState();
   return true;
+}
+
+function storeMessage(msg: PersistedMessage) {
+  messages.push(msg);
+  messageIndex.set(msg.id, messages.length - 1);
+  // Enforce retention: remove messages older than TTL
+  const now = Date.now();
+  const cutoff = now - MESSAGE_TTL_MS;
+  while (messages.length > 0 && new Date(messages[0].timestamp).getTime() < cutoff) {
+    const removed = messages.shift()!;
+    messageIndex.delete(removed.id);
+  }
+  // Rebuild index after shifts
+  messageIndex.clear();
+  for (let i = 0; i < messages.length; i++) {
+    messageIndex.set(messages[i].id, i);
+  }
+  // Enforce max count: keep only the most recent messages
+  while (messages.length > MAX_MESSAGES) {
+    const removed = messages.shift()!;
+    messageIndex.delete(removed.id);
+  }
+  // Rebuild index after shifts
+  messageIndex.clear();
+  for (let i = 0; i < messages.length; i++) {
+    messageIndex.set(messages[i].id, i);
+  }
+  saveState();
+}
+
+function markDelivered(messageId: string): void {
+  const idx = messageIndex.get(messageId);
+  if (idx !== undefined && idx < messages.length) {
+    messages[idx].delivered = true;
+    messages[idx].deliveredAt = new Date().toISOString();
+    saveState();
+  }
+}
+
+function getInbox(agentId: string): PersistedMessage[] {
+  return messages.filter((m) => m.to === agentId);
+}
+
+function getAllMessages(limit = 100): PersistedMessage[] {
+  return messages.slice(-limit);
 }
 
 // ---------------------------------------------------------------------------
@@ -398,6 +469,89 @@ Returns the full agent record or an error if not found.`,
     }
   );
 
+  // Tool: get_inbox
+  server.registerTool(
+    "get_inbox",
+    {
+      title: "Get Agent Inbox",
+      description: `Get all messages for a specific agent from the hub inbox.
+
+Returns messages sent to the agent, including delivery status.
+The callerId must match the agentId unless ASFDK_HUB_ADMIN_MODE=true.`,
+      inputSchema: {
+        agentId: z.string().describe("The unique ID of the agent whose inbox to retrieve"),
+        callerId: z.string().optional().describe("The unique ID of the requesting agent (must match agentId unless admin mode)"),
+      },
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async ({ agentId, callerId }) => {
+      if (!HUB_ADMIN_MODE && callerId && callerId !== agentId) {
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({ error: "Access denied: callerId does not match agentId and admin mode is disabled" }, null, 2),
+          }],
+        };
+      }
+      const agentInbox = getInbox(agentId);
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            agentId,
+            count: agentInbox.length,
+            messages: agentInbox,
+          }, null, 2),
+        }],
+      };
+    }
+  );
+
+  // Tool: list_messages
+  server.registerTool(
+    "list_messages",
+    {
+      title: "List All Messages",
+      description: `List all messages across all agents (admin view).
+
+Requires ASFDK_HUB_ADMIN_MODE=true to use.`,
+      inputSchema: {
+        limit: z.number().optional().describe("Maximum number of messages to return (default: 100)"),
+      },
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async ({ limit }) => {
+      if (!HUB_ADMIN_MODE) {
+        return {
+          content: [{
+            type: "text",
+            text: JSON.stringify({ error: "Access denied: ASFDK_HUB_ADMIN_MODE is not enabled" }, null, 2),
+          }],
+        };
+      }
+      const allMessages = getAllMessages(limit ?? 100);
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            count: allMessages.length,
+            messages: allMessages,
+          }, null, 2),
+        }],
+      };
+    }
+  );
+
   return server;
 }
 
@@ -408,6 +562,7 @@ Returns the full agent record or an error if not found.`,
 const HUB_HOST = process.env.ASFDK_A2A_HOST ?? "127.0.0.1";
 const HUB_PORT = Number(process.env.ASFDK_A2A_PORT ?? "3001");
 const MCP_PATH = "/mcp";
+const HUB_ADMIN_MODE = process.env.ASFDK_HUB_ADMIN_MODE === "true";
 
 async function readJsonBody(request: http.IncomingMessage): Promise<unknown | undefined> {
   const chunks: Buffer[] = [];
@@ -428,22 +583,45 @@ function jsonResponse(res: http.ServerResponse, status: number, data: unknown) {
 
 async function main() {
   loadState();
-  const mcpServer = createHubMcpServer();
-  const mcpTransport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: undefined,
-  });
-  const connectPromise = mcpServer.connect(mcpTransport);
 
   const httpServer = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", `http://${req.headers.host ?? `${HUB_HOST}:${HUB_PORT}`}`);
     const path = url.pathname;
 
     try {
-      // --- MCP endpoint ---
-      if (path === MCP_PATH && req.method === "POST") {
-        await connectPromise;
-        const body = await readJsonBody(req);
-        await mcpTransport.handleRequest(req as http.IncomingMessage & { auth?: AuthInfo }, res, body);
+      // --- MCP endpoint (Streamable HTTP, stateless mode) ---
+      // Per the MCP SDK's stateless pattern, each POST request must use a
+      // fresh transport (and fresh server) — a cached transport throws
+      // "Stateless transport cannot be reused across requests" on the 2nd request.
+      if (path === MCP_PATH) {
+        if (req.method === "POST") {
+          const mcpServer = createHubMcpServer();
+          const transport = new StreamableHTTPServerTransport({
+            sessionIdGenerator: undefined,
+          });
+          try {
+            await mcpServer.connect(transport);
+            const body = await readJsonBody(req);
+            console.log(`[discovery-hub] MCP request (POST):`, JSON.stringify(body ?? {}).substring(0, 200));
+            await transport.handleRequest(req as http.IncomingMessage & { auth?: AuthInfo }, res, body);
+            console.log(`[discovery-hub] MCP response sent (POST)`);
+          } finally {
+            // Stateless: tear down the transport when the response closes.
+            res.on("close", () => {
+              transport.close().catch(() => {});
+              mcpServer.close().catch(() => {});
+            });
+          }
+        } else if (req.method === "GET" || req.method === "DELETE") {
+          // Stateless mode does not support long-lived SSE streams.
+          jsonResponse(res, 405, {
+            jsonrpc: "2.0",
+            error: { code: -32000, message: "Method not allowed. This stateless endpoint accepts POST only." },
+            id: null,
+          });
+        } else {
+          jsonResponse(res, 405, { error: "Method not allowed", path, method: req.method });
+        }
         return;
       }
 
@@ -611,6 +789,8 @@ async function main() {
 
         console.log(`[discovery-hub] Routing message: ${message.from} → ${message.to} (${targetAgent.name}, transport: ${targetAgent.transport})`);
 
+        // Store in inbox
+        storeMessage({ ...message, delivered: false });
         // Route based on transport type
         if (targetAgent.transport === "http" && targetAgent.url) {
           // HTTP agent: forward to their endpoint
@@ -629,7 +809,8 @@ async function main() {
 
             const responseData = await response.json() as Record<string, unknown>;
             targetAgent.lastSeen = new Date().toISOString();
-            saveState();
+            // Mark delivered (consolidated save)
+            markDelivered(message.id);
 
             const a2aResponse: A2AResponse = {
               id: crypto.randomUUID(),
@@ -678,7 +859,8 @@ async function main() {
 
             const responseData = await response.json() as Record<string, unknown>;
             targetAgent.lastSeen = new Date().toISOString();
-            saveState();
+            // Mark delivered (consolidated save)
+            markDelivered(message.id);
 
             const a2aResponse: A2AResponse = {
               id: crypto.randomUUID(),
@@ -719,6 +901,40 @@ async function main() {
         return;
       }
 
+      // --- REST: Get inbox for specific agent ---
+      const inboxMatch = path.match(/^\/a2a\/inbox\/(.+)$/);
+      if (inboxMatch && req.method === "GET") {
+        const agentId = inboxMatch[1];
+        const callerId = url.searchParams.get("callerId");
+        if (!HUB_ADMIN_MODE && callerId && callerId !== agentId) {
+          jsonResponse(res, 403, { error: "Access denied: callerId does not match agentId and admin mode is disabled" });
+          return;
+        }
+        const agentInbox = getInbox(agentId);
+        jsonResponse(res, 200, {
+          agentId,
+          count: agentInbox.length,
+          messages: agentInbox,
+        });
+        return;
+      }
+
+      // --- REST: Get all messages (admin view) ---
+      if (path === "/a2a/inbox" && req.method === "GET") {
+        if (!HUB_ADMIN_MODE) {
+          jsonResponse(res, 403, { error: "Access denied: ASFDK_HUB_ADMIN_MODE is not enabled" });
+          return;
+        }
+        const limitParam = url.searchParams.get("limit");
+        const limit = limitParam ? Math.max(1, Math.min(1000, parseInt(limitParam, 10) || 100)) : 100;
+        const allMessages = getAllMessages(limit);
+        jsonResponse(res, 200, {
+          count: allMessages.length,
+          messages: allMessages,
+        });
+        return;
+      }
+
       // --- 404 ---
       jsonResponse(res, 404, { error: "Not found", path });
     } catch (error) {
@@ -732,10 +948,10 @@ async function main() {
   });
 
   httpServer.listen(HUB_PORT, HUB_HOST, () => {
-    console.error(`[discovery-hub] ASFDK A2A Discovery Hub started at http://${HUB_HOST}:${HUB_PORT}`);
-    console.error(`[discovery-hub] MCP endpoint: http://${HUB_HOST}:${HUB_PORT}${MCP_PATH}`);
-    console.error(`[discovery-hub] REST API:     http://${HUB_HOST}:${HUB_PORT}/a2a/`);
-    console.error(`[discovery-hub] Health:       http://${HUB_HOST}:${HUB_PORT}/health`);
+    console.log(`[discovery-hub] ASFDK A2A Discovery Hub started at http://${HUB_HOST}:${HUB_PORT}`);
+    console.log(`[discovery-hub] MCP endpoint: http://${HUB_HOST}:${HUB_PORT}${MCP_PATH}`);
+    console.log(`[discovery-hub] REST API:     http://${HUB_HOST}:${HUB_PORT}/a2a/`);
+    console.log(`[discovery-hub] Health:       http://${HUB_HOST}:${HUB_PORT}/health`);
   });
 
   const shutdown = async () => {
@@ -749,11 +965,11 @@ async function main() {
 }
 
 // Run if executed directly
-if (process.argv[1]) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {
     console.error("[discovery-hub] Fatal error:", error);
     process.exit(1);
   });
 }
 
-export { createHubMcpServer, registerAgent, deregisterAgent, agents };
+export { createHubMcpServer, registerAgent, deregisterAgent, agents, getInbox, getAllMessages, storeMessage, markDelivered };

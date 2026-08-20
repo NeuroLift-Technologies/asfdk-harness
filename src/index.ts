@@ -22,49 +22,9 @@ export default function asfdkPiHarness(pi: ExtensionAPI) {
     await harness.shutdown();
   });
 
-  pi.on("before_agent_start", async (event) => {
-    try {
-      const protocols = await harness.protocolSnapshot(event.systemPromptOptions.cwd);
-      const assessment = await harness.assessText(
-        event.prompt,
-        {
-          source: "pi.before_agent_start",
-          cwd: event.systemPromptOptions.cwd,
-          selectedTools: event.systemPromptOptions.selectedTools,
-          protocols,
-        },
-        Channel.SYSTEM,
-      );
-      const protocolSystemPrompt = await harness.protocolSystemPrompt(event.systemPromptOptions.cwd);
-
-      return {
-        message: {
-          customType: "asfdk-preflight",
-          content: "ASFDK preflight: OK",
-          display: false,
-          details: assessment,
-        },
-        systemPrompt: `${event.systemPrompt}\n\n${protocolSystemPrompt}\n\nASFDK governance active. Honor TOI.`,
-      };
-    } catch (error) {
-      // Fail loud, not silent: a governance/foundation error must never break the user's turn,
-      // but it must also not silently drop the Solidarity layer. Surface it visibly and proceed
-      // with a caution directive for this turn.
-      const reason = error instanceof Error ? error.message : String(error);
-      // Keep the system prompt static — never interpolate the raw error (which may carry
-      // user-controlled text) into it, to avoid prompt injection. The detail goes only into
-      // the (non-prompt) preflight message.
-      return {
-        message: {
-          customType: "asfdk-preflight",
-          content: `ASFDK governance preflight FAILED this turn (${reason}). Proceeding WITHOUT the Solidarity layer — treat with extra caution.`,
-          display: true,
-          details: { error: reason },
-        },
-        systemPrompt: `${event.systemPrompt}\n\n[ASFDK governance unavailable — proceed with caution.]`,
-      };
-    }
-  });
+  // before_agent_start hook DISABLED — preflight no longer runs automatically on every turn.
+  // ASFDK tools remain available for on-demand use via slash commands and tool calls.
+  // To re-enable, uncomment the block below.
 
   pi.on("tool_call", async (event) => {
     const decision = reviewToolCall(event.toolName, event.input as Record<string, unknown>);

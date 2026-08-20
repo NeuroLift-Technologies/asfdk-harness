@@ -25,13 +25,14 @@
 import http from "node:http";
 import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
+import { pathToFileURL } from "node:url";
 
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
 
 const OPENCODE_URL = process.env.OPENCODE_URL ?? "http://127.0.0.1:4096";
-const OPENCODE_BIN = process.env.OPENCODE_BIN ?? "/home/joshd/.opencode/bin/opencode";
+const OPENCODE_BIN = process.env.OPENCODE_BIN ?? "opencode";
 const HUB_URL = process.env.HUB_URL ?? "http://127.0.0.1:3001";
 const PROXY_PORT = Number(process.env.PROXY_PORT ?? "4097");
 const PROXY_HOST = process.env.PROXY_HOST ?? "127.0.0.1";
@@ -144,11 +145,7 @@ async function submitToOpenCodeWithAgent(prompt: string, agent: string): Promise
     const proc = spawn(OPENCODE_BIN, [
       "run", "--attach", OPENCODE_URL, "--agent", agent, "--format", "json"
     ], {
-      env: {
-        ...process.env,
-        HOME: "/home/joshd",
-        PATH: "/home/joshd/.opencode/bin:/home/joshd/.nvm/versions/node/v24.19.0/bin:/usr/local/bin:/usr/bin:/bin",
-      },
+      env: process.env,
       stdio: ["pipe", "pipe", "pipe"],
     });
 
@@ -231,7 +228,7 @@ async function registerWithHub(): Promise<void> {
     });
     
     if (response.ok) {
-      console.error(`[a2a-proxy] Registered with hub at ${HUB_URL}`);
+      console.log(`[a2a-proxy] Registered with hub at ${HUB_URL}`);
     } else {
       console.error(`[a2a-proxy] Hub registration failed: ${response.status} ${await response.text()}`);
     }
@@ -438,13 +435,13 @@ async function main() {
   });
 
   server.listen(PROXY_PORT, PROXY_HOST, async () => {
-    console.error(`[a2a-proxy] A2A-to-OpenCode proxy started at http://${PROXY_HOST}:${PROXY_PORT}`);
-    console.error(`[a2a-proxy] OpenCode target: ${OPENCODE_URL}`);
-    console.error(`[a2a-proxy] Hub URL: ${HUB_URL}`);
-    console.error(`[a2a-proxy] Agent ID: ${AGENT_ID}`);
-    console.error(`[a2a-proxy] Inbound endpoint: POST http://${PROXY_HOST}:${PROXY_PORT}/a2a/inbound`);
-    console.error(`[a2a-proxy] Submit tasks: POST http://${PROXY_HOST}:${PROXY_PORT}/a2a/task`);
-    console.error(`[a2a-proxy] Check status: GET  http://${PROXY_HOST}:${PROXY_PORT}/a2a/tasks/:id`);
+    console.log(`[a2a-proxy] A2A-to-OpenCode proxy started at http://${PROXY_HOST}:${PROXY_PORT}`);
+    console.log(`[a2a-proxy] OpenCode target: ${OPENCODE_URL}`);
+    console.log(`[a2a-proxy] Hub URL: ${HUB_URL}`);
+    console.log(`[a2a-proxy] Agent ID: ${AGENT_ID}`);
+    console.log(`[a2a-proxy] Inbound endpoint: POST http://${PROXY_HOST}:${PROXY_PORT}/a2a/inbound`);
+    console.log(`[a2a-proxy] Submit tasks: POST http://${PROXY_HOST}:${PROXY_PORT}/a2a/task`);
+    console.log(`[a2a-proxy] Check status: GET  http://${PROXY_HOST}:${PROXY_PORT}/a2a/tasks/:id`);
 
     // Register with hub
     await registerWithHub();
@@ -460,7 +457,7 @@ async function main() {
 }
 
 // Run if executed directly
-if (process.argv[1]) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {
     console.error("[a2a-proxy] Fatal error:", error);
     process.exit(1);
