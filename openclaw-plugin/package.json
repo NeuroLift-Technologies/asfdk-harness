@@ -1,0 +1,19 @@
+{
+  "name": "@neurolift-technologies/asfdk-deploy",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./index.ts",
+  "openclaw": {
+    "extensions": ["./index.ts"],
+    "compat": {
+      "pluginApi": ">=2026.3.24-beta.2",
+      "minGatewayVersion": "2026.3.24-beta.2"
+    }
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.3.24-beta.2"
+  },
+  "dependencies": {
+    "@neurolift-technologies/asfdk": "~0.2.4"
+  }
+}

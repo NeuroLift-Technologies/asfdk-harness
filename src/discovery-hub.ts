@@ -214,11 +214,6 @@ function storeMessage(msg: PersistedMessage) {
     const removed = messages.shift()!;
     messageIndex.delete(removed.id);
   }
-  // Rebuild index after shifts
-  messageIndex.clear();
-  for (let i = 0; i < messages.length; i++) {
-    messageIndex.set(messages[i].id, i);
-  }
   // Enforce max count: keep only the most recent messages
   while (messages.length > MAX_MESSAGES) {
     const removed = messages.shift()!;
