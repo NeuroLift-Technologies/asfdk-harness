@@ -1,0 +1,16 @@
+{
+  "id": "asfdk-deploy",
+  "name": "ASFDK Deploy",
+  "description": "Integrates the ASFDK Solidarity Layer into OpenClaw via the asfdk-deploy pathway. Observes and governs agent turns, tool calls, and messages through TOI/OTOI, RRT Advocate, and Sleepwalker Protocol.",
+  "version": "0.1.0",
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": []
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false
+  }
+}
