@@ -185,16 +185,14 @@ export default definePluginEntry({
     "Observes agent turns, tool calls, and messages through TOI/OTOI, RRT Advocate, " +
     "and Sleepwalker Protocol. Logs escalation signals but does NOT block or modify actions. " +
     "For enforcement mode, use the full ASFDK harness extension.",
-  version: "0.1.0",
-
-  register(api) {
-    // Merge user config
-    try {
-      const userConfig = (api as any)?.config ?? {};
-      config = { ...DEFAULT_CONFIG, ...userConfig };
-    } catch {
-      // Config not available — use defaults
-    }
+    register(api) {
+      // Merge user config
+      try {
+        const userConfig = (api as { config?: Partial<PluginConfig> })?.config ?? {};
+        config = { ...DEFAULT_CONFIG, ...userConfig };
+      } catch {
+        // Config not available — use defaults
+      }
 
     console.log("[asfdk-deploy] Running in MONITOR-ONLY mode — hooks observe but do not block");
 
@@ -202,10 +200,13 @@ export default definePluginEntry({
       await getFoundation();
     });
 
-    api.on("message_received", async (event) => {
-      // Require real identity — skip assessment for events without senderId/sessionId
-      if (!event.senderId || !event.sessionId) {
-        console.warn("[asfdk-deploy] skipping message_received: missing senderId or sessionId");
+    api.on("message_received", async (event, ctx) => {
+      // Identity: the inbound sender is event.senderId ?? event.from. The event
+      // has no sessionId — the canonical conversation session lives on ctx.sessionKey.
+      const userId = event.senderId ?? event.from;
+      const sessionId = ctx.sessionKey ?? event.sessionKey ?? (typeof event.threadId === "string" ? event.threadId : undefined) ?? (typeof event.runId === "string" ? event.runId : undefined);
+      if (!userId || !sessionId) {
+        console.warn("[asfdk-deploy] skipping message_received: missing sender or session identity");
         return;
       }
       const content =
@@ -214,17 +215,20 @@ export default definePluginEntry({
           : JSON.stringify(event.content ?? "");
       await assess(
         content,
-        Channel.MODEL_OUTPUT,  // Peer/system messages are assessed as model output
-        `message:${event.senderId}`,
-        { userId: event.senderId, sessionId: event.sessionId },
+        Channel.USER_INPUT,  // Incoming peer messages are user-origin input, not model output
+        `message:${userId}`,
+        { userId, sessionId },
       );
     });
 
-    api.on("before_tool_call", async (event) => {
+    api.on("before_tool_call", async (event, ctx) => {
       // NOTE: OpenClaw's before_tool_call hook does not support async
       // cancellation from this hook shape. Assessment is observation-only.
-      if (!event.agentId || !event.sessionId) {
-        console.warn("[asfdk-deploy] skipping before_tool_call: missing agentId or sessionId");
+      // Tool-call events carry no identity on the event itself; derive it from ctx.
+      const userId = ctx.agentId;
+      const sessionId = ctx.sessionId ?? ctx.sessionKey ?? ctx.runId;
+      if (!userId || !sessionId) {
+        console.warn("[asfdk-deploy] skipping before_tool_call: missing agentId or session identity");
         return;
       }
       const params =
@@ -233,18 +237,21 @@ export default definePluginEntry({
           : JSON.stringify(event.params ?? {});
       await assess(
         params,
-        Channel.USER_INPUT,  // Tool call arguments are assessed as user input
+        Channel.TOOL_RESULT,  // Tool call arguments are assessed on the tool-result channel
         `tool:${event.toolName ?? "unknown"}`,
-        { userId: event.agentId, sessionId: event.sessionId },
+        { userId, sessionId },
       );
     });
 
-    api.on("before_agent_reply", async (event) => {
+    api.on("before_agent_reply", async (event, ctx) => {
       // NOTE: This hook is observation-only. Even if a high-risk finding is
       // detected, the reply is NOT blocked. The signal is logged for human
       // review. For enforcement, use the full ASFDK harness extension.
-      if (!event.agentId || !event.sessionId) {
-        console.warn("[asfdk-deploy] skipping before_agent_reply: missing agentId or sessionId");
+      // Reply events carry only cleanedBody; derive identity from ctx.
+      const userId = ctx.agentId ?? ctx.senderId;
+      const sessionId = ctx.sessionId ?? ctx.sessionKey ?? ctx.runId;
+      if (!userId || !sessionId) {
+        console.warn("[asfdk-deploy] skipping before_agent_reply: missing agentId or session identity");
         return;
       }
       const reply =
@@ -253,7 +260,7 @@ export default definePluginEntry({
         reply,
         Channel.MODEL_OUTPUT,
         "agent:reply",
-        { userId: event.agentId, sessionId: event.sessionId },
+        { userId, sessionId },
       );
 
       if (result.highRisk) {

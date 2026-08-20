@@ -38,7 +38,7 @@ describe("openclaw-plugin", () => {
 
   it("index.ts requires real identity", () => {
     const source = readFileSync(resolve(pluginDir, "index.ts"), "utf8");
-    assert.ok(source.includes("missing senderId or sessionId"), "should skip events without identity");
+    assert.ok(source.includes("skipping") && source.includes("identity"), "should skip events without full identity");
     assert.ok(!source.includes('"openclaw-user"'), "should not hardcode openclaw-user");
     assert.ok(!source.includes('"openclaw-session"'), "should not hardcode openclaw-session");
   });
@@ -57,5 +57,21 @@ describe("openclaw-plugin", () => {
   it("index.ts documents English-only scope", () => {
     const source = readFileSync(resolve(pluginDir, "index.ts"), "utf8");
     assert.ok(source.includes("ENGLISH-ONLY"), "should document English-only scope");
+  });
+
+  it("index.ts uses correct Channel labels for identity-bound hooks", () => {
+    const source = readFileSync(resolve(pluginDir, "index.ts"), "utf8");
+    // message_received (incoming peer message) must be assessed as USER_INPUT
+    assert.ok(
+      /message_received[\s\S]{0,500}Channel\.USER_INPUT/.test(source),
+      "message_received should assess on Channel.USER_INPUT (incoming messages are user-origin)",
+    );
+    // before_tool_call (tool arguments) must be assessed on the tool-result channel
+    assert.ok(
+      /before_tool_call[\s\S]{0,500}Channel\.TOOL_RESULT/.test(source),
+      "before_tool_call should assess on Channel.TOOL_RESULT (tool arguments)",
+    );
+    // No untyped `any` casts remain in the plugin source
+    assert.ok(!source.includes("as any"), "plugin source should not use untyped `any` casts");
   });
 });
