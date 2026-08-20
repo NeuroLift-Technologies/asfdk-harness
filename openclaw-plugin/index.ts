@@ -1,12 +1,11 @@
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
-import { createFoundation, FoundationMode, InteractionType, Channel } from "@neurolift-technologies/asfdk";
+import { createFoundation, FoundationMode, InteractionType, Channel, type NeuroLiftFoundation, type FoundationResponse } from "@neurolift-technologies/asfdk";
 
 // ---------------------------------------------------------------------------
 // OpenClaw peer dependency check
 // ---------------------------------------------------------------------------
 
 try {
-  // Verify OpenClaw is available at import time
   await import("openclaw");
 } catch {
   console.error(
@@ -21,14 +20,11 @@ try {
 // ---------------------------------------------------------------------------
 
 interface PluginConfig {
-  /** Enable enforcement mode (returns gate decisions). Default: false (logging only). */
-  enforcement: boolean;
   /** Maximum text length to assess (chars). */
   maxAssessLength: number;
 }
 
 const DEFAULT_CONFIG: PluginConfig = {
-  enforcement: false,
   maxAssessLength: 4000,
 };
 
@@ -36,7 +32,7 @@ const DEFAULT_CONFIG: PluginConfig = {
 // Foundation singleton
 // ---------------------------------------------------------------------------
 
-let foundation: ReturnType<typeof createFoundation> extends Promise<infer T> ? T : never;
+let foundation: NeuroLiftFoundation | undefined;
 let initialized = false;
 let initFailed = false;
 let config: PluginConfig = { ...DEFAULT_CONFIG };
@@ -45,7 +41,8 @@ async function getFoundation() {
   if (initialized || initFailed) return foundation;
 
   try {
-    foundation = await createFoundation("openclaw-user", FoundationMode.UNIFIED);
+    // Use a placeholder userId — real identity comes from OpenClaw events
+    foundation = await createFoundation("openclaw-plugin", FoundationMode.UNIFIED);
     initialized = true;
     console.log("[asfdk-deploy] Foundation initialized in UNIFIED mode");
   } catch (err) {
@@ -61,15 +58,15 @@ async function getFoundation() {
 // ---------------------------------------------------------------------------
 
 interface AssessmentResult {
-  /** Whether the hook should block the action. */
-  block: boolean;
   /** Crisis level from RRT Advocate (if any). */
   crisisLevel: string;
-  /** Human-readable reason for the decision. */
+  /** Human-readable reason for the finding. */
   reason: string;
+  /** Whether this was a high-risk finding. */
+  highRisk: boolean;
 }
 
-const NO_BLOCK: AssessmentResult = { block: false, crisisLevel: "", reason: "" };
+const NO_FINDING: AssessmentResult = { crisisLevel: "", reason: "", highRisk: false };
 
 // ---------------------------------------------------------------------------
 // Hallucination / fallback-language detection
@@ -96,24 +93,27 @@ function replyLooksUnsupported(reply: string): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Core assessment
+// Core assessment — observation-only
+//
+// This plugin is MONITOR-ONLY. It observes and logs governance signals but
+// does NOT block or modify agent actions. For enforcement mode, use the
+// full ASFDK harness extension.
 // ---------------------------------------------------------------------------
 
 async function assess(
   text: string,
   channel: Channel,
   source: string,
-  identity?: { userId?: string; sessionId?: string },
+  identity: { userId: string; sessionId: string },
 ): Promise<AssessmentResult> {
-  if (!text) return NO_BLOCK;
+  if (!text) return NO_FINDING;
 
   const f = await getFoundation();
   if (!f) {
-    // Foundation not available — log warning, do not block
     if (!initFailed) {
       console.warn("[asfdk-deploy] Foundation not available for assessment", { source });
     }
-    return NO_BLOCK;
+    return NO_FINDING;
   }
 
   try {
@@ -121,8 +121,8 @@ async function assess(
       timestamp: new Date(),
       interactionType: InteractionType.EMOTIONAL_ASSESSMENT,
       data: { text: text.slice(0, config.maxAssessLength), source },
-      userId: identity?.userId ?? "openclaw-user",
-      sessionId: identity?.sessionId ?? "openclaw-session",
+      userId: identity.userId,
+      sessionId: identity.sessionId,
       channel,
     });
 
@@ -133,36 +133,39 @@ async function assess(
     const isHighRisk =
       HIGH_RISK.has(crisisLevel.toLowerCase()) ||
       Boolean(emotional.requiresCheckIn) ||
-      Boolean(emotional?.selfHarm);
+      Boolean(emotional.selfHarm);
 
     if (isHighRisk) {
-      const reason = `Crisis level: ${crisisLevel}, requiresCheckIn: ${emotional?.requiresCheckIn}, selfHarm: ${emotional?.selfHarm}`;
-      console.log(`[asfdk-deploy] gate-up channel=${channel} source=${source} ${reason} — escalate to Joshua W. Dorsey, Sr.`);
-      return { block: config.enforcement, crisisLevel, reason };
+      const reason = `Crisis level: ${crisisLevel}, requiresCheckIn: ${emotional.requiresCheckIn}, selfHarm: ${emotional.selfHarm}`;
+      console.log(`[asfdk-deploy] HIGH-RISK channel=${channel} source=${source} ${reason} — escalate to Joshua W. Dorsey, Sr.`);
+      return { crisisLevel, reason, highRisk: true };
     }
 
     // Hallucination check (replies only)
     if (channel === Channel.MODEL_OUTPUT && text && replyLooksUnsupported(text)) {
       const reason = "Reply contains unsupported/fallback language patterns";
-      console.log(`[asfdk-deploy] unsupported-claim channel=${channel} source=${source} — escalate to Joshua W. Dorsey, Sr.`);
-      return { block: config.enforcement, crisisLevel: "", reason };
+      console.log(`[asfdk-deploy] UNSUPPORTED-CLAIM channel=${channel} source=${source} — escalate to Joshua W. Dorsey, Sr.`);
+      return { crisisLevel: "", reason, highRisk: true };
     }
   } catch (err) {
     console.error(`[asfdk-deploy] assessment-error channel=${channel} source=${source}`, err);
   }
 
-  return NO_BLOCK;
+  return NO_FINDING;
 }
 
 // ---------------------------------------------------------------------------
-// Plugin entry
+// Plugin entry — MONITOR-ONLY
 // ---------------------------------------------------------------------------
 
 export default definePluginEntry({
   id: "asfdk-deploy",
-  name: "ASFDK Deploy",
+  name: "ASFDK Deploy (Monitor-Only)",
   description:
-    "Integrates the ASFDK Solidarity Layer into OpenClaw. Observes agent turns, tool calls, and messages through TOI/OTOI, RRT Advocate, and Sleepwalker Protocol. Supports logging-only (default) or enforcement mode via config.",
+    "MONITOR-ONLY integration of the ASFDK Solidarity Layer into OpenClaw. " +
+    "Observes agent turns, tool calls, and messages through TOI/OTOI, RRT Advocate, " +
+    "and Sleepwalker Protocol. Logs escalation signals but does NOT block or modify actions. " +
+    "For enforcement mode, use the full ASFDK harness extension.",
   version: "0.1.0",
 
   register(api) {
@@ -174,11 +177,7 @@ export default definePluginEntry({
       // Config not available — use defaults
     }
 
-    if (config.enforcement) {
-      console.log("[asfdk-deploy] Running in ENFORCEMENT mode — hooks may block actions");
-    } else {
-      console.log("[asfdk-deploy] Running in LOGGING-ONLY mode — hooks observe but do not block");
-    }
+    console.log("[asfdk-deploy] Running in MONITOR-ONLY mode — hooks observe but do not block");
 
     api.on("gateway_start", async () => {
       await getFoundation();
@@ -191,46 +190,44 @@ export default definePluginEntry({
           : JSON.stringify(event.content ?? "");
       await assess(
         content,
-        Channel.USER_INPUT,
+        Channel.MODEL_OUTPUT,  // Peer/system messages are assessed as model output
         `message:${event.senderId ?? "unknown"}`,
-        { userId: event.senderId, sessionId: event.sessionId },
+        { userId: event.senderId ?? "unknown", sessionId: event.sessionId ?? "unknown" },
       );
     });
 
     api.on("before_tool_call", async (event) => {
       // NOTE: OpenClaw's before_tool_call hook does not support async
-      // cancellation from this hook shape. Assessment is observation-only
-      // regardless of enforcement config. Enforcement only applies to hooks
-      // that support returning a stop decision (before_agent_reply).
+      // cancellation from this hook shape. Assessment is observation-only.
       const params =
         typeof event.params === "string"
           ? event.params
           : JSON.stringify(event.params ?? {});
       await assess(
         params,
-        Channel.TOOL_RESULT,
+        Channel.USER_INPUT,  // Tool call arguments are assessed as user input
         `tool:${event.toolName ?? "unknown"}`,
-        { userId: event.agentId, sessionId: event.sessionId },
+        { userId: event.agentId ?? "unknown", sessionId: event.sessionId ?? "unknown" },
       );
     });
 
     api.on("before_agent_reply", async (event) => {
+      // NOTE: This hook is observation-only. Even if a high-risk finding is
+      // detected, the reply is NOT blocked. The signal is logged for human
+      // review. For enforcement, use the full ASFDK harness extension.
       const reply =
         typeof event.cleanedBody === "string" ? event.cleanedBody : "";
       const result = await assess(
         reply,
         Channel.MODEL_OUTPUT,
         "agent:reply",
-        { userId: event.agentId, sessionId: event.sessionId },
+        { userId: event.agentId ?? "unknown", sessionId: event.sessionId ?? "unknown" },
       );
 
-      if (result.block) {
+      if (result.highRisk) {
         console.log(
-          `[asfdk-deploy] BLOCKED reply: ${result.reason} — escalate to Joshua W. Dorsey, Sr.`
+          `[asfdk-deploy] HIGH-RISK REPLY DETECTED: ${result.reason} — escalate to Joshua W. Dorsey, Sr.`
         );
-        // NOTE: If OpenClaw supports returning a stop decision from
-        // before_agent_reply, this is where it would be returned.
-        // Currently the plugin is observation-only by design.
       }
     });
   },

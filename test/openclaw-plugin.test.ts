@@ -17,14 +17,21 @@ describe("openclaw-plugin", () => {
   it("openclaw.plugin.json has valid config schema", () => {
     const manifest = JSON.parse(readFileSync(resolve(pluginDir, "openclaw.plugin.json"), "utf8"));
     expect(manifest.id).toBe("asfdk-deploy");
-    expect(manifest.configSchema?.properties?.enforcement?.type).toBe("boolean");
+    expect(manifest.name).toContain("Monitor-Only");
     expect(manifest.configSchema?.properties?.maxAssessLength?.type).toBe("number");
+    // enforcement removed — plugin is monitor-only
+    expect(manifest.configSchema?.properties?.enforcement).toBeUndefined();
   });
 
   it("index.ts exports a plugin entry", async () => {
-    // Dynamic import — this verifies the module loads without throwing
     const mod = await import(resolve(pluginDir, "index.ts"));
     expect(mod.default).toBeDefined();
     expect(typeof mod.default.register).toBe("function");
+  });
+
+  it("plugin description says monitor-only", () => {
+    const manifest = JSON.parse(readFileSync(resolve(pluginDir, "openclaw.plugin.json"), "utf8"));
+    expect(manifest.description.toLowerCase()).toContain("monitor-only");
+    expect(manifest.description.toLowerCase()).toContain("does not block");
   });
 });
