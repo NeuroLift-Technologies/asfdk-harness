@@ -117,7 +117,7 @@ async function assess(
   }
 
   try {
-    const interaction = await f.processInteraction({
+    const interaction: FoundationResponse = await f.processInteraction({
       timestamp: new Date(),
       interactionType: InteractionType.EMOTIONAL_ASSESSMENT,
       data: { text: text.slice(0, config.maxAssessLength), source },
@@ -126,13 +126,13 @@ async function assess(
       channel,
     });
 
-    const content: any = (interaction as any)?.content ?? {};
-    const crisisLevel: string = content?.rrt?.crisisLevel ?? "";
+    const content: Record<string, unknown> = interaction.content ?? {};
+    const crisisLevel: string = (content.rrt as Record<string, unknown>)?.crisisLevel as string ?? "";
     const HIGH_RISK = new Set(["high", "elevated", "emergency"]);
-    const emotional = content?.emotionalState ?? {};
+    const emotional = (content.emotionalState as Record<string, unknown>) ?? {};
     const isHighRisk =
       HIGH_RISK.has(crisisLevel.toLowerCase()) ||
-      Boolean(emotional?.requiresCheckIn) ||
+      Boolean(emotional.requiresCheckIn) ||
       Boolean(emotional?.selfHarm);
 
     if (isHighRisk) {
