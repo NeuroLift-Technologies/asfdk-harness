@@ -29,28 +29,38 @@ const DEFAULT_CONFIG: PluginConfig = {
 };
 
 // ---------------------------------------------------------------------------
-// Foundation singleton
+// Foundation singleton — serialized initialization
+//
+// Concurrent hook callbacks share a single promise to prevent duplicate
+// foundation allocation. The foundation is created once and reused.
 // ---------------------------------------------------------------------------
 
 let foundation: NeuroLiftFoundation | undefined;
-let initialized = false;
+let initPromise: Promise<NeuroLiftFoundation | undefined> | null = null;
 let initFailed = false;
 let config: PluginConfig = { ...DEFAULT_CONFIG };
 
-async function getFoundation() {
-  if (initialized || initFailed) return foundation;
+async function getFoundation(): Promise<NeuroLiftFoundation | undefined> {
+  if (foundation) return foundation;
+  if (initFailed) return undefined;
 
-  try {
-    // Use a placeholder userId — real identity comes from OpenClaw events
-    foundation = await createFoundation("openclaw-plugin", FoundationMode.UNIFIED);
-    initialized = true;
-    console.log("[asfdk-deploy] Foundation initialized in UNIFIED mode");
-  } catch (err) {
-    initFailed = true;
-    console.error("[asfdk-deploy] FATAL: Foundation init failed — governance is DISABLED", err);
+  // Serialize: concurrent callers share the same init promise
+  if (!initPromise) {
+    initPromise = (async () => {
+      try {
+        const f = await createFoundation("openclaw-plugin", FoundationMode.UNIFIED);
+        foundation = f;
+        console.log("[asfdk-deploy] Foundation initialized in UNIFIED mode");
+        return f;
+      } catch (err) {
+        initFailed = true;
+        console.error("[asfdk-deploy] FATAL: Foundation init failed — governance is DISABLED", err);
+        return undefined;
+      }
+    })();
   }
 
-  return foundation;
+  return initPromise;
 }
 
 // ---------------------------------------------------------------------------
@@ -71,9 +81,11 @@ const NO_FINDING: AssessmentResult = { crisisLevel: "", reason: "", highRisk: fa
 // ---------------------------------------------------------------------------
 // Hallucination / fallback-language detection
 //
-// NOTE: These patterns are English-only. Non-English fallback language or
-// stylistic variations will be missed. A model-backed classifier should be
-// used if reliable cross-language detection is required.
+// LANGUAGE SCOPE: These patterns are English-only. They detect common
+// English phrases that indicate the model is fabricating, simulating, or
+// fallback-ing when it cannot access real data. Non-English fallback
+// language or stylistic variations will NOT be detected. For reliable
+// cross-language detection, a model-backed classifier is required.
 // ---------------------------------------------------------------------------
 
 const FABRICATION_PATTERNS: RegExp[] = [
@@ -110,9 +122,7 @@ async function assess(
 
   const f = await getFoundation();
   if (!f) {
-    if (!initFailed) {
-      console.warn("[asfdk-deploy] Foundation not available for assessment", { source });
-    }
+    console.warn("[asfdk-deploy] Foundation not available for assessment", { source });
     return NO_FINDING;
   }
 
@@ -125,6 +135,15 @@ async function assess(
       sessionId: identity.sessionId,
       channel,
     });
+
+    // Check for component failures before extracting content
+    if (interaction.content?.error) {
+      console.error(
+        `[asfdk-deploy] component-error channel=${channel} source=${source}`,
+        interaction.content.error,
+      );
+      return NO_FINDING;
+    }
 
     const content: Record<string, unknown> = interaction.content ?? {};
     const crisisLevel: string = (content.rrt as Record<string, unknown>)?.crisisLevel as string ?? "";
@@ -141,9 +160,9 @@ async function assess(
       return { crisisLevel, reason, highRisk: true };
     }
 
-    // Hallucination check (replies only)
+    // Hallucination check (replies only, ENGLISH-ONLY — see FABRICATION_PATTERNS docstring)
     if (channel === Channel.MODEL_OUTPUT && text && replyLooksUnsupported(text)) {
-      const reason = "Reply contains unsupported/fallback language patterns";
+      const reason = "Reply contains unsupported/fallback language patterns (English-only detection)";
       console.log(`[asfdk-deploy] UNSUPPORTED-CLAIM channel=${channel} source=${source} — escalate to Joshua W. Dorsey, Sr.`);
       return { crisisLevel: "", reason, highRisk: true };
     }
@@ -184,6 +203,11 @@ export default definePluginEntry({
     });
 
     api.on("message_received", async (event) => {
+      // Require real identity — skip assessment for events without senderId/sessionId
+      if (!event.senderId || !event.sessionId) {
+        console.warn("[asfdk-deploy] skipping message_received: missing senderId or sessionId");
+        return;
+      }
       const content =
         typeof event.content === "string"
           ? event.content
@@ -191,14 +215,18 @@ export default definePluginEntry({
       await assess(
         content,
         Channel.MODEL_OUTPUT,  // Peer/system messages are assessed as model output
-        `message:${event.senderId ?? "unknown"}`,
-        { userId: event.senderId ?? "unknown", sessionId: event.sessionId ?? "unknown" },
+        `message:${event.senderId}`,
+        { userId: event.senderId, sessionId: event.sessionId },
       );
     });
 
     api.on("before_tool_call", async (event) => {
       // NOTE: OpenClaw's before_tool_call hook does not support async
       // cancellation from this hook shape. Assessment is observation-only.
+      if (!event.agentId || !event.sessionId) {
+        console.warn("[asfdk-deploy] skipping before_tool_call: missing agentId or sessionId");
+        return;
+      }
       const params =
         typeof event.params === "string"
           ? event.params
@@ -207,7 +235,7 @@ export default definePluginEntry({
         params,
         Channel.USER_INPUT,  // Tool call arguments are assessed as user input
         `tool:${event.toolName ?? "unknown"}`,
-        { userId: event.agentId ?? "unknown", sessionId: event.sessionId ?? "unknown" },
+        { userId: event.agentId, sessionId: event.sessionId },
       );
     });
 
@@ -215,13 +243,17 @@ export default definePluginEntry({
       // NOTE: This hook is observation-only. Even if a high-risk finding is
       // detected, the reply is NOT blocked. The signal is logged for human
       // review. For enforcement, use the full ASFDK harness extension.
+      if (!event.agentId || !event.sessionId) {
+        console.warn("[asfdk-deploy] skipping before_agent_reply: missing agentId or sessionId");
+        return;
+      }
       const reply =
         typeof event.cleanedBody === "string" ? event.cleanedBody : "";
       const result = await assess(
         reply,
         Channel.MODEL_OUTPUT,
         "agent:reply",
-        { userId: event.agentId ?? "unknown", sessionId: event.sessionId ?? "unknown" },
+        { userId: event.agentId, sessionId: event.sessionId },
       );
 
       if (result.highRisk) {
