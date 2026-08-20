@@ -26,9 +26,22 @@ import { z } from "zod";
 const STATE_FILE = process.env.ASFDK_HUB_STATE_FILE
   ?? path.join(process.cwd(), ".asfdk-hub-state.json");
 
+interface PersistedMessage {
+  id: string;
+  from: string;
+  to: string;
+  type: "task" | "message" | "event";
+  payload: Record<string, unknown>;
+  timestamp: string;
+  replyTo?: string;
+  delivered: boolean;
+  deliveredAt?: string;
+}
+
 interface PersistedState {
   agents: [string, RegisteredAgent][];
   stats: HubStats;
+  messages: PersistedMessage[];
 }
 
 function saveState() {
@@ -36,6 +49,7 @@ function saveState() {
     const state: PersistedState = {
       agents: Array.from(agents.entries()),
       stats,
+      messages,
     };
     fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2), "utf8");
   } catch (err) {
@@ -56,10 +70,15 @@ function loadState() {
         agents.set(id, agent);
       }
     }
+    if (Array.isArray(state.messages)) {
+      for (const msg of state.messages) {
+        messages.push(msg);
+      }
+    }
     if (state.stats) {
       stats = { ...stats, ...state.stats, startedAt: new Date().toISOString() };
     }
-    console.error(`[discovery-hub] Loaded ${agents.size} agent(s) from ${STATE_FILE}`);
+    console.error(`[discovery-hub] Loaded ${agents.size} agent(s), ${messages.length} message(s) from ${STATE_FILE}`);
   } catch (err) {
     console.error(`[discovery-hub] Failed to load state from ${STATE_FILE}:`, err);
     console.error(`[discovery-hub] Starting with empty registry`);
@@ -114,10 +133,11 @@ interface HubStats {
 }
 
 // ---------------------------------------------------------------------------
-// In-memory agent registry
+// In-memory agent registry + message inbox
 // ---------------------------------------------------------------------------
 
 const agents = new Map<string, RegisteredAgent>();
+const messages: PersistedMessage[] = [];
 let stats: HubStats = {
   totalRegistrations: 0,
   totalDeregistrations: 0,
@@ -176,6 +196,19 @@ function deregisterAgent(id: string): boolean {
   stats.totalDeregistrations++;
   saveState();
   return true;
+}
+
+function storeMessage(msg: PersistedMessage) {
+  messages.push(msg);
+  saveState();
+}
+
+function getInbox(agentId: string): PersistedMessage[] {
+  return messages.filter((m) => m.to === agentId);
+}
+
+function getAllMessages(limit = 100): PersistedMessage[] {
+  return messages.slice(-limit);
 }
 
 // ---------------------------------------------------------------------------
@@ -398,6 +431,71 @@ Returns the full agent record or an error if not found.`,
     }
   );
 
+  // Tool: get_inbox
+  server.registerTool(
+    "get_inbox",
+    {
+      title: "Get Agent Inbox",
+      description: `Get all messages for a specific agent from the hub inbox.
+
+Returns messages sent to the agent, including delivery status.`,
+      inputSchema: {
+        agentId: z.string().describe("The unique ID of the agent whose inbox to retrieve"),
+      },
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async ({ agentId }) => {
+      const agentInbox = getInbox(agentId);
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            agentId,
+            count: agentInbox.length,
+            messages: agentInbox,
+          }, null, 2),
+        }],
+      };
+    }
+  );
+
+  // Tool: list_messages
+  server.registerTool(
+    "list_messages",
+    {
+      title: "List All Messages",
+      description: `List all messages across all agents (admin view).
+
+Optionally limit the number of results.`,
+      inputSchema: {
+        limit: z.number().optional().describe("Maximum number of messages to return (default: 100)"),
+      },
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async ({ limit }) => {
+      const allMessages = getAllMessages(limit ?? 100);
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            count: allMessages.length,
+            messages: allMessages,
+          }, null, 2),
+        }],
+      };
+    }
+  );
+
   return server;
 }
 
@@ -428,22 +526,45 @@ function jsonResponse(res: http.ServerResponse, status: number, data: unknown) {
 
 async function main() {
   loadState();
-  const mcpServer = createHubMcpServer();
-  const mcpTransport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: undefined,
-  });
-  const connectPromise = mcpServer.connect(mcpTransport);
 
   const httpServer = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", `http://${req.headers.host ?? `${HUB_HOST}:${HUB_PORT}`}`);
     const path = url.pathname;
 
     try {
-      // --- MCP endpoint ---
-      if (path === MCP_PATH && req.method === "POST") {
-        await connectPromise;
-        const body = await readJsonBody(req);
-        await mcpTransport.handleRequest(req as http.IncomingMessage & { auth?: AuthInfo }, res, body);
+      // --- MCP endpoint (Streamable HTTP, stateless mode) ---
+      // Per the MCP SDK's stateless pattern, each POST request must use a
+      // fresh transport (and fresh server) — a cached transport throws
+      // "Stateless transport cannot be reused across requests" on the 2nd request.
+      if (path === MCP_PATH) {
+        if (req.method === "POST") {
+          const mcpServer = createHubMcpServer();
+          const transport = new StreamableHTTPServerTransport({
+            sessionIdGenerator: undefined,
+          });
+          try {
+            await mcpServer.connect(transport);
+            const body = await readJsonBody(req);
+            console.log(`[discovery-hub] MCP request (POST):`, JSON.stringify(body ?? {}).substring(0, 200));
+            await transport.handleRequest(req as http.IncomingMessage & { auth?: AuthInfo }, res, body);
+            console.log(`[discovery-hub] MCP response sent (POST)`);
+          } finally {
+            // Stateless: tear down the transport when the response closes.
+            res.on("close", () => {
+              transport.close().catch(() => {});
+              mcpServer.close().catch(() => {});
+            });
+          }
+        } else if (req.method === "GET" || req.method === "DELETE") {
+          // Stateless mode does not support long-lived SSE streams.
+          jsonResponse(res, 405, {
+            jsonrpc: "2.0",
+            error: { code: -32000, message: "Method not allowed. This stateless endpoint accepts POST only." },
+            id: null,
+          });
+        } else {
+          jsonResponse(res, 405, { error: "Method not allowed", path, method: req.method });
+        }
         return;
       }
 
@@ -611,6 +732,8 @@ async function main() {
 
         console.log(`[discovery-hub] Routing message: ${message.from} → ${message.to} (${targetAgent.name}, transport: ${targetAgent.transport})`);
 
+        // Store in inbox
+        storeMessage({ ...message, delivered: false });
         // Route based on transport type
         if (targetAgent.transport === "http" && targetAgent.url) {
           // HTTP agent: forward to their endpoint
@@ -629,6 +752,9 @@ async function main() {
 
             const responseData = await response.json() as Record<string, unknown>;
             targetAgent.lastSeen = new Date().toISOString();
+            // Mark delivered
+            const stored = messages.find((m) => m.id === message.id);
+            if (stored) { stored.delivered = true; stored.deliveredAt = new Date().toISOString(); }
             saveState();
 
             const a2aResponse: A2AResponse = {
@@ -678,6 +804,9 @@ async function main() {
 
             const responseData = await response.json() as Record<string, unknown>;
             targetAgent.lastSeen = new Date().toISOString();
+            // Mark delivered
+            const stored = messages.find((m) => m.id === message.id);
+            if (stored) { stored.delivered = true; stored.deliveredAt = new Date().toISOString(); }
             saveState();
 
             const a2aResponse: A2AResponse = {
@@ -719,6 +848,31 @@ async function main() {
         return;
       }
 
+      // --- REST: Get inbox for specific agent ---
+      const inboxMatch = path.match(/^\/a2a\/inbox\/(.+)$/);
+      if (inboxMatch && req.method === "GET") {
+        const agentId = inboxMatch[1];
+        const agentInbox = getInbox(agentId);
+        jsonResponse(res, 200, {
+          agentId,
+          count: agentInbox.length,
+          messages: agentInbox,
+        });
+        return;
+      }
+
+      // --- REST: Get all messages (admin view) ---
+      if (path === "/a2a/inbox" && req.method === "GET") {
+        const limitParam = url.searchParams.get("limit");
+        const limit = limitParam ? parseInt(limitParam, 10) : 100;
+        const allMessages = getAllMessages(limit);
+        jsonResponse(res, 200, {
+          count: allMessages.length,
+          messages: allMessages,
+        });
+        return;
+      }
+
       // --- 404 ---
       jsonResponse(res, 404, { error: "Not found", path });
     } catch (error) {
@@ -756,4 +910,4 @@ if (process.argv[1]) {
   });
 }
 
-export { createHubMcpServer, registerAgent, deregisterAgent, agents };
+export { createHubMcpServer, registerAgent, deregisterAgent, agents, messages, getInbox, getAllMessages };

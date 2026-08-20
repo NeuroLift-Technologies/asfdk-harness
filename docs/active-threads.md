@@ -2,7 +2,27 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-08-17T19:15:00Z
+**Last updated:** 2026-08-18T06:00:00Z
+
+---
+
+## Active Threads
+
+### THREAD-011 — Fix A2A hub MCP SSE 404 / stateless transport reuse
+| Field | Value |
+|---|---|
+| **Thread ID** | THREAD-011 |
+| **Status** | 🟢 Complete (verified live) |
+| **Started** | 2026-08-18 |
+| **Owner** | swe |
+| **Branch** | `feat/discovery-hub-persistence` |
+| **Task** | Fix "SSE error non-200 status code 404" from MCP clients (opencode/kilo) connecting to the A2A discovery hub at `http://localhost:3001/mcp`. |
+| **Root cause** | 1) Hub only handled `POST /mcp`; `GET /mcp` (SSE stream establishment) fell through to the 404 handler. 2) Hub cached a singleton `StreamableHTTPServerTransport` with `sessionIdGenerator: undefined` (stateless). The MCP SDK throws `Stateless transport cannot be reused across requests` on the 2nd request, so any request after the first 500'd. |
+| **Fix** | Rewrote MCP handling in `src/discovery-hub.ts` per the SDK's official stateless pattern: fresh `McpServer` + fresh `StreamableHTTPServerTransport` per POST, torn down on response close; `GET`/`DELETE /mcp` return 405 (which the MCP client treats as expected "no SSE offered" — SDK comment line 101-105), not 404. |
+| **Verification** | initialize → 200; tools/list (2nd request) → 200 with 7 hub tools; GET /mcp → 405. Hub restarted on new build; 5 agents persisted via state file. |
+| **Blockers** | None. |
+| **Related PR** | TBD from `feat/discovery-hub-persistence` |
+| **Notes** | Dist rebuilt (`npm run build`), hub restarted with `ASFDK_HUB_STATE_FILE` env. `/tmp/discovery-hub.log` holds runtime log. |
 
 ---
 
