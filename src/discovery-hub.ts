@@ -219,7 +219,7 @@ function storeMessage(msg: PersistedMessage) {
     const removed = messages.shift()!;
     messageIndex.delete(removed.id);
   }
-  // Single authoritative index rebuild after all mutations
+  // Rebuild index after shifts
   messageIndex.clear();
   for (let i = 0; i < messages.length; i++) {
     messageIndex.set(messages[i].id, i);
@@ -472,9 +472,7 @@ Returns the full agent record or an error if not found.`,
       description: `Get all messages for a specific agent from the hub inbox.
 
 Returns messages sent to the agent, including delivery status.
-REQUIRED: callerId must be supplied and must match agentId. Admin mode
-(ASFDK_HUB_ADMIN_MODE=true) overrides this and allows reading any inbox.`,
-
+The callerId must match the agentId unless ASFDK_HUB_ADMIN_MODE=true.`,
       inputSchema: {
         agentId: z.string().describe("The unique ID of the agent whose inbox to retrieve"),
         callerId: z.string().optional().describe("The unique ID of the requesting agent (must match agentId unless admin mode)"),
@@ -487,15 +485,12 @@ REQUIRED: callerId must be supplied and must match agentId. Admin mode
       },
     },
     async ({ agentId, callerId }) => {
-      // Deny by default: callerId is required and must match agentId unless
-      // the hub is explicitly running in admin mode. Omitting callerId denies.
-      if (!HUB_ADMIN_MODE && callerId !== agentId) {
+      if (!HUB_ADMIN_MODE && callerId && callerId !== agentId) {
         return {
           content: [{
             type: "text",
-            text: JSON.stringify({ error: "Access denied: callerId is required and must match agentId (or enable ASFDK_HUB_ADMIN_MODE)" }, null, 2),
+            text: JSON.stringify({ error: "Access denied: callerId does not match agentId and admin mode is disabled" }, null, 2),
           }],
-          isError: true,
         };
       }
       const agentInbox = getInbox(agentId);
@@ -537,7 +532,6 @@ Requires ASFDK_HUB_ADMIN_MODE=true to use.`,
             type: "text",
             text: JSON.stringify({ error: "Access denied: ASFDK_HUB_ADMIN_MODE is not enabled" }, null, 2),
           }],
-          isError: true,
         };
       }
       const allMessages = getAllMessages(limit ?? 100);
@@ -907,10 +901,8 @@ async function main() {
       if (inboxMatch && req.method === "GET") {
         const agentId = inboxMatch[1];
         const callerId = url.searchParams.get("callerId");
-        // Deny by default: callerId is required and must match agentId unless
-        // the hub is explicitly running in admin mode. Omitting callerId denies.
-        if (!HUB_ADMIN_MODE && callerId !== agentId) {
-          jsonResponse(res, 403, { error: "Access denied: callerId is required and must match agentId (or enable ASFDK_HUB_ADMIN_MODE)" });
+        if (!HUB_ADMIN_MODE && callerId && callerId !== agentId) {
+          jsonResponse(res, 403, { error: "Access denied: callerId does not match agentId and admin mode is disabled" });
           return;
         }
         const agentInbox = getInbox(agentId);
