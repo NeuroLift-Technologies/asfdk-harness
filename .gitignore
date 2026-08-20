@@ -145,6 +145,8 @@ vite.config.ts.timestamp-*
 # ASFDK harness runtime artifacts
 # Sleepwalker Protocol cross-session continuity storage (created at runtime, per user id)
 .swp_storage/
+# Hub persistence file (local runtime data)
+.asfdk-hub-state.json
 
 # Personal TOI files
 .toi
