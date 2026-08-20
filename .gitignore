@@ -167,3 +167,6 @@ agents/**/*.js.map
 
 # Poolside local settings (not repo content)
 .poolside/
+
+# Zed extension build output
+zed-extension/target/

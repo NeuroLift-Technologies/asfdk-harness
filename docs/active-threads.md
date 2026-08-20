@@ -2,11 +2,27 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-08-18T06:00:00Z
+**Last updated:** 2026-08-20T00:00:00Z
 
 ---
 
 ## Active Threads
+
+### THREAD-012 — Package ASFDK Harness as a Zed Dev Extension
+| Field | Value |
+|---|---|
+| **Thread ID** | THREAD-012 |
+| **Status** | 🟢 Complete |
+| **Started** | 2026-08-20 |
+| **Owner** | Zed GPT-5.3 Codex |
+| **Branch** | `feat/kilo-plugin` |
+| **Task** | Turn `asfdk-harness` into a local-installable Zed dev extension that exposes the existing ASFDK MCP server in Zed's Agent Panel. |
+| **Scope** | `zed-extension/` (new), `README.md`, `.gitignore`, `docs/active-threads.md`, `docs/agent-log/*` |
+| **Blockers** | None. |
+| **Related PR** | TBD |
+| **Notes** | Added a Rust-based Zed extension wrapper with `extension.toml`, `Cargo.toml`, and `src/lib.rs`. The extension resolves command startup with this order: (1) local dev build `../dist/mcp-server.js` via Zed's Node runtime, (2) fallback to `asfdk-harness-mcp` on PATH, (3) optional user override via `context_servers.asfdk-harness.command` settings. Added usage docs in `zed-extension/README.md` and root `README.md`. |
+
+---
 
 ### THREAD-011 — Fix A2A hub MCP SSE 404 / stateless transport reuse
 | Field | Value |

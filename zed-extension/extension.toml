@@ -1,0 +1,10 @@
+id = "mcp-server-asfdk-harness"
+name = "ASFDK Harness MCP Server"
+description = "Expose ASFDK governance tools to Zed via Model Context Protocol"
+version = "0.1.0"
+schema_version = 1
+authors = ["NeuroLift Technologies <info@neuroliftsolutions.com>"]
+repository = "https://github.com/NeuroLift-Technologies/asfdk-harness"
+
+[context_servers.asfdk-harness]
+name = "ASFDK Harness"

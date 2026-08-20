@@ -21,6 +21,7 @@ It adds Solidarity Framework hooks around agent runtime sessions so prompts and 
 - **Turn preflight hook** using ASFDK assessment context
 - **Tool-call policy hook** for high-risk shell commands and sensitive local paths
 - **Standalone SDK runner** for one-shot Pi prompts with ASFDK hooks enabled
+- **Zed dev extension wrapper** (`zed-extension/`) for MCP context-server installation in Zed
 - **Skill and prompt resources** for Pi discovery
 
 ## Install locally in Pi
@@ -43,6 +44,25 @@ npm run harness -- "What files are in this repo?"
 ```
 
 > **Workers types:** run `npm run cf:typegen` (`wrangler types`) to generate `worker-configuration.d.ts` before `npm run cf:check` or `npm run cf:deploy`. This file is gitignored and not committed.
+
+## Zed Dev Extension
+
+A local Zed dev extension is included at `zed-extension/`.
+
+From the repo root:
+
+```bash
+npm install
+npm run build
+```
+
+Then in Zed:
+
+1. Run `zed: extensions`
+2. Click **Install Dev Extension**
+3. Select `asfdk-harness/zed-extension`
+
+See `zed-extension/README.md` for command override options.
 
 ## MCP Server
 

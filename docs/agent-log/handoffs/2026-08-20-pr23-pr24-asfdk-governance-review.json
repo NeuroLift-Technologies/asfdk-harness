@@ -1,0 +1,68 @@
+{
+  "handoff_record": {
+    "session_id": "2026-08-20-pr23-pr24-asfdk-governance-review",
+    "agent_name": "harness-reviewer (Poolside / Claude)",
+    "date": "2026-08-20",
+    "timestamp": "2026-08-20T09:05:00Z",
+    "otoi_version": "ORG-DEV-OTOI-1.0.3",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "feat/discovery-hub-persistence (PR #23), feat/openclaw-plugin-and-a2a-skill (PR #24)",
+    "work_completed": [
+      "Reviewed PR #23 (feat/discovery-hub-persistence: message persistence, inbox endpoints, disabled auto-preflight) — posted a COMMENTED review capturing three MEDIUM findings.",
+      "Reviewed PR #24 (feat/openclaw-plugin-and-a2a-skill: OpenClaw plugin + Pi A2A skill) — confirmed it fixes all three #23 MEDIUMs and adds retention/admin work; posted a COMMENTED review (verdict: Approve-with-changes).",
+      "Confirmed PR #24 fixes: entry-point guard (import.meta.url pattern), removal of hardcoded /home/joshd paths, .asfdk-hub-state.json + .poolside/ added to .gitignore.",
+      "Ran tsc --noEmit and npm run check on the PR #24 branch — clean (EXIT=0). Verified CI (CodeQL, GitGuardian, Analyze) all green on commit 07df6cd.",
+      "Delivered the review to the cto_agent durably via three mechanisms: (1) posted as COMMENTED review comments on PR #23 and PR #24 (6081-byte review on #24 — canonical, persistent delivery); (2) queued in the cto_agent's A2A hub inbox (POST /a2a/message from asfdk-reviewer; inbox shows delivered=True, messageId 3c621191…); (3) routed to OpenCode via the proxy — hub->proxy /a2a/inbound->opencode --agent ai_cto_agent (task 9a985772 completed, session ses_fe1b4d856ffe1mV6V3Rzc9cAi1 created).",
+      "Observed (NOT authored by me) in-flight activity responding to this review: (a) a SWE-agent committed fixes on the PR #24 branch addressing the review — c654a89 'address PR #24 review — blocking + should-fix' and 2d741d9 'address PR #24 review — MEDIUM + LOW' (committed 07:37Z and 07:44Z, minutes after my 07:34Z review); (b) additional uncommitted working-tree changes addressing findings: src/discovery-hub.ts now has the authz deny-by-default fix (line 492/912: callerId !== agentId) plus isError:true + redundant index-rebuild removed; openclaw-plugin/index.ts has channel-label changes and the typed config cast; a new test/openclaw-plugin.test.ts. tsc --noEmit still passes (EXIT 0) with these in-progress changes."
+    ],
+    "work_in_progress": [
+      "authz deny-by-default fix is in the working tree (src/discovery-hub.ts) but NOT yet committed — pending commit by the cto_agent/SWE-owner.",
+      "openclaw-plugin/index.ts channel-label changes (message_received MODEL_OUTPUT->USER_INPUT; before_tool_call params USER_INPUT->TOOL_RESULT) are uncommitted and need the cto_agent to verify correctness (governance judgment)."
+    ],
+    "blockers": [
+      "OpenCode headless server (port 4096) cannot execute the ai_cto_agent: every invocation returns 'Unexpected server error' with 0 tokens (confirmed with a trivial 'hi' test, refs err_12b091b2/err_393ebc40). The 'build' agent runs fine on the same server, so this is specific to the ai_cto_agent agent config/server-side. The cto_agent therefore cannot actively process the inbox message until this is resolved; the review is durably delivered via PR comments + inbox regardless."
+    ],
+    "decisions_made": [
+      "Did NOT use gh pr review --request-changes on either PR: both are authored by JDUB1216 (the reviewer) and GitHub rejects requesting changes on one's own PR; used --comment reviews instead.",
+      "Did NOT implement source fixes autonomously: per AGENTS.md guardrails (no autonomous architecture/security/implementation decisions, protected files off-limits). Findings are posted for the cto_agent to confirm/implement.",
+      "Registered 'ai-cto-agent' (in-memory) on the A2A discovery hub so it has an inbox and is routable; the proxy maps ai-cto-agent -> ai_cto_agent.",
+      "Left the SWE-agent's and build-agent's uncommitted source changes in the working tree (did not commit them — they are not mine and need cto_agent review/signature).",
+      "OpenCode headless diagnostic: opencod run --attach :4096 --agent build runs fine (peer sessions show nonzero tokens), but opencod run --attach :4096 --agent ai_cto_agent fails every invocation with 'Unexpected server error' (0 tokens, including a trivial 'hi' test, refs err_12b091b2/err_393ebc40). No server log (journalctl asfdk-headless.service, ~/.opencode) surfaces the root cause. Cannot fix autonomously — server-side agent config, outside the repo."
+    ],
+    "decisions_pending": [
+      "MEDIUM #1 (authz): fix is present in the working tree (src/discovery-hub.ts deny-by-default + isError) but uncommitted. cto_agent/SWE should commit it (or fold into the in-progress PR #24 branch). Update SKILL.md curl examples to ?callerId=pi.",
+      "MEDIUM #2 (plugin): SWE already added openclaw-plugin/tsconfig.json (2d741d9) and typed the config cast. cto_agent should confirm monitor-only vs must-block and finalize the plugin's type-coverage/test story.",
+      "LOW: redundant index-rebuild removed (working tree); isError flags added (working tree); channel labels changed (working tree) — cto_agent to verify channel correctness.",
+      "Resolve the OpenCode headless server error for the ai_cto_agent (server-side; outside this repo).",
+      "cto_agent to confirm or push back on each finding and commit/implement the agreed changes."
+    ],
+    "escalations": [],
+    "next_agent_notes": "cto_agent — please look at the review. It is posted as COMMENTED review comments on PR #23 (https://github.com/NeuroLift-Technologies/asfdk-harness/pull/23) and PR #24 (https://github.com/NeuroLift-Technologies/asfdk-harness/pull/24), and a copy is queued in your A2A hub inbox (sent from asfdk-reviewer, delivered=True — run GET /a2a/inbox/ai-cto-agent or your MCP get_inbox once able to run). It was routed to OpenCode via the proxy (session ses_fe1b4d856ffe), but the ai_cto_agent does NOT currently execute on the headless server (every run returns 'Unexpected server error', 0 tokens), so the durable delivery is the PR review comments + your inbox message. TL;DR verdict: Approve-with-changes. The #23 mediums are fixed in #24. Action needed: (1) the inbox authz bypass — deny-by-default fix is already in the working tree (src/discovery-hub.ts) but UNCOMMITTED; please commit it (and update SKILL.md curl examples to ?callerId=pi); (2) confirm the OpenClaw plugin is monitor-only or must gate/block, and finalize its tsconfig + type-coverage + smoke test (SWE already added a tsconfig and typed the config); (3) verify the channel-label changes in openclaw-plugin/index.ts (message_received -> USER_INPUT, tool-call params -> TOOL_RESULT) and the LOW cleanup (redundant index-rebuild removed, isError flags). Security item: the authz deny-by-default is highest priority. Full detail: PR review comments + this handoff record. Note: a SWE-agent has already committed partial responses to this review (c654a89, 2d741d9 on the PR #24 branch); the working tree additionally contains uncommitted fixes I did NOT author — please review before merging.",
+    "files_modified": [
+      "docs/active-threads.md",
+      "docs/agent-log/handoffs/2026-08-20-pr23-pr24-asfdk-governance-review.json",
+      "docs/agent-log/registrations/2026-08-20-harness-reviewer.json"
+    ],
+    "files_observed_not_authored": [
+      "src/discovery-hub.ts (authz deny-by-default, isError flags, removed redundant index-rebuild — by another agent, uncommitted)",
+      "openclaw-plugin/index.ts (typed config cast, channel-label changes — by another agent, uncommitted)",
+      "openclaw-plugin/tsconfig.json (added by [swe] commit 2d741d9)",
+      "test/openclaw-plugin.test.ts (added by [swe] commit c654a89; further uncommitted additions by another agent)"
+    ],
+    "tests_run": [
+      "tsc --noEmit — EXIT 0 (passes with the in-progress working-tree changes)",
+      "npm run check — passed",
+      "gh pr checks #24 — CodeQL, GitFingerprint, Analyze all green (on commit 07df6cd)",
+      "gh pr view 24 reviews — COMMENTED by JDUB1216 posted (07:34Z), reviewDecision ''",
+      "curl http://127.0.0.1:3001/health — hub ok; cto_agent not pre-registered",
+      "curl http://127.0.0.1:4097/health — proxy ok (totalTasks 13)",
+      "hub inbox GET /a2a/inbox/ai-cto-agent — 1 message from asfdk-reviewer, delivered=True",
+      "a2a-proxy journal — inbound message from asfdk-reviewer (target: ai-cto-agent) routed; task 9a985772 completed, session ses_fe1b4d856ffe created",
+      "opencod run --attach :4096 --agent ai_cto_agent 'hi' — session ses_fe1a0b77 created then 'Unexpected server error' (0 tokens); ai_cto_agent execution broken server-side (build agent works)",
+      "opencod session inspect — peer target:ai_cto_agent sessions misrouted to 'build' agent (proxy map key is ai-cto-agent hyphen vs target ai_cto_agent underscore)",
+      "git log — observed [swe] commits c654a89/2d741d9 'address PR #24 review' (07:37Z/07:44Z, after the 07:34Z review)"
+    ],
+    "tests_passing": true,
+    "pr_url": "https://github.com/NeuroLift-Technologies/asfdk-harness/pull/24"
+  }
+}
