@@ -1,0 +1,15 @@
+---
+name: asfdk-governance
+version: 1.0.0
+description: "ASFDK Solidarity Framework — governance tools for the live agent session. Exposes foundation status, health checks, emotional assessment, TOI, preference updates, and A2A discovery hub agent registry. Sources from the installed asfdk Python package and the running discovery hub."
+author: NeuroLift Technologies
+kind: backend
+provides_tools:
+  - asfdk_status
+  - asfdk_health
+  - asfdk_assess
+  - asfdk_preferences
+  - asfdk_toi
+  - hub_status
+  - hub_agents
+  - hub_agent
