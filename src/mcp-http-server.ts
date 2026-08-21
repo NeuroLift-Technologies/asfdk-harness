@@ -7,9 +7,9 @@
  */
 
 import http from "node:http";
-import { pathToFileURL } from "node:url";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
+import { isMainModule } from "./entrypoint.js";
 import { AsfdkHarness } from "./harness.js";
 import { createMcpServer, MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./mcp-server.js";
 
@@ -94,7 +94,7 @@ async function main() {
   }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isMainModule(import.meta.url)) {
   main().catch((error) => {
     console.error(`[${MCP_SERVER_NAME}] MCP HTTP fatal error:`, error);
     process.exit(1);

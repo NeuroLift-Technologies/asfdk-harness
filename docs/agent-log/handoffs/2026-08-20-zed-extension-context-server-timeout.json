@@ -1,0 +1,44 @@
+{
+  "handoff_record": {
+    "session_id": "2026-08-20-zed-extension-timeout-diagnosis",
+    "agent_name": "Zed Coding Agent (Claude Sonnet 5)",
+    "date": "2026-08-20",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "feat/kilo-plugin",
+    "work_completed": [
+      "Confirmed via ~/.local/share/zed/logs/Zed.log that the Rust/WASM extension compiles successfully on every attempt after rust-toolchain.toml was added; the visible failure the user kept hitting is actually a separate downstream error: 'asfdk-harness context server failed to start: Context server request timeout' after a 60s 'initialize' handshake wait.",
+      "Root-caused the timeout: src/lib.rs's local_dev_command() resolves `../dist/mcp-server.js` relative to std::env::current_dir(), which is unreliable inside Zed's wasm32-wasip2 sandbox (observed a transient/inconsistent sibling `dist/` under ~/.local/share/zed/extensions/installed/ that disappeared across rebuilds). When that lookup misses, default_command() falls back to a bare `asfdk-harness-mcp` PATH lookup that was never installed (no npm link was run), even though Zed's own process environment (checked via /proc/<pid>/environ) does have a working nvm-managed node on PATH.",
+      "Verified the vendored zed_extension_api 0.7.0 settings schema (wit/since_v0.2.0/settings.rs) to confirm ContextServerSettings supports a `command: { path, arguments, env }` override that unconditionally takes precedence over the extension's auto-detected default_command in context_server_command().",
+      "Patched ~/.config/zed/settings.json (outside the repo, local machine only) to add an explicit context_servers.asfdk-harness.command override pointing at the absolute nvm node binary and the absolute dist/mcp-server.js path.",
+      "Validated the exact resolved command directly: piped a raw JSON-RPC MCP `initialize` request over stdio to `/home/joshd/.nvm/versions/node/v24.19.0/bin/node /home/joshd/Desktop/nlt-repos/asfdk-harness/dist/mcp-server.js` and received an immediate valid initialize response (previously this path would have silently timed out at 60s under the auto-detected command).",
+      "Documented the root cause and the settings-override fix (with a copy-pasteable verification command) as a new Troubleshooting section in zed-extension/README.md.",
+      "Updated docs/active-threads.md THREAD-012 with a session-by-session trail of both issues (rustup default, then context server timeout) and their fixes.",
+      "Committed all extension scaffolding, the rust-toolchain.toml pin, and doc updates to feat/kilo-plugin and pushed to origin (no direct push to main; PR still TBD)."
+    ],
+    "work_in_progress": [],
+    "blockers": [],
+    "decisions_made": [
+      "Treat the explicit context_servers.asfdk-harness.command settings override as the primary supported path for this specific local machine, rather than continuing to rely on the auto-detected ../dist/mcp-server.js relative-path heuristic, since that heuristic's behavior inside the WASM sandbox is host-dependent and was empirically unreliable.",
+      "Left src/lib.rs's auto-detect logic in place (harmless best-effort fallback for other machines/users) rather than ripping it out, since the settings override already fully supersedes it when present."
+    ],
+    "decisions_pending": [
+      "Whether to open the PR for feat/kilo-plugin now that the extension is confirmed working end-to-end, per the repo's PR-only workflow.",
+      "Whether to harden src/lib.rs further (e.g. drop the unreliable current_dir()-based auto-detect entirely and always require either PATH install or explicit settings) now that it's proven fragile."
+    ],
+    "escalations": [],
+    "next_agent_notes": "User should restart Zed (or just wait for the context server to reconnect / manually restart it from the Agent Panel) to pick up the new settings.json command override; no further extension rebuild should be necessary since the override bypasses the WASM path-detection entirely. If it still fails after this, capture a fresh tail of ~/.local/share/zed/logs/Zed.log immediately after the failure and check for a *different* error signature than 'Context server request timeout' before re-diagnosing.",
+    "files_modified": [
+      "zed-extension/README.md",
+      "docs/active-threads.md",
+      "docs/agent-log/registrations/2026-08-20-zed-sonnet5-extension-timeout-fix.json",
+      "docs/agent-log/handoffs/2026-08-20-zed-extension-context-server-timeout.json",
+      "~/.config/zed/settings.json (local machine only, not part of this repo/branch)"
+    ],
+    "tests_run": [
+      "cargo build --target wasm32-wasip2 --release (zed-extension/) -> success",
+      "grep of ~/.local/share/zed/logs/Zed.log confirming successful WASM compiles and isolating the real 'Context server request timeout' error",
+      "Direct stdio MCP initialize probe against the exact overridden command -> immediate valid JSON-RPC response"
+    ],
+    "tests_passing": true
+  }
+}

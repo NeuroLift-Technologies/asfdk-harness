@@ -1,0 +1,46 @@
+{
+  "handoff_record": {
+    "session_id": "2026-08-20-zed-dev-extension-conversion",
+    "agent_name": "Zed GPT-5.3 Codex",
+    "date": "2026-08-20",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "feat/kilo-plugin",
+    "work_completed": [
+      "Scaffolded a new Zed dev extension at zed-extension/",
+      "Added extension manifest and Rust wrapper to launch ASFDK MCP server in Zed",
+      "Implemented command resolution strategy: local dist entrypoint, PATH fallback, settings override",
+      "Documented Zed dev-extension install flow in root README and zed-extension README"
+    ],
+    "work_in_progress": [],
+    "blockers": [
+      "Terminal command execution in this environment returns '/bin/sh: 2: Cannot set tty process group (No such process)' and exits with code 2, which prevented normal npm validation commands"
+    ],
+    "decisions_made": [
+      "Use a dedicated zed-extension/ subproject to avoid disrupting existing Pi/CLI/MCP surfaces",
+      "Prefer local dev startup via ../dist/mcp-server.js and Zed-provided Node runtime",
+      "Allow explicit command override through Zed context server command settings"
+    ],
+    "decisions_pending": [
+      "Whether to publish this extension publicly in the Zed extensions registry"
+    ],
+    "escalations": [],
+    "next_agent_notes": "If publishing is desired, verify extension metadata/versioning and run full Rust build checks in a terminal environment without the current shell TTY issue. Consider adding CI validation for zed-extension/ if this becomes a supported release artifact.",
+    "files_modified": [
+      "README.md",
+      ".gitignore",
+      "docs/active-threads.md",
+      "docs/agent-log/registrations/2026-08-20-zed-gpt53-zed-extension.json",
+      "zed-extension/extension.toml",
+      "zed-extension/Cargo.toml",
+      "zed-extension/src/lib.rs",
+      "zed-extension/README.md"
+    ],
+    "tests_run": [
+      "npm run check (failed: shell TTY process-group error in terminal environment)",
+      "./node_modules/.bin/tsc --noEmit (failed: shell TTY process-group error in terminal environment)",
+      "Diagnostics: asfdk-harness/zed-extension/src/lib.rs (no errors/warnings)",
+      "Diagnostics: project summary (existing errors in kilo-plugin/*.ts unrelated to this change)"
+    ],
+    "tests_passing": false
+  }
+}

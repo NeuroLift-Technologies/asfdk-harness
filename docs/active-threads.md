@@ -2,11 +2,27 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-08-18T06:00:00Z
+**Last updated:** 2026-08-20T14:43:20Z
 
 ---
 
 ## Active Threads
+
+### THREAD-012 — Package ASFDK Harness as a Zed Dev Extension
+| Field | Value |
+|---|---|
+| **Thread ID** | THREAD-012 |
+| **Status** | 🟢 Complete |
+| **Started** | 2026-08-20 |
+| **Owner** | Zed GPT-5.3 Codex |
+| **Branch** | `feat/kilo-plugin` |
+| **Task** | Turn `asfdk-harness` into a local-installable Zed dev extension that exposes the existing ASFDK MCP server in Zed's Agent Panel. |
+| **Scope** | `zed-extension/` (new), `README.md`, `.gitignore`, `docs/active-threads.md`, `docs/agent-log/*` |
+| **Blockers** | None. |
+| **Related PR** | TBD |
+| **Notes** | Added a Rust-based Zed extension wrapper with `extension.toml`, `Cargo.toml`, and `src/lib.rs`. The extension resolves command startup with this order: (1) local dev build `../dist/mcp-server.js` via Zed's Node runtime, (2) fallback to `asfdk-harness-mcp` on PATH, (3) optional user override via `context_servers.asfdk-harness.command` settings. Added usage docs in `zed-extension/README.md` and root `README.md`. **Update (session 2):** User hit "failed to compile rust extension" — root cause was no default rustup toolchain for the account running Zed's background process; fixed by `rustup default 1.95.0-x86_64-unknown-linux-gnu` plus a new `zed-extension/rust-toolchain.toml` pin. **Update (session 3):** Compile actually succeeded on every subsequent attempt (verified in `~/.local/share/zed/logs/Zed.log`); the real failure was `asfdk-harness context server failed to start: Context server request timeout` — the `../dist/mcp-server.js` auto-detect via `std::env::current_dir()` does not reliably resolve inside Zed's WASM sandbox (it can reflect the installed-extension copy rather than the dev checkout), and the `asfdk-harness-mcp` PATH fallback was never `npm link`-ed. Fixed by adding an explicit absolute-path `command` override to the user's `~/.config/zed/settings.json` (`context_servers.asfdk-harness.command` → absolute nvm `node` path + absolute `dist/mcp-server.js` path); verified the exact command answers a raw MCP `initialize` handshake instantly via stdio. Documented root cause and fix as a Troubleshooting section in `zed-extension/README.md`. **Update (session 4) — actual root cause found and fixed in source:** the settings.json override got silently wiped back to `{}` by Zed's Extensions panel (clicking **Configure** appears to rewrite `context_servers.asfdk-harness` to the extension's bare defaults), so the timeout recurred after a restart — and, notably, an *unrelated* extension (`mcp-server-nextjs`) hit the identical timeout, proving this wasn't specific to our command resolution. Fetched Zed's actual open-source `context_server` crate (`stdio_transport.rs`, `client.rs`, `shell_builder.rs`, `shell.rs` from `zed-industries/zed@main`) and confirmed Zed's stdio framing, shell-wrapping, and JSON-RPC id matching are all spec-correct — ruled out a Zed-side bug. Root-caused it to a genuine bug in this repo instead: `src/mcp-server.ts`, `a2a-proxy.ts`, `discovery-hub.ts`, and `mcp-http-server.ts` all used `if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)` to guard their `main()` call — this idiom breaks for *any* symlink-based invocation (exactly how `npm link`/global npm/pnpm/yarn installs wire up `package.json#bin`), because Node resolves `import.meta.url` to the realpath but leaves `process.argv[1]` as the invoked (symlink) path, so the comparison never matches; `main()` silently never ran and the process exited cleanly without touching stdio — indistinguishable from a hang to a waiting MCP client. Confirmed empirically with a throwaway symlinked probe script before and after the fix. Fixed by adding `src/entrypoint.ts` (`isMainModule()`, realpath-based comparison on both sides) and switching all four affected entry points to use it. Ran `npm link` (with the same nvm-managed npm Zed's own process resolves via `PATH`, confirmed via `/proc/<pid>/environ`) so the `asfdk-harness-mcp` fallback command now actually works end-to-end — verified via a raw MCP `initialize` handshake piped through the symlinked PATH command, both before (silently no response) and after (correct instant response) the fix. `npm run build` and `npm run test:unit` pass (76 tests, 73 pass / 3 pre-existing unrelated failures — confirmed identical on a `git stash`-ed baseline, so no regressions). Rewrote the `zed-extension/README.md` Troubleshooting section to lead with this source-level fix; the settings.json override is now optional belt-and-suspenders, not required. |
+
+---
 
 ### THREAD-011 — Fix A2A hub MCP SSE 404 / stateless transport reuse
 | Field | Value |

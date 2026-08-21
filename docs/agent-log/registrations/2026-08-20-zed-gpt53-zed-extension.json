@@ -1,0 +1,26 @@
+{
+  "agent_registration": {
+    "agent_name": "Zed GPT-5.3 Codex",
+    "platform": "Zed coding agent",
+    "version": "GPT-5.3-Codex",
+    "session_id": "2026-08-20-zed-dev-extension-conversion",
+    "entry_date": "2026-08-20",
+    "entry_point": "User request: \"i want to turn this into a Zed Dev Extention\"",
+    "acknowledged_otoi": true,
+    "otoi_version": "ORG-DEV-OTOI-1.0.3",
+    "working_repo": "NeuroLift-Technologies/asfdk-harness",
+    "working_branch": "feat/kilo-plugin",
+    "capabilities_self_reported": [
+      "Inspect and refactor TypeScript/Node.js codebases",
+      "Create extension scaffolding and configuration",
+      "Update docs and project metadata",
+      "Run local validation commands (check/build/test)"
+    ],
+    "known_limitations": [
+      "No autonomous architecture/deployment/strategic decisions without human approval",
+      "No credentials/secrets handling",
+      "No direct pushes to protected branches"
+    ],
+    "preferred_handoff_format": "Concise markdown summary with changed files, validation run, and next actions"
+  }
+}

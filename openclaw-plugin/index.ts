@@ -215,7 +215,7 @@ export default definePluginEntry({
           : JSON.stringify(event.content ?? "");
       await assess(
         content,
-        Channel.USER_INPUT,  // Incoming peer messages are user-origin input, not model output
+        Channel.USER_INPUT,
         `message:${userId}`,
         { userId, sessionId },
       );
@@ -237,7 +237,7 @@ export default definePluginEntry({
           : JSON.stringify(event.params ?? {});
       await assess(
         params,
-        Channel.TOOL_RESULT,  // Tool call arguments are assessed on the tool-result channel
+        Channel.TOOL_RESULT,
         `tool:${event.toolName ?? "unknown"}`,
         { userId, sessionId },
       );

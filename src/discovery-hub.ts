@@ -13,8 +13,8 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
 import { randomUUID } from "node:crypto";
+import { isMainModule } from "./entrypoint.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
@@ -968,7 +968,7 @@ async function main() {
 }
 
 // Run if executed directly
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (isMainModule(import.meta.url)) {
   main().catch((error) => {
     console.error("[discovery-hub] Fatal error:", error);
     process.exit(1);
