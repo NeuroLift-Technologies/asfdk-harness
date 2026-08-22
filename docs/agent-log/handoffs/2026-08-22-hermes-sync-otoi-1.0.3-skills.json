@@ -1,0 +1,43 @@
+{
+  "handoff_record": {
+    "session_id": "hermes/sync-otoi-1.0.3-skills",
+    "agent_name": "HERMES",
+    "date": "2026-08-22T12:48:24-04:00",
+    "otoi_version": "ORG-DEV-OTOI-1.0.3",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "hermes/sync-otoi-1.0.3-skills",
+    "work_completed": [
+      "Synced 7 nlt-* skills in .claude/skills/ from ORG-DEV-OTOI-1.0.2 to 1.0.3, matching this repo's nltotoi.json document_id (ORG-DEV-OTOI-1.0.3) and root NLT-DEV-OTOI.md.",
+      "Applied the substantive 1.0.3 change: date-only fields become full ISO 8601 timestamps with UTC offset in nlt-agent-registration and nlt-handoff-record.",
+      "Preserved Claude Code slash commands and the .claude bare-filename link style instead of copying the skills/ flavor, which would have deleted slash commands and broken ../../AGENTS.md paths."
+    ],
+    "work_in_progress": [],
+    "blockers": [],
+    "decisions_made": [
+      "Surgical content-aware edit rather than wholesale copy, because .claude/skills/ is a distinct flavor, not a stale duplicate.",
+      "Confirmed this repo's local contract is already 1.0.3, so the skill bump aligns with governance rather than amending it."
+    ],
+    "decisions_pending": [
+      "This repo has no skill-profile-validation.yml, so nothing enforces that nlt-otoi-version matches nltotoi.json. Adding such a check is an architectural decision for Joshua W. Dorsey, Sr."
+    ],
+    "escalations": [],
+    "next_agent_notes": "PR #173 in .github-private carries the same sync for the org template. Note the base branch here (main) has ~30 unmerged commits from other agents, so this PR's file count appears larger than the 7 files this session actually changed. Read nltotoi.json before touching skill versions.",
+    "files_modified": [
+      ".claude/skills/nlt-agent-registration/SKILL.md",
+      ".claude/skills/nlt-commit-format/SKILL.md",
+      ".claude/skills/nlt-escalation/SKILL.md",
+      ".claude/skills/nlt-handoff-record/SKILL.md",
+      ".claude/skills/nlt-incident-response/SKILL.md",
+      ".claude/skills/nlt-intent-log/SKILL.md",
+      ".claude/skills/nlt-otoi/SKILL.md"
+    ],
+    "tests_run": [
+      "Verified all nlt-otoi copies report ORG-DEV-OTOI-1.0.3.",
+      "Confirmed slash commands preserved.",
+      "Resolved all references/ links: 0 broken.",
+      "CodeQL javascript-typescript and python analysis passing on PR #28."
+    ],
+    "tests_passing": true,
+    "pr_url": "https://github.com/NeuroLift-Technologies/asfdk-harness/pull/28"
+  }
+}

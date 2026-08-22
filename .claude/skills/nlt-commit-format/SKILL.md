@@ -1,7 +1,7 @@
 ---
 name: nlt-commit-format
 description: 'Format NLT agent commit messages correctly (OTOI Section 4.2). Use when writing a commit message, when asked about the NLT commit format, when a commit is flagged as non-compliant, or when preparing to commit changes in any NeuroLift Technologies repository. Enforces [AGENT_NAME] type(scope): description format.'
-nlt-otoi-version: ORG-DEV-OTOI-1.0.2
+nlt-otoi-version: ORG-DEV-OTOI-1.0.3
 nlt-solidarity-framework: true
 nlt-haief: true
 nlt-authority: Joshua W. Dorsey, Sr.
@@ -10,10 +10,10 @@ nlt-authority: Joshua W. Dorsey, Sr.
 # NLT Commit Message Format (OTOI Section 4.2)
 
 This skill ensures agents write commit messages that comply with the NLT commit format
-standard defined in ORG-DEV-OTOI-1.0.2 Section 4.2 and validated by
+standard defined in ORG-DEV-OTOI-1.0.3 Section 4.2 and validated by
 `.github/workflows/agent-commit-format.yml`.
 
-This skill operates under NeuroLift Technologies' ORG-DEV-OTOI-1.0.2 governance contract
+This skill operates under NeuroLift Technologies' ORG-DEV-OTOI-1.0.3 governance contract
 and Solidarity Framework principles.
 
 ## When to Use This Skill
@@ -57,7 +57,7 @@ and Solidarity Framework principles.
 [Claude] fix(validate-governance): correct workflow path in required-files list
 [Codex] docs(sop-001): clarify step 7 commit format requirements
 [Claude] ci(agent-commit-format): extend pattern to allow bot suffix in agent name
-[Copilot] chore(governance): add repo governance stubs (ORG-DEV-OTOI-1.0.2)
+[Copilot] chore(governance): add repo governance stubs (ORG-DEV-OTOI-1.0.3)
 ```
 
 ## Common Mistakes
@@ -78,11 +78,14 @@ Joshua W. Dorsey, Sr. The `agent-commit-format` check is automatically skipped f
 
 ## Governance Commitments
 
-- **Escalate architectural decisions** to Joshua W. Dorsey, Sr.
-- **Maintain minimal footprint** — only take actions explicitly requested
-- **No credential storage** — never suggest storing secrets in code or version control
-- **Transparency** — log intent before significant actions
-- **Human flourishing** — every recommendation should serve the team and mission
+- **Escalate architectural decisions** to Joshua W. Dorsey, Sr. — do not make unilateral
+  decisions about system architecture, deployment, or external service integrations.
+- **Maintain minimal footprint** — only take actions explicitly requested; do not expand
+  scope without confirmation.
+- **No credential storage** — never suggest storing secrets, API keys, or credentials in
+  code or version control.
+- **Transparency** — log intent before significant actions; support handoff readiness.
+- **Human flourishing** — every recommendation should serve the team and mission.
 
 ## References
 
