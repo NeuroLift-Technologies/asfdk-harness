@@ -1,7 +1,7 @@
 ---
 name: nlt-handoff-record
 description: 'Write a complete NLT session handoff record (OTOI Section 5). Use when ending a coding session, when asked to write a handoff, create a handoff record, document session end, or prepare work for the next agent. Covers work completed, work in progress, blockers, decisions, escalations, and next agent notes.'
-nlt-otoi-version: ORG-DEV-OTOI-1.0.2
+nlt-otoi-version: ORG-DEV-OTOI-1.0.3
 nlt-solidarity-framework: true
 nlt-haief: true
 nlt-authority: Joshua W. Dorsey, Sr.
@@ -10,10 +10,10 @@ nlt-authority: Joshua W. Dorsey, Sr.
 # NLT Session Handoff Record (OTOI Section 5)
 
 This skill guides agents through writing a complete **session handoff record** as required
-by ORG-DEV-OTOI-1.0.2 Section 5. A handoff record must be written at the end of every
+by ORG-DEV-OTOI-1.0.3 Section 5. A handoff record must be written at the end of every
 significant session.
 
-This skill operates under NeuroLift Technologies' ORG-DEV-OTOI-1.0.2 governance contract
+This skill operates under NeuroLift Technologies' ORG-DEV-OTOI-1.0.3 governance contract
 and Solidarity Framework principles.
 
 ## When to Use This Skill
@@ -41,8 +41,8 @@ The `/handoff` slash command automates this.
   "handoff_record": {
     "session_id":         "[Unique session identifier]",
     "agent_name":         "[Agent name / platform]",
-    "date":               "[ISO 8601 date, e.g. 2026-04-28]",
-    "otoi_version":       "ORG-DEV-OTOI-1.0.2",
+    "date":               "[ISO 8601 timestamp with offset, e.g. 2026-04-28T17:00:00-04:00]",
+    "otoi_version":       "ORG-DEV-OTOI-1.0.3",
     "repo":               "[Repository worked in, e.g. NeuroLift-Technologies/some-repo]",
     "branch":             "[Branch name]",
     "work_completed": [
@@ -70,8 +70,8 @@ All fields required; use empty arrays where there is no content rather than omit
 |-------|-------|
 | `session_id` | Branch name or unique identifier for this session |
 | `agent_name` | Your agent name/platform (e.g. "Claude Code") |
-| `date` | ISO 8601 date: `YYYY-MM-DD` |
-| `otoi_version` | Must be `"ORG-DEV-OTOI-1.0.2"` |
+| `date` | Full ISO 8601 timestamp with offset: `YYYY-MM-DDThh:mm:ss±hh:mm` (not date-only) |
+| `otoi_version` | Must be `"ORG-DEV-OTOI-1.0.3"` |
 | `repo` | Full repo name: `NeuroLift-Technologies/repo-name` |
 | `branch` | Git branch you worked on |
 | `work_completed` | Specific, concrete list of completed items |
@@ -99,11 +99,14 @@ Before writing the handoff record, complete:
 
 When using this skill, always:
 
-- **Escalate architectural decisions** to Joshua W. Dorsey, Sr.
-- **Maintain minimal footprint** — only take actions explicitly requested
-- **No credential storage** — never suggest storing secrets in code or version control
-- **Transparency** — log intent before significant actions
-- **Human flourishing** — every recommendation should serve the team and mission
+- **Escalate architectural decisions** to Joshua W. Dorsey, Sr. — do not make unilateral
+  decisions about system architecture, deployment, or external service integrations.
+- **Maintain minimal footprint** — only take actions explicitly requested; do not expand
+  scope without confirmation.
+- **No credential storage** — never suggest storing secrets, API keys, or credentials in
+  code or version control.
+- **Transparency** — log intent before significant actions; support handoff readiness.
+- **Human flourishing** — every recommendation should serve the team and mission.
 
 ## References
 

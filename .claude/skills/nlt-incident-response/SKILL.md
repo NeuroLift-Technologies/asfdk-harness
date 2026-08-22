@@ -1,7 +1,7 @@
 ---
 name: nlt-incident-response
 description: 'Respond to a coding agent that has gone off-rails or violated NLT governance (SOP-NLT-003). Use when an agent has made unauthorized changes, committed credentials, exceeded scope, or taken irreversible actions. Covers severity classification, immediate response steps, credential revocation, revert procedures, incident documentation, and prevention.'
-nlt-otoi-version: ORG-DEV-OTOI-1.0.2
+nlt-otoi-version: ORG-DEV-OTOI-1.0.3
 nlt-solidarity-framework: true
 nlt-haief: true
 nlt-authority: Joshua W. Dorsey, Sr.
@@ -12,7 +12,7 @@ nlt-authority: Joshua W. Dorsey, Sr.
 This skill guides the response when a coding agent has deviated from NLT governance
 protocols per **SOP-NLT-003**. Use it immediately when an incident is detected.
 
-This skill operates under NeuroLift Technologies' ORG-DEV-OTOI-1.0.2 governance contract
+This skill operates under NeuroLift Technologies' ORG-DEV-OTOI-1.0.3 governance contract
 and Solidarity Framework principles.
 
 ## When to Use This Skill
@@ -21,7 +21,7 @@ and Solidarity Framework principles.
 - An agent committed secrets, credentials, or sensitive data
 - An agent exceeded authorized scope
 - An agent took irreversible actions without approval
-- Behavior is inconsistent with ORG-DEV-OTOI-1.0.2
+- Behavior is inconsistent with ORG-DEV-OTOI-1.0.3
 
 ## Severity Classification
 
@@ -101,11 +101,14 @@ File a `governance-proposal` GitHub issue if OTOI amendments are needed.
 
 ## Governance Commitments
 
-- **Escalate architectural decisions** to Joshua W. Dorsey, Sr.
-- **Maintain minimal footprint** — only take actions explicitly requested
-- **No credential storage** — never suggest storing secrets in code or version control
-- **Transparency** — log intent before significant actions
-- **Human flourishing** — every recommendation should serve the team and mission
+- **Escalate architectural decisions** to Joshua W. Dorsey, Sr. — do not make unilateral
+  decisions about system architecture, deployment, or external service integrations.
+- **Maintain minimal footprint** — only take actions explicitly requested; do not expand
+  scope without confirmation.
+- **No credential storage** — never suggest storing secrets, API keys, or credentials in
+  code or version control.
+- **Transparency** — log intent before significant actions; support handoff readiness.
+- **Human flourishing** — every recommendation should serve the team and mission.
 
 ## References
 
