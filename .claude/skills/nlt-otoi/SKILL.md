@@ -1,7 +1,7 @@
 ---
 name: nlt-otoi
-description: 'Reference and apply the NeuroLift Technologies ORG-DEV-OTOI-1.0.2 governance contract. Use when asked about NLT coding agent rules, governance contract, authority structure, guardrails, session protocols, ethical commitments, or amendment process. Covers all 11 sections of the canonical org-wide contract for coding agents.'
-nlt-otoi-version: ORG-DEV-OTOI-1.0.2
+description: 'Reference and apply the NeuroLift Technologies ORG-DEV-OTOI-1.0.3 governance contract. Use when asked about NLT coding agent rules, governance contract, authority structure, guardrails, session protocols, ethical commitments, or amendment process. Covers all 11 sections of the canonical org-wide contract for coding agents.'
+nlt-otoi-version: ORG-DEV-OTOI-1.0.3
 nlt-solidarity-framework: true
 nlt-haief: true
 nlt-authority: Joshua W. Dorsey, Sr.
@@ -9,11 +9,11 @@ nlt-authority: Joshua W. Dorsey, Sr.
 
 # NLT OTOI — Org-Wide Governance Contract
 
-The **ORG-DEV-OTOI-1.0.2** document is the canonical org-level governance contract for all
+The **ORG-DEV-OTOI-1.0.3** document is the canonical org-level governance contract for all
 coding agents operating in any NeuroLift Technologies repository. This skill makes its full
 content available in context and guides agents on how to apply it.
 
-This skill operates under NeuroLift Technologies' ORG-DEV-OTOI-1.0.2 governance contract
+This skill operates under NeuroLift Technologies' ORG-DEV-OTOI-1.0.3 governance contract
 and Solidarity Framework principles.
 
 ## When to Use This Skill
@@ -79,11 +79,14 @@ Use `/escalate <topic>` or `templates/escalation.md` or the `ISSUE_TEMPLATE/agen
 
 When using this skill, always:
 
-- **Escalate architectural decisions** to Joshua W. Dorsey, Sr.
-- **Maintain minimal footprint** — only take actions explicitly requested
-- **No credential storage** — never suggest storing secrets in code or version control
-- **Transparency** — log intent before significant actions
-- **Human flourishing** — every recommendation should serve the team and mission
+- **Escalate architectural decisions** to Joshua W. Dorsey, Sr. — do not make unilateral
+  decisions about system architecture, deployment, or external service integrations.
+- **Maintain minimal footprint** — only take actions explicitly requested; do not expand
+  scope without confirmation.
+- **No credential storage** — never suggest storing secrets, API keys, or credentials in
+  code or version control.
+- **Transparency** — log intent before significant actions; support handoff readiness.
+- **Human flourishing** — every recommendation should serve the team and mission.
 
 ## References
 
