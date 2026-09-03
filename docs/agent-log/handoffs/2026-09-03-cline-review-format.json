@@ -1,0 +1,33 @@
+{
+  "handoff_record": {
+    "session_id": "governance/add-review-format",
+    "agent_name": "Cline (coding-agent)",
+    "date": "2026-09-03T17:49:56Z",
+    "otoi_version": "ORG-DEV-OTOI-1.0.3",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "governance/add-review-format",
+    "work_completed": [
+      "Added REVIEW.md (canonical agent-conducted review format) and templates/review-record.md (fillable template), synced verbatim from NeuroLift-Technologies/.github-private (PR #174, merged 2026-09-03)."
+    ],
+    "work_in_progress": [],
+    "blockers": [],
+    "decisions_made": [
+      "Propagated manually via the governance-auto-propagate equivalent because ORG_GOVERNANCE_TOKEN is not yet provisioned on .github-private."
+    ],
+    "decisions_pending": [
+      "Provision ORG_GOVERNANCE_TOKEN on .github-private to enable automated nightly propagation."
+    ],
+    "escalations": [],
+    "next_agent_notes": "Merge to adopt the canonical review format. Public .github and .github-token repos are excluded from propagation by policy.",
+    "files_modified": [
+      "REVIEW.md",
+      "templates/review-record.md",
+      "docs/agent-log/handoffs/2026-09-03-cline-review-format.json"
+    ],
+    "tests_run": [
+      "Content parity check against .github-private@main"
+    ],
+    "tests_passing": true,
+    "pr_url": "[this pull request]"
+  }
+}
