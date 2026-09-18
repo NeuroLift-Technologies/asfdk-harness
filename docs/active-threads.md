@@ -2,11 +2,25 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-08-20T14:43:20Z
+**Last updated:** 2026-09-18T00:00:00Z
 
 ---
 
 ## Active Threads
+
+### THREAD-013 — Universal runtime installer + opencode/kilo plugin refresh
+| Field | Value |
+|---|---|
+| **Thread ID** | THREAD-013 |
+| **Status** | 🟡 In Progress |
+| **Started** | 2026-09-18 |
+| **Owner** | opencode-big-pickle |
+| **Branch** | `feat/universal-installer` |
+| **Task** | Make ASFDK installable into any agent runtime with one command; ship the corrected opencode/kilo plugins (SDK >= 1.18 API). |
+| **Scope** | `scripts/install.mjs` (new), `INSTALL.md` (new), `opencode-plugin/` (new canonical plugin sources: `asfdk-deploy.ts`, `a2a-task-watch.ts`, `index.ts`, `package.json`, `README.md`), `kilo-plugin/` (mirror — `asfdk-deploy.ts` `chat.message` → `output.parts` fix, `index.ts` mirror, `README.md`), `package.json` (`install:runtimes` script), `docs/agent-log/`, this file |
+| **Blockers** | None. Other-runtime (kilo/hermes/openclaw/zed/pi) adapters are best-effort — their config formats aren't fully specified in-repo; opencode is the only locally verifiable runtime. |
+| **Related PR** | TBD from `feat/universal-installer` |
+| **Notes** | Installer: no external deps, Node 20+, cross-platform; opencode/kilo fully automated (config-dir deps via npm, plugin file copy, MCP `asfdk-governance` local stdio → `dist/mcp-server.js`, timeout 180000, env TOI/OTOI paths, config backup + merge, raw `initialize` handshake verification); hermes/openclaw/zed/pi print documented commands when CLIs absent. Plugin refresh: canonical sources now live in `opencode-plugin/`, `kilo-plugin/` mirrors them (manual-sync policy, READMEs added). Includes hard-won opencode lessons (timeouts, Defender exclusions, LSP trim, no-esbuild-zod-v4, output.parts) in INSTALL.md Troubleshooting. Prior MCP connection work (asfdk-governance live in opencode) completed in an earlier session. |
 
 ### THREAD-012 — Package ASFDK Harness as a Zed Dev Extension
 | Field | Value |
