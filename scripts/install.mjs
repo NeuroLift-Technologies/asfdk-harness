@@ -45,6 +45,7 @@ const FLAGS = new Set([
 ]);
 
 function parseArgs(argv) {
+  const VALUE_FLAGS = new Set(["--target", "--config-dir", "--repo", "--state-dir", "--tools-gate"]);
   const opts = {
     target: "auto",
     configDir: null,
@@ -61,6 +62,10 @@ function parseArgs(argv) {
     const arg = argv[i];
     if (!arg.startsWith("--")) continue;
     const [name, inline] = arg.split("=");
+    if (VALUE_FLAGS.has(name) && !inline && argv[i + 1] === undefined) {
+      log("err", `Missing value for ${name}. Usage: ${name} <value> or ${name}=<value>`);
+      process.exit(1);
+    }
     switch (name) {
       case "--target": opts.target = inline ?? argv[++i] ?? "auto"; break;
       case "--config-dir": opts.configDir = inline ?? argv[++i]; break;
@@ -232,19 +237,33 @@ function ensureRepoBuilt(opts, info) {
 /* ------------------------------------------------------------------ */
 
 function verifyMcp(command, cwd, env, verbose) {
+  // Expected ASFDK governance tool names — must match what mcp-server.js serves.
+  const EXPECTED_TOOLS = new Set([
+    "asfdk_status",
+    "asfdk_assess_text",
+    "asfdk_update_preferences",
+    "asfdk_health_check",
+    "asfdk_review_tool_call",
+    "asfdk_process_interaction",
+    "asfdk_governance_summary",
+    "asfdk_authority_chain",
+    "asfdk_governance_raw",
+    "asfdk_discovery_hub",
+  ]);
   return new Promise((resolve) => {
     const child = spawn(command[0], command.slice(1), {
       cwd, env: { ...process.env, ...env }, stdio: ["pipe", "pipe", "pipe"],
     });
     let buf = "";
     let done = false;
+    let initialized = false;
     const finish = (ok, msg) => {
       if (done) return;
       done = true;
       try { child.kill(); } catch { /* noop */ }
       resolve({ ok, msg });
     };
-    const timer = setTimeout(() => finish(false, "timeout waiting for initialize"), 120000);
+    const timer = setTimeout(() => finish(false, initialized ? "timeout waiting for tools/list" : "timeout waiting for initialize"), 120000);
     child.stdout.on("data", (data) => {
       buf += data.toString();
       let idx;
@@ -255,13 +274,29 @@ function verifyMcp(command, cwd, env, verbose) {
         try {
           const msg = JSON.parse(line);
           if (msg.id === 1 && msg.result?.serverInfo) {
+            initialized = true;
             clearTimeout(timer);
-            finish(true, `initialize OK — ${msg.result.serverInfo.name} v${msg.result.serverInfo.version}`);
-            return;
+            // Don't finish yet — wait for tools/list (id: 2) below.
           }
           if (msg.id === 1 && msg.error) {
             clearTimeout(timer);
             finish(false, `initialize error: ${JSON.stringify(msg.error)}`);
+            return;
+          }
+          if (msg.id === 2) {
+            clearTimeout(timer);
+            if (msg.error) {
+              finish(false, `tools/list error: ${JSON.stringify(msg.error)}`);
+              return;
+            }
+            const tools = msg.result?.tools ?? [];
+            const names = new Set(tools.map((t) => t.name));
+            const missing = [...EXPECTED_TOOLS].filter((n) => !names.has(n));
+            if (missing.length > 0) {
+              finish(false, `initialize OK but tools/list missing expected tools: ${missing.join(", ")}`);
+            } else {
+              finish(true, `initialize OK + ${tools.length} tools verified`);
+            }
             return;
           }
         } catch { /* partial line */ }
@@ -280,7 +315,9 @@ function platformGuardrails(opts) {
   if (process.platform === "win32") {
     notes.push(
       "Windows Defender real-time scanning can add 20-30s cold-start latency to the MCP server.",
-      "If you see slow boots, run (elevated PowerShell): Add-MpPreference -ExclusionPath \"<repo>\"",
+      "20-30s on FIRST boot only is expected and benign; scan the repo in DEFG.",
+      "If slow boots persist, scope a Defender exclusion to the exact checkout only (elevated PowerShell),",
+      "not drive-wide: Add-MpPreference -ExclusionPath \"<repo>\"",
     );
   }
   notes.push(
@@ -307,12 +344,12 @@ async function installOcodeFamily(opts, { label, configDir }) {
   const info = repoInfo(opts);
 
   if (!existsSync(path.join(configDir))) {
-    ensureDir(configDir);
-    done.push(`created config dir ${configDir}`);
+    if (!opts.dryRun) ensureDir(configDir);
+    done.push(`${opts.dryRun ? "would create" : "created"} config dir ${configDir}`);
   }
 
   const pluginsDir = path.join(configDir, "plugins");
-  ensureDir(pluginsDir);
+  if (!opts.dryRun) ensureDir(pluginsDir);
   const pluginFiles = ["asfdk-deploy.ts", "a2a-task-watch.ts", "index.ts"];
   const srcDir = path.join(opts.repo, "opencode-plugin");
   for (const file of pluginFiles) {
@@ -327,13 +364,37 @@ async function installOcodeFamily(opts, { label, configDir }) {
     done.push(`installed plugin ${file}`);
   }
 
-  const cfgNM = (dir) => ({
-    asfdk: existsSync(path.join(dir, "node_modules", "@neurolift-technologies", "asfdk")),
-    plugin: existsSync(path.join(dir, "node_modules", "@opencode-ai", "plugin")),
-  });
+  const readPkgVersion = (pkgPath) => {
+    if (!existsSync(pkgPath)) return null;
+    try { return readJson(pkgPath, {}).version ?? null; } catch { return null; }
+  };
+  const gte = (ver, min) => {
+    if (!ver) return false;
+    const parse = (v) => String(v).split(".").map((n) => parseInt(n, 10) || 0);
+    const a = parse(ver), b = parse(min);
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+      const x = a[i] ?? 0, y = b[i] ?? 0;
+      if (x > y) return true;
+      if (x < y) return false;
+    }
+    return true;
+  };
+  const cfgNM = (dir) => {
+    const pluginPkg = path.join(dir, "node_modules", "@opencode-ai", "plugin", "package.json");
+    return {
+      asfdk: existsSync(path.join(dir, "node_modules", "@neurolift-technologies", "asfdk")),
+      plugin: existsSync(path.join(dir, "node_modules", "@opencode-ai", "plugin")),
+      pluginVersion: readPkgVersion(pluginPkg),
+    };
+  };
   const needDeps = (() => {
     const s = cfgNM(configDir);
-    return !s.asfdk || !s.plugin;
+    if (!s.asfdk || !s.plugin) return true;
+    if (!gte(s.pluginVersion, "1.18.0")) {
+      log("warn", `  @opencode-ai/plugin is ${s.pluginVersion ?? "unknown"} (< 1.18.0) — refreshing.`);
+      return true;
+    }
+    return false;
   })();
   if (!opts.dryRun && !opts.skipDeps && needDeps) {
     const pkgFile = path.join(configDir, "package.json");
@@ -356,7 +417,7 @@ async function installOcodeFamily(opts, { label, configDir }) {
     return { done, configDir };
   }
 
-  const stateDir = opts.stateDir ?? (existsSync(info.toi) ? path.join(home(), ".asfdk") : configDir);
+  const stateDir = opts.stateDir ?? path.join(home(), ".asfdk");
   if (!opts.dryRun) ensureDir(stateDir);
   const cfgFile = path.join(configDir, "opencode.jsonc");
   const hadCfg = existsSync(cfgFile);

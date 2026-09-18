@@ -104,12 +104,15 @@ This happens when the MCP server cold-start exceeds the client timeout (Windows
 Defender / antivirus scans can add 20-30 s to first import of `@neurolift-technologies/asfdk`).
 - This installer sets `timeout` + `mcp_timeout` to 180 000 ms.
 - opencode auto-retries a failed first spawn; a WARN that is not repeated is benign.
-- On Windows, exclude the checkout + config dirs from real-time scanning (elevated):
+- On Windows, the FIRST cold boot is expected to be slower (Defender real-time scans on
+  first import of `@neurolift-technologies/asfdk`). If boots stay slow after the first,
+  scope a Defender exclusion to the exact paths only (elevated PowerShell) and
+  prefer the least-broad scope:
   ```powershell
   Add-MpPreference -ExclusionPath "C:\path\to\asfdk-harness"
-  Add-MpPreference -ExclusionPath "$env:USERPROFILE\.asfdk"
-  Add-MpPreference -ExclusionPath "$env:USERPROFILE\.config\opencode"
   ```
+  Add additional exclusions only as needed (e.g. `$env:USERPROFILE\.asfdk`,
+  `$env:USERPROFILE\.config\opencode`), not drive-wide or user-home-wide.
 
 ### `chat.message` produces no text / assessments never fire
 Your plugin SDK must be `@opencode-ai/plugin >= 1.18`. Message content is delivered in

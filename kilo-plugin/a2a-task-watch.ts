@@ -96,7 +96,6 @@ export default async function a2aTaskWatch(_input: PluginInput, options: PluginO
         name: opts.agentName,
         description: "OpenCode runtime governed by the ASFDK Solidarity Framework.",
         version: "1.0.0",
-        url: hubUrl,
         preferredTransport: "JSONRPC",
         defaultInputModes: ["text/plain", "application/json"],
         defaultOutputModes: ["text/plain", "application/json"],
@@ -180,7 +179,11 @@ export default async function a2aTaskWatch(_input: PluginInput, options: PluginO
     }
     if (disposed) return;
     const ready = await foundationReady();
-    if (disposed || !ready) return;
+    if (disposed) return;
+    if (!ready) {
+      log("disabled", "foundation init failed — A2A task watch is inactive");
+      return;
+    }
     await registerAgent();
     if (disposed) return;
     await pollAgents();
