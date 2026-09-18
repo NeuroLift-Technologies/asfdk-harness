@@ -61,10 +61,18 @@ function parseArgs(argv) {
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (!arg.startsWith("--")) continue;
-    const [name, inline] = arg.split("=");
-    if (VALUE_FLAGS.has(name) && !inline && argv[i + 1] === undefined) {
-      log("err", `Missing value for ${name}. Usage: ${name} <value> or ${name}=<value>`);
-      process.exit(1);
+    const eqIdx = arg.indexOf("=");
+    const name = eqIdx === -1 ? arg : arg.slice(0, eqIdx);
+    const inline = eqIdx === -1 ? null : arg.slice(eqIdx + 1);
+    if (VALUE_FLAGS.has(name)) {
+      if (inline !== null && inline === "") {
+        log("err", `Empty value for ${name}. Usage: ${name} <value> or ${name}=<value>`);
+        process.exit(1);
+      }
+      if (inline === null && (argv[i + 1] === undefined || (argv[i + 1]?.startsWith("--") && FLAGS.has(argv[i + 1])))) {
+        log("err", `Missing value for ${name}. Usage: ${name} <value> or ${name}=<value>`);
+        process.exit(1);
+      }
     }
     switch (name) {
       case "--target": opts.target = inline ?? argv[++i] ?? "auto"; break;
@@ -275,8 +283,8 @@ function verifyMcp(command, cwd, env, verbose) {
           const msg = JSON.parse(line);
           if (msg.id === 1 && msg.result?.serverInfo) {
             initialized = true;
-            clearTimeout(timer);
-            // Don't finish yet — wait for tools/list (id: 2) below.
+            // Keep the timeout active — it protects the entire operation
+            // (initialize + tools/list), not just the initialize handshake.
           }
           if (msg.id === 1 && msg.error) {
             clearTimeout(timer);
@@ -315,7 +323,9 @@ function platformGuardrails(opts) {
   if (process.platform === "win32") {
     notes.push(
       "Windows Defender real-time scanning can add 20-30s cold-start latency to the MCP server.",
-      "20-30s on FIRST boot only is expected and benign; scan the repo in DEFG.",
+      "20-30s on FIRST boot only is expected and benign. If boots persist slowly, run a manual scan on the",
+      "checkout once (Windows Security → Virus & threat protection → Scan options → Custom scan), then",
+      "exclude only the specific paths below if the slowness persists across restarts.",
       "If slow boots persist, scope a Defender exclusion to the exact checkout only (elevated PowerShell),",
       "not drive-wide: Add-MpPreference -ExclusionPath \"<repo>\"",
     );
@@ -370,6 +380,8 @@ async function installOcodeFamily(opts, { label, configDir }) {
   };
   const gte = (ver, min) => {
     if (!ver) return false;
+    // Reject non-numeric versions (e.g. "latest", empty string)
+    if (!/^\d+(\.\d+)*([-.].*)?$/.test(String(ver))) return false;
     const parse = (v) => String(v).split(".").map((n) => parseInt(n, 10) || 0);
     const a = parse(ver), b = parse(min);
     for (let i = 0; i < Math.max(a.length, b.length); i++) {
@@ -377,12 +389,17 @@ async function installOcodeFamily(opts, { label, configDir }) {
       if (x > y) return true;
       if (x < y) return false;
     }
+    // Equal numeric parts — treat prerelease as below stable (e.g. 1.18.0-rc1 < 1.18.0)
+    const pre = String(ver).split("-")[1];
+    if (pre) return false;
     return true;
   };
   const cfgNM = (dir) => {
+    const asfdkPkg = path.join(dir, "node_modules", "@neurolift-technologies", "asfdk", "package.json");
     const pluginPkg = path.join(dir, "node_modules", "@opencode-ai", "plugin", "package.json");
     return {
       asfdk: existsSync(path.join(dir, "node_modules", "@neurolift-technologies", "asfdk")),
+      asfdkVersion: readPkgVersion(asfdkPkg),
       plugin: existsSync(path.join(dir, "node_modules", "@opencode-ai", "plugin")),
       pluginVersion: readPkgVersion(pluginPkg),
     };
@@ -392,6 +409,10 @@ async function installOcodeFamily(opts, { label, configDir }) {
     if (!s.asfdk || !s.plugin) return true;
     if (!gte(s.pluginVersion, "1.18.0")) {
       log("warn", `  @opencode-ai/plugin is ${s.pluginVersion ?? "unknown"} (< 1.18.0) — refreshing.`);
+      return true;
+    }
+    if (!gte(s.asfdkVersion, "0.2.4")) {
+      log("warn", `  @neurolift-technologies/asfdk is ${s.asfdkVersion ?? "unknown"} (< 0.2.4) — refreshing.`);
       return true;
     }
     return false;
