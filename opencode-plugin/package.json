@@ -1,0 +1,17 @@
+{
+  "name": "@neurolift-technologies/opencode-asfdk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Canonical opencode/kilo plugins for the ASFDK Solidarity Framework. Install via `node scripts/install.mjs` from the asfdk-harness repo root.",
+  "type": "module",
+  "files": [
+    "*.ts"
+  ],
+  "dependencies": {
+    "@neurolift-technologies/asfdk": ">=0.2.4"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": ">=1.18.0",
+    "@types/node": ">=22"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "agent_registration": {
+    "agent_name": "opencode-big-pickle",
+    "platform": "opencode",
+    "version": "1.18.31",
+    "session_id": "asfdk-harness-universal-installer-2026-09-18",
+    "entry_date": "2026-09-18",
+    "entry_point": "User request: 'make it easy for any agent to install ASFDK into their setup'",
+    "acknowledged_otoi": true,
+    "otoi_version": "ORG-DEV-OTOI-1.0.3",
+    "working_repo": "NeuroLift-Technologies/asfdk-harness",
+    "working_branch": "feat/universal-installer",
+    "capabilities_self_reported": [
+      "Universal runtime installer authoring (opencode/kilo automated; hermes/openclaw/zed/pi best-effort)",
+      "OpenCode plugin refresh to @opencode-ai/plugin >= 1.18 API (chat.message output.parts)",
+      "Raw MCP stdio handshake verification (initialize / tools/list)",
+      "Prior session: field-tested local asfdk-governance MCP server integration into opencode on Windows"
+    ],
+    "known_limitations": [
+      "Windows sandbox: cannot modify Defender exclusions directly (user applies elevated commands)",
+      "kilo/hermes/openclaw/zed/pi adapters are best-effort — runtime config formats not fully specified in repo",
+      "Cannot verify other-runtime installs locally (only opencode installed on this machine)"
+    ],
+    "preferred_handoff_format": "structured summary with file paths, commands run, and verification evidence"
+  }
+}

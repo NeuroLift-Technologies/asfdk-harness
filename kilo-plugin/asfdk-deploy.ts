@@ -121,10 +121,13 @@ export default async function asfdkDeploy(_input: PluginInput, options: PluginOp
   }
 
   return {
-    "chat.message": async (input) => {
+    // NOTE (@opencode-ai/plugin >= 1.18): message content is delivered in the
+    // SECOND hook argument (output.parts / Part[] with { type: "text", text }),
+    // not in input.parts. Reading input.parts silently yields an empty string.
+    "chat.message": async (input, output) => {
       try {
-        const text = extractText(input.parts as ReadonlyArray<{ type?: string; text?: unknown }>);
-        const dedupKey = input.parts
+        const text = extractText(output.parts as ReadonlyArray<{ type?: string; text?: unknown }>);
+        const dedupKey = output.parts
           .map((part) => (part as { id?: string }).id)
           .filter(Boolean)
           .join("+");
