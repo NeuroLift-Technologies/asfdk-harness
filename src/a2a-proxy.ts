@@ -15,7 +15,9 @@
  *   GET  /health            — Health check
  *
  * Environment:
- *   OPENCODE_URL  — OpenCode server URL (default: http://127.0.0.1:4096)
+ *   OPENCODE_URL  — OpenCode server URL. When set, submissions use
+ *                   `opencode run --server <url>`; when unset, the CLI
+ *                   resolves the running background service itself.
  *   HUB_URL       — Discovery hub URL (default: http://127.0.0.1:3001)
  *   PROXY_PORT    — Port to listen on (default: 4097)
  *   PROXY_HOST    — Host to bind to (default: 127.0.0.1)
@@ -31,7 +33,7 @@ import { isMainModule } from "./entrypoint.js";
 // Config
 // ---------------------------------------------------------------------------
 
-const OPENCODE_URL = process.env.OPENCODE_URL ?? "http://127.0.0.1:4096";
+const OPENCODE_URL = process.env.OPENCODE_URL;
 const OPENCODE_BIN = process.env.OPENCODE_BIN ?? "opencode";
 const HUB_URL = process.env.HUB_URL ?? "http://127.0.0.1:3001";
 const PROXY_PORT = Number(process.env.PROXY_PORT ?? "4097");
@@ -63,6 +65,12 @@ const tasks = new Map<string, PendingTask>();
 // A2A → OpenCode translation
 // ---------------------------------------------------------------------------
 
+/**
+ * Map an A2A agent ID to the OpenCode agent name that executes its tasks.
+ * Unmapped or unknown agents fall back to the `build` agent.
+ * @param agentId - A2A agent identifier from the inbound message or hub.
+ * @returns The OpenCode agent name to run.
+ */
 function mapAgentToOpenCode(agentId: string | undefined): string {
   // Map A2A agent IDs to OpenCode agent names
   const agentMap: Record<string, string> = {
@@ -83,6 +91,11 @@ function mapAgentToOpenCode(agentId: string | undefined): string {
   return agentMap[agentId] ?? "build";
 }
 
+/**
+ * Translate a pending A2A task into a natural-language prompt for OpenCode.
+ * @param task - The pending A2A task to translate.
+ * @returns The assembled prompt string.
+ */
 function translateA2AToOpenCode(task: PendingTask): string {
   const { action, payload, from, priority } = task;
 
@@ -138,15 +151,30 @@ function translateA2AToOpenCode(task: PendingTask): string {
   return parts.join("\n");
 }
 
+/**
+ * Submit a prompt to a specific OpenCode agent via `opencode run --agent`
+ * and stream the prompt on stdin, resolving with the new session ID.
+ * When `OPENCODE_URL` is explicitly configured, the spawn targets that
+ * server with `--server`; otherwise the CLI discovers the background service.
+ * @param prompt - The message to send to the OpenCode agent.
+ * @param agent - The OpenCode agent name (e.g. "build").
+ * @returns The created OpenCode session ID.
+ */
 async function submitToOpenCodeWithAgent(prompt: string, agent: string): Promise<{ sessionId: string }> {
   // Use opencode run with --agent flag to trigger actual agent processing.
-  // No --server/--attach flag: the CLI resolves the running background
-  // service itself (the app server is auth-protected and rejects --server).
+  // Server selection: when OPENCODE_URL is explicitly configured, pass it via
+  // `--server <url>` (supported by `opencode run` in OpenCode 2.0.10). When
+  // unset, the CLI resolves the running background service itself (the app
+  // server is auth-protected and rejects --server, so an explicit URL is the
+  // only way to pin a specific target).
   // The --agent flag is required — without it, the server creates an empty session
   return new Promise((resolve, reject) => {
-    const proc = spawn(OPENCODE_BIN, [
-      "run", "--agent", agent, "--format", "json"
-    ], {
+    const args = ["run"];
+    if (OPENCODE_URL) {
+      args.push("--server", OPENCODE_URL);
+    }
+    args.push("--agent", agent, "--format", "json");
+    const proc = spawn(OPENCODE_BIN, args, {
       env: process.env,
       stdio: ["pipe", "pipe", "pipe"],
     });
@@ -195,7 +223,11 @@ async function submitToOpenCodeWithAgent(prompt: string, agent: string): Promise
   });
 }
 
-// Keep the old function for backward compatibility
+/**
+ * Legacy wrapper: submit a prompt to the default `build` agent.
+ * @param prompt - The message to send to the build agent.
+ * @returns The created OpenCode session ID.
+ */
 async function submitToOpenCode(prompt: string): Promise<{ sessionId: string }> {
   return submitToOpenCodeWithAgent(prompt, "build");
 }
@@ -204,6 +236,10 @@ async function submitToOpenCode(prompt: string): Promise<{ sessionId: string }> 
 // Hub Registration
 // ---------------------------------------------------------------------------
 
+/**
+ * Register this proxy's agent card with the discovery hub so peers can
+ * route A2A messages to it. Failures are logged but non-fatal.
+ */
 async function registerWithHub(): Promise<void> {
   const agentCard = {
     id: AGENT_ID,
@@ -243,6 +279,11 @@ async function registerWithHub(): Promise<void> {
 // HTTP Server
 // ---------------------------------------------------------------------------
 
+/**
+ * Drain and JSON-parse the request body, returning undefined for empty bodies.
+ * @param request - The Node HTTP request to read.
+ * @returns The parsed JSON value, or undefined when the body is empty.
+ */
 async function readJsonBody(request: http.IncomingMessage): Promise<unknown | undefined> {
   const chunks: Buffer[] = [];
   for await (const chunk of request) {
@@ -254,12 +295,21 @@ async function readJsonBody(request: http.IncomingMessage): Promise<unknown | un
   return JSON.parse(raw);
 }
 
+/**
+ * Write a JSON response with the given status code.
+ * @param res - The HTTP server response to write to.
+ * @param status - HTTP status code to send.
+ * @param data - Payload to serialize as JSON.
+ */
 function jsonResponse(res: http.ServerResponse, status: number, data: unknown) {
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json");
   res.end(JSON.stringify(data, null, 2));
 }
 
+/**
+ * Start the HTTP server on PROXY_HOST:PROXY_PORT and register with the hub.
+ */
 async function main() {
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", `http://${req.headers.host ?? `${PROXY_HOST}:${PROXY_PORT}`}`);
@@ -271,7 +321,7 @@ async function main() {
         jsonResponse(res, 200, {
           status: "ok",
           proxy: "a2a-opencode-proxy",
-          opencodeUrl: OPENCODE_URL,
+          opencodeUrl: OPENCODE_URL ?? "cli-service-discovery",
           hubUrl: HUB_URL,
           agentId: AGENT_ID,
           pendingTasks: Array.from(tasks.values()).filter((t) => t.status === "pending").length,
@@ -438,7 +488,7 @@ async function main() {
 
   server.listen(PROXY_PORT, PROXY_HOST, async () => {
     console.log(`[a2a-proxy] A2A-to-OpenCode proxy started at http://${PROXY_HOST}:${PROXY_PORT}`);
-    console.log(`[a2a-proxy] OpenCode target: ${OPENCODE_URL}`);
+    console.log(`[a2a-proxy] OpenCode target: ${OPENCODE_URL ?? "cli-service-discovery (CLI resolves the background service)"}`);
     console.log(`[a2a-proxy] Hub URL: ${HUB_URL}`);
     console.log(`[a2a-proxy] Agent ID: ${AGENT_ID}`);
     console.log(`[a2a-proxy] Inbound endpoint: POST http://${PROXY_HOST}:${PROXY_PORT}/a2a/inbound`);
