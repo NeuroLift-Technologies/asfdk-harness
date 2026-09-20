@@ -1,0 +1,27 @@
+{
+  "agent_registration": {
+    "agent_name": "opencode-big-pickle",
+    "platform": "opencode",
+    "version": "2.0.10",
+    "session_id": "ses_f43918105ffeHeALbHALOGPxeh",
+    "entry_date": "2026-09-20",
+    "entry_point": "User request: fix a2a-task-watch registration endpoint + A2A-to-OpenCode proxy delivery on Windows, then log/handoff/commit on a branch",
+    "acknowledged_otoi": true,
+    "otoi_version": "ORG-DEV-OTOI-1.0.3",
+    "working_repo": "NeuroLift-Technologies/asfdk-harness",
+    "working_branch": "feat/a2a-opencode-windows-fixes",
+    "capabilities_self_reported": [
+      "A2A hub registration via /a2a/register + OpenCode-compatible polling routes (/agents, /agents/:id/tasks)",
+      "Windows spawn remediation (OPENCODE_BIN real binary vs .cmd/.sh PATH shims)",
+      "OpenCode 2.0.10 CLI surface (run flags: --agent/--format json; --server auth limitation on the app server)",
+      "Git plumbing commit creation on a Windows host with an un-materializable index (hash-object/mktree/commit-tree/update-ref)",
+      "Prior session: installed asfdk-harness into opencode, wired asfdk-governance MCP, cataloged the UE built-in MCP registry on port 8001"
+    ],
+    "known_limitations": [
+      "Cannot repair the Windows git index without a history rewrite (':' filenames) — requires human approval, escalated",
+      "opencode app server port is ephemeral per launch; proxy relies on CLI service discovery (no OPENCODE_URL dependency)",
+      "Build lane ownership (Codex + Poolside) still applies to broader plugin/build integration beyond these two authorized fixes"
+    ],
+    "preferred_handoff_format": "structured summary with file paths, commands run, and verification evidence"
+  }
+}

@@ -35,6 +35,15 @@ const DEFAULT_OPTIONS: Required<A2ATaskWatchOptions> = {
   fetchTimeoutMs: 10000,
 };
 
+/**
+ * A2A task-watch plugin for OpenCode: registers this runtime's agent card
+ * with the discovery hub, polls for peer agents and tasks, and runs ASFDK
+ * emotional assessments on new task text. Loaded automatically by OpenCode
+ * when this module is configured as a plugin.
+ * @param _input - Plugin input (unused by this plugin).
+ * @param options - Plugin options overlaid on DEFAULT_OPTIONS.
+ * @returns OpenCode hooks exposing a `dispose` lifecycle method.
+ */
 export default async function a2aTaskWatch(_input: PluginInput, options: PluginOptions = {}): Promise<Hooks> {
   const opts = { ...DEFAULT_OPTIONS, ...options } as Required<A2ATaskWatchOptions>;
   const hubUrl = opts.hubUrl || process.env.ASFDK_A2A_HUB_URL || "";
@@ -101,7 +110,7 @@ export default async function a2aTaskWatch(_input: PluginInput, options: PluginO
         defaultOutputModes: ["text/plain", "application/json"],
         discovery: { protocol: "A2A", mechanism: "Agent Card" },
       };
-      await json(hubUrl.replace(/\/$/, "") + "/register", { method: "POST", body: JSON.stringify(body) });
+      await json(hubUrl.replace(/\/$/, "") + "/a2a/register", { method: "POST", body: JSON.stringify(body) });
       log("registered", opts.agentId);
     } catch (error) {
       log("register-error", String(error));

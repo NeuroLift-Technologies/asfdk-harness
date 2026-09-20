@@ -1,0 +1,52 @@
+{
+  "handoff_record": {
+    "session_id": "ses_f43918105ffeHeALbHALOGPxeh",
+    "agent_name": "OpenCode (Big Pickle)",
+    "date": "2026-09-20T03:30:00Z",
+    "otoi_version": "ORG-DEV-OTOI-1.0.3",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "feat/a2a-opencode-windows-fixes",
+    "work_completed": [
+      "opencode-plugin/a2a-task-watch.ts: registration endpoint corrected from POST /register to POST /a2a/register (hub only serves the /a2a-prefixed route). Live-verified by posting the plugin's exact agent card to http://127.0.0.1:3001/a2a/register (201; agent opencode-asfdk-deploy registered).",
+      "src/a2a-proxy.ts: drop --attach (removed in OpenCode 2.0.10) and --server (the app server is auth-protected, 401 on its health check, so --server cannot connect); spawn is now `opencode run --agent <agent> --format json` via stdin, letting the CLI resolve the running background service itself.",
+      "Operational wiring on the Windows host: hub (3001) restarted with ASFDK_HUB_STATE_FILE=~/.asfdk/discovery-hub-state.json (registrations now persist across restarts); hub registry re-populated (opencode, opencode-asfdk-deploy + proxy self-registration a2a-opencode-proxy); proxy run with OPENCODE_BIN pointing at the real binary C:\\Users\\joshd\\AppData\\Local\\hermes\\node\\node_modules\\@opencode\\cli\\bin\\opencode.exe (the PATH shims opencode.cmd/.sh cannot be spawned without a shell).",
+      "End-to-end smoke test passed delivery stage: hub POST /a2a/message -> proxy /a2a/inbound -> opencode child process spawned (task status: processing). Earlier rounds failed fast (spawn ENOENT; --attach flag error; --server health 401) and were fixed in sequence.",
+      "PR #34 review response (CodeRabbit, 2026-09-20): src/a2a-proxy.ts now honors OPENCODE_URL when explicitly configured — submitToOpenCodeWithAgent builds `opencode run --server <url> --agent <agent> --format json` when the env var is set and falls back to CLI service discovery when unset (2.0.10 supports --server per `opencode run --help`). Health check and startup log report the effective target (cli-service-discovery when unset). JSDoc docstrings added to diff-touched functions in src/a2a-proxy.ts and opencode-plugin/a2a-task-watch.ts to clear the CodeRabbit docstring-coverage check."
+    ],
+    "work_in_progress": [
+      "The routed smoke task (6c40d08a-2e4f-4e6e-8d8e-111932ae246f) was still processing at handoff; completion depends on the build agent's model call (a manual peer-session test hit one transient provider.internal 500)."
+    ],
+    "blockers": [
+      "Git index is empty on this Windows host: HEAD contains filenames with ':' (e.g. docs/agent-log/handoffs/2026-06-25T19:30:39Z-*.json) that core.protectNTFS forbids; every index-materializing git operation (reset/checkout/switch) fails with 'invalid path'. Branch commit was created via plumbing (hash-object/mktree/commit-tree/update-ref) to avoid the broken index. See decisions_pending."
+    ],
+    "decisions_made": [
+      "User authorized these repo source fixes (auto-fix overrode the earlier build-lane handoff for this specific pair of changes).",
+      "Commit-on-branch delivered via pure git plumbing because the index cannot be materialized on Windows without renaming the ':'-poisoned paths (history rewrite — withheld pending approval)."
+    ],
+    "decisions_pending": [
+      "Index repair for Windows: rename the ':'-named files to Windows-safe names (history rewrite via filter-branch/filter-repo, or a rename commit on a branch before merge). Requires human/Codex+Poolside approval — escalated, do not do autonomously.",
+      "Line endings: mixed in HEAD — docs/active-threads.md is stored CRLF (Windows-origin) while src/ + opencode-plugin/ sources are LF. Branch commit matches each tracked file's existing convention so diffs stay minimal. Recommend committing .gitattributes ('* text=auto') + core.autocrlf=true to standardize before broad commits resume.",
+      "Whether the a2a-running services (hub 3001, proxy 4097) should be promoted to managed background services on Windows instead of shell-background processes."
+    ],
+    "escalations": [
+      "2026-09-20 — broken git index on Windows (empty index; ':'-named paths in HEAD blocked by core.protectNTFS). All normal git ops in the local checkout are non-functional until resolved. Suggested fix: history rewrite renaming ':' to '-' (verify no origin collaborators depend on the colons) or accepting a rename commit on main first.",
+      "2026-09-20 — repo stores mixed line endings (CRLF in docs/active-threads.md, LF in src/ + opencode-plugin/); no .gitattributes/core.autocrlf on this host. Recommend standardizing with .gitattributes ('* text=auto') before broad commits resume.",
+      "2026-09-20 — OpenCode app server port is ephemeral on this host (opencode api /api/info -> url 127.0.0.1:49374 at handoff, changes across restarts). The proxy no longer needs OPENCODE_URL (CLI service discovery), so this is now informational only."
+    ],
+    "next_agent_notes": "Two repo files changed and committed on feat/a2a-opencode-windows-fixes: opencode-plugin/a2a-task-watch.ts (register path) and src/a2a-proxy.ts (spawn args). PR from that branch will merge cleanly into main (tree = main + these 5 files: the 2 sources + 3 docs records). BEFORE that merge, decide the git-index repair — if you fix history (':' -> '-') first, the branch should be rebased onto the repaired main. The runtime services are shell-background on the Windows box; hub persists state to ~/.asfdk/discovery-hub-state.json; proxy needs OPENCODE_BIN set to the hermes node @opencode/cli bin opencode.exe.",
+    "files_modified": [
+      "opencode-plugin/a2a-task-watch.ts",
+      "src/a2a-proxy.ts",
+      "docs/active-threads.md",
+      "docs/agent-log/handoffs/2026-09-20-a2a-opencode-windows-fixes.json",
+      "docs/agent-log/registrations/2026-09-20-opencode-big-pickle-a2a-fixes.json"
+    ],
+    "tests_run": [
+      "Live hub registration of plugin agent card (201)",
+      "End-to-end message route: hub /a2a/message -> proxy /a2a/inbound -> opencode child spawn (task processing)",
+      "opencode run --agent build --format json smoke (session created ses_f432cbb2affezUM2eu7GAhTTVJ)"
+    ],
+    "tests_passing": true,
+    "pr_url": "https://github.com/NeuroLift-Technologies/asfdk-harness/pull/34 (a2a fixes; filename-repair PR #33)"
+  }
+}
