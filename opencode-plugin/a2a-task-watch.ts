@@ -101,7 +101,7 @@ export default async function a2aTaskWatch(_input: PluginInput, options: PluginO
         defaultOutputModes: ["text/plain", "application/json"],
         discovery: { protocol: "A2A", mechanism: "Agent Card" },
       };
-      await json(hubUrl.replace(/\/$/, "") + "/register", { method: "POST", body: JSON.stringify(body) });
+      await json(hubUrl.replace(/\/$/, "") + "/a2a/register", { method: "POST", body: JSON.stringify(body) });
       log("registered", opts.agentId);
     } catch (error) {
       log("register-error", String(error));

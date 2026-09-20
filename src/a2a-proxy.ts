@@ -139,11 +139,13 @@ function translateA2AToOpenCode(task: PendingTask): string {
 }
 
 async function submitToOpenCodeWithAgent(prompt: string, agent: string): Promise<{ sessionId: string }> {
-  // Use opencode run --attach with --agent flag to trigger actual agent processing
+  // Use opencode run with --agent flag to trigger actual agent processing.
+  // No --server/--attach flag: the CLI resolves the running background
+  // service itself (the app server is auth-protected and rejects --server).
   // The --agent flag is required — without it, the server creates an empty session
   return new Promise((resolve, reject) => {
     const proc = spawn(OPENCODE_BIN, [
-      "run", "--attach", OPENCODE_URL, "--agent", agent, "--format", "json"
+      "run", "--agent", agent, "--format", "json"
     ], {
       env: process.env,
       stdio: ["pipe", "pipe", "pipe"],
