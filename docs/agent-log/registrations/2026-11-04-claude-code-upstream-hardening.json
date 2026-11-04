@@ -1,0 +1,27 @@
+{
+  "agent_registration": {
+    "agent_name": "Claude Code",
+    "platform": "Claude Code (cloud session, claude.ai/code)",
+    "version": "Not recorded",
+    "session_id": "session_01UNjnjm3TZ7Tg4MRswGt24P",
+    "entry_date": "2026-11-04",
+    "entry_timestamp": "2026-11-04T20:50:00Z",
+    "entry_point": "Owner-directed follow-up from NeuroLift-Technologies/nlt-pi (PR #15/#16): fix the harness policy.ts guardrail gaps, a CodeQL file-race, and unredacted protocol paths found while vendoring the harness into nlt-pi.",
+    "acknowledged_otoi": true,
+    "otoi_version": "ORG-DEV-OTOI-1.0.3",
+    "working_repo": "NeuroLift-Technologies/asfdk-harness",
+    "working_branch": "ccr-0d5033af-1rkbla",
+    "capabilities_self_reported": [
+      "Repository inspection and local edits",
+      "npm install, TypeScript typecheck and node:test execution in the cloud container",
+      "Git branch commits and draft pull request creation via GitHub MCP"
+    ],
+    "known_limitations": [
+      "No Windows host; Windows-specific behavior is not exercised.",
+      "Three unit tests already fail on the unmodified base in this environment (see PR).",
+      "npm ci fails on main because package-lock.json references a local tarball path; tests were run after npm install --legacy-peer-deps --no-package-lock.",
+      "cf:check (Workers types) was not run."
+    ],
+    "preferred_handoff_format": "structured JSON and Markdown"
+  }
+}

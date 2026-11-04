@@ -1,0 +1,49 @@
+{
+  "handoff_record": {
+    "session_id": "session_01UNjnjm3TZ7Tg4MRswGt24P",
+    "agent_name": "Claude Code",
+    "date": "2026-11-04T20:55:00Z",
+    "otoi_version": "ORG-DEV-OTOI-1.0.3",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "ccr-0d5033af-1rkbla",
+    "work_completed": [
+      "policy.ts: block recursive rm of root/home/glob targets across flag orderings, long options and `--`; block shell globs that can expand to a sensitive file name (additive; existing patterns unchanged).",
+      "protocols.ts: readOptionalFile reads once (CodeQL js/file-system-race); behavior preserved.",
+      "tools.ts: asfdk_protocol_status redacts absolute paths outside development mode.",
+      "Added 8 tests; a mutation check confirms the policy and redaction tests depend on the fixes."
+    ],
+    "work_in_progress": [],
+    "blockers": [
+      "Three unit tests fail on the unmodified base in this environment (package-tarball, factory registration, before_agent_start preflight); not investigated.",
+      "package-lock.json references a local tarball path (/home/user/wt-asfdk-provenance/packages/asfdk/neurolift-technologies-asfdk-0.2.2.tgz), so npm ci fails on main."
+    ],
+    "decisions_made": [
+      "Block recursion without -f on root/home/glob targets, not only -rf.",
+      "Inspect globs only when they have at least two literal characters before the first wildcard, to avoid blocking *, *.json and .*."
+    ],
+    "decisions_pending": [
+      "Whether to fix the lockfile's local tarball path.",
+      "Whether the guardrail should also cover globs with fewer literal characters (for example `cat .*`).",
+      "Release/version bump and re-sync into NeuroLift-Technologies/nlt-pi, which vendors policy.ts, protocols.ts and tools.ts."
+    ],
+    "files_modified": [
+      "src/policy.ts",
+      "src/protocols.ts",
+      "src/tools.ts",
+      "test/policy.test.ts",
+      "test/protocols.test.ts",
+      "test/tools.test.ts",
+      "docs/active-threads.md",
+      "docs/agent-log/registrations/2026-11-04-claude-code-upstream-hardening.json",
+      "docs/escalations/2026-11-04-policy-ts-hardening-approved.md",
+      "docs/agent-log/handoffs/2026-11-04-claude-code-upstream-hardening.json"
+    ],
+    "tests_run": [
+      "npx tsc --noEmit",
+      "node --import tsx --test test/policy.test.ts test/protocols.test.ts test/tools.test.ts (27 pass)",
+      "npm run test:unit (84 tests, 81 pass; same 3 failures as the unmodified base)"
+    ],
+    "test_result": "new_tests_pass; no_regression_vs_base; 3_preexisting_failures",
+    "pr_url": "pending"
+  }
+}

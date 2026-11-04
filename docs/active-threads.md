@@ -2,11 +2,25 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-09-20T00:00:00Z
+**Last updated:** 2026-11-04T20:55:00Z
 
 ---
 
 ## Active Threads
+
+### THREAD-015 — Harden policy.ts guardrail gaps; read protocol files once; redact protocol paths
+| Field | Value |
+|---|---|
+| **Thread ID** | THREAD-015 |
+| **Status** | 🟡 In Progress (draft PR) |
+| **Started** | 2026-11-04 |
+| **Owner** | Claude Code (owner-directed from nlt-pi) |
+| **Branch** | `ccr-0d5033af-1rkbla` |
+| **Task** | Fix gaps found while vendoring the harness into nlt-pi: policy.ts allowed `rm -fr ~`, `rm -rf -- /etc`, `rm -r -f /`, `rm --recursive --force ~`, `cat .en?`, `cat .e*`; protocols.ts access()+readFile() file race (CodeQL js/file-system-race); asfdk_protocol_status returned unredacted absolute paths. |
+| **Scope** | `src/policy.ts`, `src/protocols.ts`, `src/tools.ts`, tests, `docs/agent-log/*`, `docs/escalations/*`, this file |
+| **Blockers** | 3 unit tests fail on the unmodified base in the cloud environment (not investigated); `npm ci` fails on main because package-lock.json references a local tarball path. |
+| **Related PR** | pending |
+| **Notes** | policy.ts is an escalate-before-change file; the owner approved the change in the originating session (see `docs/escalations/2026-11-04-policy-ts-hardening-approved.md`). Additive blocking only. Re-sync into nlt-pi (which vendors these files) after merge. |
 
 ### THREAD-014 — Windows-runtime fixes: a2a-task-watch registration + proxy spawn/CLI
 | Field | Value |
