@@ -19,7 +19,7 @@
 | **Task** | Fix gaps found while vendoring the harness into nlt-pi: policy.ts allowed `rm -fr ~`, `rm -rf -- /etc`, `rm -r -f /`, `rm --recursive --force ~`, `cat .en?`, `cat .e*`; protocols.ts access()+readFile() file race (CodeQL js/file-system-race); asfdk_protocol_status returned unredacted absolute paths. |
 | **Scope** | `src/policy.ts`, `src/protocols.ts`, `src/tools.ts`, tests, `docs/agent-log/*`, `docs/escalations/*`, this file |
 | **Blockers** | 3 unit tests fail on the unmodified base in the cloud environment (not investigated); `npm ci` fails on main because package-lock.json references a local tarball path. |
-| **Related PR** | pending |
+| **Related PR** | [asfdk-harness#36](https://github.com/NeuroLift-Technologies/asfdk-harness/pull/36); related: rrt-advocate#49, #50, asfdk#41, nlt-pi#16 |
 | **Notes** | policy.ts is an escalate-before-change file; the owner approved the change in the originating session (see `docs/escalations/2026-11-04-policy-ts-hardening-approved.md`). Additive blocking only. Re-sync into nlt-pi (which vendors these files) after merge. |
 
 ### THREAD-014 — Windows-runtime fixes: a2a-task-watch registration + proxy spawn/CLI
