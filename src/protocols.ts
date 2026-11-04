@@ -393,13 +393,21 @@ function resolveProtocolPath(cwd: string, path: string): string {
   return isAbsolute(path) ? path : resolve(cwd, path);
 }
 
+// Read once instead of access() then readFile(), which left a window between the check and the read
+// (CodeQL js/file-system-race). A missing or unreadable file is still reported as absent; any other error
+// (for example reading a directory) still propagates.
+const ABSENT_FILE_ERROR_CODES: ReadonlySet<string> = new Set(["ENOENT", "ENOTDIR", "EACCES", "EPERM"]);
+
 async function readOptionalFile(path: string): Promise<string | undefined> {
   try {
-    await access(path, fsConstants.R_OK);
-  } catch {
-    return undefined;
+    return await readFile(path, "utf8");
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException | undefined)?.code;
+    if (code !== undefined && ABSENT_FILE_ERROR_CODES.has(code)) {
+      return undefined;
+    }
+    throw error;
   }
-  return readFile(path, "utf8");
 }
 
 async function resolveDefaultToiPath(cwd: string): Promise<string> {

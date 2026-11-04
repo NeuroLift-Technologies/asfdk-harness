@@ -1,7 +1,7 @@
 import "./setup.ts";
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { AsfdkHarness, Channel } from "../src/harness.ts";
+import { AsfdkHarness, Channel, FoundationMode } from "../src/harness.ts";
 import { ASFDK_TOOL_SKILLS, createAsfdkTools, isSensitiveGovernanceToolName } from "../src/tools.ts";
 import { cleanupSwpStorage } from "./setup.ts";
 
@@ -130,4 +130,24 @@ test("asfdk_assess_text defaults absent channel to unknown at the tool seam", as
   const interaction = r.details.interaction as { content?: Record<string, unknown> };
   assert.equal(interaction.content?.channel, Channel.UNKNOWN);
   assert.equal(interaction.content?.trusted, false);
+});
+
+test("asfdk_protocol_status redacts absolute local paths outside development mode", async () => {
+  const execute = byName("asfdk_protocol_status").execute as (id: string, p: unknown) => Promise<{ content: Array<{ text: string }> }>;
+  const result = await execute("call-redact", {});
+  const text = result.content[0]?.text ?? "";
+  assert.ok(text.includes("[REDACTED_PATH]"), "absolute paths should be redacted");
+  assert.ok(!text.includes(process.cwd()), "the absolute working directory must not be exposed");
+});
+
+test("asfdk_protocol_status keeps real paths in development mode", async () => {
+  const dev = new AsfdkHarness({ mode: FoundationMode.DEVELOPMENT });
+  const devTools = createAsfdkTools(dev);
+  const tool = devTools.find((t) => t.name === "asfdk_protocol_status");
+  assert.ok(tool);
+  const execute = tool.execute as (id: string, p: unknown) => Promise<{ content: Array<{ text: string }> }>;
+  const result = await execute("call-dev", {});
+  const text = result.content[0]?.text ?? "";
+  assert.ok(text.includes(process.cwd()), "development mode should expose the working directory");
+  await dev.shutdown();
 });
