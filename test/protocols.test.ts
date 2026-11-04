@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createProtocolSnapshot, loadGovernanceProtocols } from "../src/protocols.ts";
@@ -81,6 +81,30 @@ test("local personal TOI overrides the tracked default when present", async () =
       assert.strictEqual(context.effectiveToi, context.personalToi);
       assert.equal(snapshot.toi?.author, "Local Test Principal");
       assert.ok(context.protocols.includes("otoi-honor-resolution"));
+    },
+  );
+});
+
+test("a missing .otoi is reported as a diagnostic, not thrown", async () => {
+  await withGovernanceFixture(
+    async (dir) => {
+      await rm(join(dir, ".otoi"));
+    },
+    async (dir) => {
+      const context = await loadGovernanceProtocols({ cwd: dir });
+      assert.ok(context.diagnostics.some((line) => line.includes("No .otoi charter found")));
+    },
+  );
+});
+
+test("an error other than a missing file still propagates (a directory is not a charter)", async () => {
+  await withGovernanceFixture(
+    async (dir) => {
+      await rm(join(dir, ".otoi"));
+      await mkdir(join(dir, ".otoi"));
+    },
+    async (dir) => {
+      await assert.rejects(() => loadGovernanceProtocols({ cwd: dir }));
     },
   );
 });

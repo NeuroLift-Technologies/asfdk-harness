@@ -2,6 +2,7 @@ import { Type, type Static } from "typebox";
 import type { AsfdkHarness } from "./harness.js";
 import {
   Channel,
+  FoundationMode,
   InteractionType,
   canExposeSensitiveGovernanceTools,
   resolveToolSeamChannel,
@@ -190,7 +191,9 @@ export function createAsfdkTools(harness: AsfdkHarness) {
       ],
       parameters: Type.Object({}),
       async execute() {
-        const protocols = await harness.protocolSnapshot();
+        // Same rule as harness.status(): outside development mode, do not hand absolute local paths to the model.
+        const snapshot = await harness.protocolSnapshot();
+        const protocols = harness.mode === FoundationMode.DEVELOPMENT ? snapshot : harness.redactProtocolPaths(snapshot);
         return {
           content: [{ type: "text" as const, text: JSON.stringify(protocols, null, 2) }],
           details: protocols as unknown as Record<string, unknown>,

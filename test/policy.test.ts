@@ -100,3 +100,70 @@ test("formatPolicyContext returns a JSON string with the payload", () => {
   assert.equal(typeof s, "string");
   assert.ok(s.includes('"ok":'), "must contain the payload key");
 });
+
+test("blocks recursive rm of root/home/glob targets regardless of flag order, split flags, long options, or `--`", () => {
+  const blocked = [
+    "rm -fr ~",
+    "rm -fr /",
+    "rm -rf -- /etc",
+    "rm -fr -- ~",
+    "rm -r -f /",
+    "rm -R -f $HOME",
+    "rm --recursive --force ~",
+    "rm --force --recursive /var",
+    "rm -r ~",
+    "rm -rf ./build ~",
+    "echo hi && rm -fr ~",
+    "cd /tmp; rm -rf -- *",
+    "rm -rf ${HOME}",
+  ];
+  for (const command of blocked) {
+    const d = reviewToolCall("bash", { command });
+    assert.equal(d.allow, false, `should block: ${command}`);
+    assert.equal(d.severity, "block");
+  }
+});
+
+test("still allows scoped rm and other rm-like commands", () => {
+  const allowed = [
+    "rm -rf ./build",
+    "rm -rf node_modules",
+    "rm -r ./tmp-dir",
+    "rm -f file.txt",
+    "rm file.txt",
+    "git rm -r --cached ./dist",
+    "rm -rf -- ./build",
+    "echo rm -rf",
+  ];
+  for (const command of allowed) {
+    assert.equal(reviewToolCall("bash", { command }).allow, true, `should allow: ${command}`);
+  }
+});
+
+test("blocks shell globs that can expand to a sensitive file", () => {
+  const blocked = [
+    "cat .en?",
+    "cat .e*",
+    "cat .env*",
+    "cat .e[n]v",
+    "cp .en? /tmp/x",
+    "cat id_*",
+    "cat cred*",
+    "cat sec*",
+    "cat ~/.ssh/id_*",
+  ];
+  for (const command of blocked) {
+    const d = reviewToolCall("bash", { command });
+    assert.equal(d.allow, false, `should block: ${command}`);
+    assert.equal(d.severity, "block");
+  }
+});
+
+test("does not block broad or unrelated globs (they have no literal prefix that can name a sensitive file)", () => {
+  // Known limit: a glob with fewer than two literal characters before the first wildcard (`*`, `.*`, `?env`)
+  // is not inspected, so this guardrail does not stop `cat .*`. This is a guardrail, not a security boundary.
+  const allowed = ["ls *.json", "cat *.md", "git add *", "ls -d .*", "cat src/**/*.ts", "[ -f x ]", "ls .git*", "cat [ab]*.txt"];
+  for (const command of allowed) {
+    assert.equal(reviewToolCall("bash", { command }).allow, true, `should allow: ${command}`);
+  }
+});
