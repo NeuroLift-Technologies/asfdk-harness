@@ -1,6 +1,6 @@
 # NLT-DEV-OTOI — Organization-Wide Developer Orchestrated Terms of Interaction
 
-**Document ID:** ORG-DEV-OTOI-1.0.3
+**Document ID:** ORG-DEV-OTOI-1.0.4
 **Scope:** Organization-Wide (NeuroLift Technologies)
 **Repository:** `NeuroLift-Technologies/asfdk-harness`
 **Maintained by:** Joshua W. Dorsey, Sr. — Final authority on all architectural, deployment, and strategic decisions
@@ -287,6 +287,7 @@ Agents may not self-amend this document.
 
 | Version | Date | Authorized By | Summary |
 |---|---|---|---|
+| ORG-DEV-OTOI-1.0.4 | 2026-11-04 | Joshua W. Dorsey, Sr. | Version bump to synchronize with .github governance contract. .otoi updated to reference public repo NeuroLift-Technologies/asfdk-harness instead of .github-private. Governance files synced from .github repo. |
 | ORG-DEV-OTOI-1.0.3 | 2026-06-01 | Joshua W. Dorsey, Sr. | Corrected full-name expansion of TOI and OTOI across all governance documents. TOI = "Terms of Interaction"; OTOI = "Orchestrated Terms of Interaction". Previous incorrect expansion ("Developer Operations & Team Orientation Index") removed from document title, agent-log README, skills reference copy, and contracts namespace. Synchronized `skills/nlt-otoi/references/NLT-DEV-OTOI.md` with root contract (added Section 4.1 step 6, Section 4.2 PR-only enforcement paragraph, Section 4.4 Pull Request guardrail). Implemented by Claude Code acting on behalf of Joshua W. Dorsey, Sr. |
 | ORG-DEV-OTOI-1.0.1 | 2026-05-28 | Joshua W. Dorsey, Sr. | Added PR-only workflow guardrail (Section 4.4), updated Session Start Protocol to require feature branch (Section 4.1 step 6), clarified commit format to explicitly require PR delivery (Section 4.2). |
 | ORG-DEV-OTOI-1.0.0 | 2026-03-31 | Joshua W. Dorsey, Sr. | Initial release of org-wide governance contract. |

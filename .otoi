@@ -51,9 +51,9 @@
   ],
   "x-nlt-dev-otoi": {
     "note": "NLT-DEV-OTOI.md is a developer governance contract, not a .toi document, so it is referenced here outside toi_sources.",
-    "repo": "NeuroLift-Technologies/.github-private",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
     "path": "NLT-DEV-OTOI.md",
-    "document_id": "ORG-DEV-OTOI-1.0.2",
+    "document_id": "ORG-DEV-OTOI-1.0.4",
     "scope": "Organization-Wide (NeuroLift Technologies)",
     "maintainer": "Joshua W. Dorsey, Sr.",
     "sha256": "e365bb0e6b0bd0331a2e41c45874726ddd003eb24e9691674b04e2ea5a3e239e",
