@@ -139,6 +139,51 @@ with the asfdk repo.
 Do not. esbuild/bundling `dist/mcp-server.js` breaks zod v4 (`TypeError: Class2 is not a
 constructor`). The stdio server is meant to run from Node with `node_modules` present.
 
+## Run the A2A hub and governance MCP as auto-start Windows services
+
+Use this when you want the **A2A discovery hub** and the **asfdk-governance MCP
+server** (HTTP transport) to boot with Windows and keep running unattended —
+auto-start on boot, automatic restart if they crash.
+
+Two services are provided (all commands are safe — nothing is applied until you
+say `apply`):
+
+| Service name | Runs | Listens on |
+|---|---|---|
+| `asfdk-a2a-hub` | `node dist\discovery-hub.js` | `127.0.0.1:3001` (`ASFDK_A2A_HOST/PORT`) |
+| `asfdk-governance-mcp` | `node dist\mcp-http-server.js` | `127.0.0.1:8788` (`MCP_HTTP_HOST/PORT`, path `/mcp`) |
+
+### 1. Preview (default, read-only)
+```powershell
+npm run services:preview
+```
+Prints the exact `sc.exe` commands and launchers instead of running them.
+
+### 2. Apply (creates the services — requires an elevated PowerShell)
+```powershell
+npm run services:apply
+```
+- Registers both services with `start= auto` (boot start) and `sc failure`
+  restart actions (crash → auto-restart).
+- Each service runs a tiny `.cmd` launcher (generated into `scripts\.svc\`,
+  gitignored) that `cd`s to the repo and runs the **dist JS directly as
+  `argv[1]`** — so the `isMainModule` guard still matches and the server really
+  starts. The absolute `node.exe` is baked into each launcher because services
+  run under SYSTEM, whose PATH differs from an interactive session.
+- Requires elevation: run from an **Administrator** PowerShell. Non-elevated
+  runs abort with a clear message and change nothing.
+
+### 3. Status / remove
+```powershell
+npm run services:status   # query both services
+npm run services:remove   # stop + delete both services (and their launchers)
+```
+
+> Note: services run as `LocalSystem`; they bind loopback only
+> (`127.0.0.1`), so nothing is exposed off-machine. Heavy-lift changes (service
+> account, network egress, multi-instance scaling) are governance decisions —
+> escalate before adding them.
+
 ## Files owned by this feature
 
 - `scripts/install.mjs` — universal installer
