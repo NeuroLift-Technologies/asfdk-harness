@@ -19,7 +19,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
 import { isMainModule } from "./entrypoint.js";
-import { AsfdkHarness, Channel, InteractionType, canExposeSensitiveGovernanceTools, resolveToolSeamChannel } from "./harness.js";
+import { AsfdkHarness, Channel, InteractionType, FoundationMode, canExposeSensitiveGovernanceTools, resolveToolSeamChannel } from "./harness.js";
 import { summarizeFoundationResponse } from "./harness.js";
 import { reviewToolCall, type ToolPolicyDecision } from "./policy.js";
 import {
@@ -27,9 +27,10 @@ import {
   buildGovernanceRawData,
   formatGovernanceSummary,
 } from "./tools.js";
+import { getThirdPartyProtocolProfiles } from "./protocols.js";
 
 const MCP_SERVER_NAME = "asfdk-harness";
-const MCP_SERVER_VERSION = "0.1.0";
+const MCP_SERVER_VERSION = "0.2.0";
 
 // ---------------------------------------------------------------------------
 // Skill content strings
@@ -49,6 +50,9 @@ Operating model:
 
 Available tools:
 - asfdk_status             - Inspect active ASFDK foundation mode and component health.
+- asfdk_protocol_status    - Inspect local TOI/OTOI protocol loading and resolution.
+- asfdk_interop_protocols  - Inspect third-party interoperability protocol targets.
+- asfdk_a2a_agent_card     - Generate a TOI/OTOI-governed A2A Agent Card.
 - asfdk_assess_text        - Assess free text through active ASFDK components.
 - asfdk_update_preferences - Validate/update explicit user preferences through the TOI/OTOI path.
 - asfdk_health_check       - Run a full ASFDK foundation health check.
@@ -465,6 +469,134 @@ routing decisions on incomplete inputs.`,
   );
 
   // -------------------------------------------------------------------------
+  // Tool: asfdk_protocol_status
+  // -------------------------------------------------------------------------
+  server.registerTool(
+    "asfdk_protocol_status",
+    {
+      title: "ASFDK Protocol Status",
+      description: `Return the local TOI/OTOI protocol snapshot including loaded protocols, paths, and diagnostics.
+
+Use this tool to inspect how the harness resolves and loads governance protocols without MCP.
+
+Returns a JSON object with:
+  - cwd: current working directory (redacted outside development mode)
+  - paths: { toi, otoi } file paths (redacted outside development mode)
+  - protocols: array of loaded protocol identifiers
+  - diagnostics: array of diagnostic messages (paths redacted)
+  - toi: personal TOI content (if loaded)
+  - otoi: OTOI charter content (if loaded)
+  - thirdPartyProtocols: array of interoperability protocol profiles
+
+Path redaction preserves HTTP(S) URLs while replacing absolute filesystem paths with [REDACTED_PATH] outside development mode.`,
+      inputSchema: z.object({}),
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async () => {
+      try {
+        const snapshot = await harness.protocolSnapshot();
+        // Apply path redaction based on harness mode (same as harness.status())
+        const protocols = harness.mode === FoundationMode.DEVELOPMENT ? snapshot : harness.redactProtocolPaths(snapshot);
+        return {
+          content: [{ type: "text", text: JSON.stringify(protocols, null, 2) }],
+          structuredContent: protocols as unknown as Record<string, unknown>,
+        };
+      } catch (error) {
+        return toolError(error, "Ensure the harness is healthy (call asfdk_status) and protocols are loaded.");
+      }
+    }
+  );
+
+  // -------------------------------------------------------------------------
+  // Tool: asfdk_interop_protocols
+  // -------------------------------------------------------------------------
+  server.registerTool(
+    "asfdk_interop_protocols",
+    {
+      title: "ASFDK Interop Protocols",
+      description: `Return registered third-party interoperability protocol profiles.
+
+This tool exposes the interoperability targets registered in the ASFDK harness,
+distinguishing A2A, AG-UI, ACP, MCP, OpenAPI/REST, and NLIP/Open Floor protocols.
+MCP is listed with status "separate-owner" per the ownership boundary.
+
+Use this tool when:
+  - You need to know which third-party protocols the harness can interoperate with
+  - Checking A2A, AG-UI, ACP, or other protocol integration status
+
+Returns an array of protocol profiles with id, name, layer, status, discovery, and harnessSurface.`,
+      inputSchema: z.object({}),
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async () => {
+      try {
+        const protocols = getThirdPartyProtocolProfiles();
+        return {
+          content: [{ type: "text", text: JSON.stringify(protocols, null, 2) }],
+          structuredContent: { protocols },
+        };
+      } catch (error) {
+        return toolError(error, "Ensure the harness is initialized and protocol registry is loaded.");
+      }
+    }
+  );
+
+  // -------------------------------------------------------------------------
+  // Tool: asfdk_a2a_agent_card
+  // -------------------------------------------------------------------------
+  server.registerTool(
+    "asfdk_a2a_agent_card",
+    {
+      title: "ASFDK A2A Agent Card",
+      description: `Generate a TOI/OTOI-governed A2A Agent Card for the current harness state.
+
+The Agent Card advertises this harness's capabilities to A2A peers. It includes:
+  - Governance extensions (TOI/OTOI authority, guardrails, privacy, agency)
+  - Skills derived from the active ASFDK tool set (filtered by mode)
+  - Interoperability protocols (excluding separate-owner MCP)
+  - Service endpoint URL (requires ASFDK_A2A_URL or a2aUrl option)
+
+Disclosure of sensitive governance tools in the card is restricted to authorized modes
+(DEVELOPMENT or ASFDK_GOVERNANCE_TOOLS=approved).
+
+Use this tool when:
+  - Registering this harness with an A2A discovery hub
+  - Inspecting how this harness presents itself to A2A peers
+  - Debugging A2A capability advertisement
+
+Returns a full A2A Agent Card object per the A2A protocol specification.`,
+      inputSchema: z.object({}),
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async () => {
+      try {
+        const card = await harness.a2aAgentCard();
+        return {
+          content: [{ type: "text", text: JSON.stringify(card, null, 2) }],
+          structuredContent: card as unknown as Record<string, unknown>,
+        };
+      } catch (error) {
+        return toolError(error, "Ensure the harness is healthy and protocol context is loaded. Set ASFDK_A2A_URL if the card needs a service endpoint.");
+      }
+    }
+  );
+
+  // -------------------------------------------------------------------------
   // Resources: skill, prompt, documentation
   // -------------------------------------------------------------------------
   server.registerResource(
@@ -728,7 +860,8 @@ Do NOT expose this raw output directly to end users without redacting sensitive 
   // Advertises the A2A discovery hub so every client that connects to this MCP
   // server automatically knows where agents register and find each other.
   // ---------------------------------------------------------------------------
-  const hubUrl = process.env.ASFDK_A2A_HUB_URL ?? "http://localhost:3001";
+  const hubUrl = process.env.ASFDK_A2A_HUB_URL;
+  const isHubConfigured = typeof hubUrl === "string" && hubUrl.length > 0;
 
   server.registerTool(
     "asfdk_discovery_hub",
@@ -746,13 +879,18 @@ Use this tool to:
 
 Returns:
   {
-    url:         string,   // Base URL of the hub
-    mcp:         string,   // MCP endpoint (POST)
-    register:    string,   // A2A registration endpoint (POST)
-    agents:      string,   // Agent list endpoint (GET)
-    health:      string,   // Health check endpoint (GET)
-    description: string
+    configured:    boolean,  // Whether a hub URL is configured
+    url:           string,   // Base URL of the hub (only if configured)
+    mcp:           string,   // MCP endpoint (POST) (only if configured)
+    register:      string,   // A2A registration endpoint (POST) (only if configured)
+    agents:        string,   // Agent list endpoint (GET) (only if configured)
+    health:        string,   // Health check endpoint (GET) (only if configured)
+    description:   string
   }
+
+If the hub is not configured (no ASFDK_A2A_HUB_URL set), the tool returns
+configured: false with an explanatory description instead of inventing a
+reachable URL.
 
 Do NOT use this tool to actually register or query agents — use the hub's own MCP
 tools (register_agent, list_agents, get_agent) for that.`,
@@ -765,7 +903,19 @@ tools (register_agent, list_agents, get_agent) for that.`,
       },
     },
     async () => {
+      if (!isHubConfigured || !hubUrl) {
+        const info = {
+          configured: false,
+          description: "ASFDK A2A Discovery Hub is not configured. Set ASFDK_A2A_HUB_URL environment variable to enable hub discovery.",
+        };
+        return {
+          content: [{ type: "text", text: JSON.stringify(info, null, 2) }],
+          structuredContent: info,
+        };
+      }
+
       const info = {
+        configured: true,
         url: hubUrl,
         mcp: `${hubUrl}/mcp`,
         register: `${hubUrl}/a2a/register`,
@@ -792,13 +942,23 @@ tools (register_agent, list_agents, get_agent) for that.`,
       contents: [{
         uri: "asfdk-discovery://hub",
         mimeType: "application/json",
-        text: JSON.stringify({
-          url: hubUrl,
-          mcp: `${hubUrl}/mcp`,
-          register: `${hubUrl}/a2a/register`,
-          agents: `${hubUrl}/a2a/agents`,
-          health: `${hubUrl}/health`,
-        }, null, 2),
+        text: JSON.stringify(
+          isHubConfigured && hubUrl
+            ? {
+                configured: true,
+                url: hubUrl,
+                mcp: `${hubUrl}/mcp`,
+                register: `${hubUrl}/a2a/register`,
+                agents: `${hubUrl}/a2a/agents`,
+                health: `${hubUrl}/health`,
+              }
+            : {
+                configured: false,
+                description: "ASFDK A2A Discovery Hub is not configured. Set ASFDK_A2A_HUB_URL environment variable to enable hub discovery.",
+              },
+          null,
+          2,
+        ),
       }],
     })
   );

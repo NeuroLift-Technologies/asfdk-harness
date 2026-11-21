@@ -2,11 +2,25 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-11-04T20:55:00Z
+**Last updated:** 2026-11-21T19:30:00Z
 
 ---
 
 ## Active Threads
+
+### THREAD-016 — MCP Server Parity and A2A Hub Integration (NLT-HND-2026-KILO-MCP-A2A-001)
+| Field | Value |
+|---|---|
+| **Thread ID** | THREAD-016 |
+| **Status** | 🟡 In Progress |
+| **Started** | 2026-11-21 |
+| **Owner** | Kilo |
+| **Branch** | `feature/mcp-a2a-parity` |
+| **Task** | Bring MCP server to parity with Harness runtime (add asfdk_protocol_status, asfdk_interop_protocols, asfdk_a2a_agent_card tools) and update asfdk_discovery_hub to not default to localhost. Version bumps: package 0.2.0, MCP_SERVER_VERSION 0.2.0, ASFDK dependency ^0.2.4, Worker governance metadata ORG-DEV-OTOI-1.0.4. |
+| **Scope** | `src/mcp-server.ts`, `package.json`, `wrangler.jsonc`, `test/mcp-server.test.ts`, `docs/active-threads.md`, `docs/agent-log/*`, `docs/escalations/*` |
+| **Blockers** | Workstream B (Worker-native A2A Hub with Durable Objects) requires Joshua approval per escalation docs/escalations/2026-11-21-kilo-mcp-a2a-ownership.md. THREAD-002 ownership (Vibe) and THREAD-010 extension (AI CTO Agent) need confirmation. |
+| **Related PR** | TBD from `feature/mcp-a2a-parity` |
+| **Notes** | Workstream A (MCP parity) complete: 3 new tools added, discovery hub fixed, versions bumped, tests passing (88 pass, 2 pre-existing failures in extension-load.test.ts per THREAD-015). Workstream B pending owner approval. |
 
 ### THREAD-015 — Harden policy.ts guardrail gaps; read protocol files once; redact protocol paths
 | Field | Value |
