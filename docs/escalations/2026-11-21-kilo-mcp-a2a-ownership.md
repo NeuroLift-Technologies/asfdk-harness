@@ -20,8 +20,10 @@ Section 4 of the handoff explicitly requires:
 
 ### Decision Required
 
-1. Is Kilo authorized to take over/modify the MCP server surface currently owned by Vibe (THREAD-002)?
-2. Is Kilo authorized to extend the A2A Hub implementation (THREAD-010) into a Worker-native version with new Durable Objects?
+1. **Workstream A (MCP parity):** Is Joshua authorizing Kilo to implement the three missing MCP tools (`asfdk_protocol_status`, `asfdk_interop_protocols`, `asfdk_a2a_agent_card`) and the `asfdk_discovery_hub` fix on the THREAD-002 MCP surface? This work has been completed in PR #39 and requires explicit owner approval for merge.
+
+2. **Workstream B (Worker-native A2A Hub):** Is Kilo authorized to extend the A2A Hub implementation (THREAD-010) into a Worker-native version with new Durable Objects (`A2ARegistry`, `A2AMailbox`)?
+
 3. Should the existing local Node.js discovery hub (`src/discovery-hub.ts`) be preserved as-is for backward compatibility?
 
 ### Options Considered
@@ -35,12 +37,27 @@ Section 4 of the handoff explicitly requires:
 3. **Wait for explicit authorization** — Escalate and pause until Joshua confirms
    - Trade-off: Delay but clear ownership boundaries
 
+### Status Update (2026-11-21)
+
+Workstream A has been implemented in PR #39 (`feature/mcp-a2a-parity`) with the following changes:
+- Added `asfdk_protocol_status`, `asfdk_interop_protocols`, `asfdk_a2a_agent_card` MCP tools
+- Fixed `asfdk_discovery_hub` to return `configured: false` instead of defaulting to `localhost:3001`
+- Added sanitized projection methods (`protocolSnapshotSanitized`, `a2aAgentCardSanitized`) to prevent sensitive TOI/OTOI field and filesystem path leakage
+- Version bumps: package 0.2.0, MCP_SERVER_VERSION 0.2.0, ASFDK ^0.2.4, Worker governance ORG-DEV-OTOI-1.0.4
+- 12 new MCP integration tests via InMemoryTransport
+- Package-lock.json regenerated with synchronized version
+
+**PR #39 requires Joshua's explicit authorization for Workstream A before merge.** Workstream B remains blocked pending separate approval.
+
 ### Recommendation
 
-Option 3 — Wait for explicit authorization from Joshua before making any changes to `src/mcp-server.ts` or implementing Worker-native A2A Hub. The handoff explicitly states "Do not silently take over ownership."
+Joshua to provide explicit decision on:
+1. Workstream A: Authorize Kilo's MCP parity implementation on THREAD-002 surface (retroactive approval for PR #39)
+2. Workstream B: Separate decision required for Worker-native A2A Hub with Durable Objects
+3. Coordination with Vibe (THREAD-002 owner) and AI CTO Agent (THREAD-010 owner) before merge
 
 ### Blockers
 
-- Cannot begin Workstream A (MCP parity) without confirming THREAD-002 ownership transfer from Vibe
-- Cannot begin Workstream B (Worker-native A2A Hub) without confirming THREAD-010 extension authorization
-- Cannot proceed with `wrangler.jsonc` modifications (new DO classes, migrations) without approval
+- **Workstream A:** Joshua authorization required for PR #39 merge (THREAD-002 ownership)
+- **Workstream B:** Cannot proceed without separate Joshua approval for Worker-native A2A Hub
+- Cannot proceed with `wrangler.jsonc` Durable Object migrations without approval

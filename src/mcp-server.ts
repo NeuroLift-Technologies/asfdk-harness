@@ -499,9 +499,8 @@ Path redaction preserves HTTP(S) URLs while replacing absolute filesystem paths 
     },
     async () => {
       try {
-        const snapshot = await harness.protocolSnapshot();
-        // Apply path redaction based on harness mode (same as harness.status())
-        const protocols = harness.mode === FoundationMode.DEVELOPMENT ? snapshot : harness.redactProtocolPaths(snapshot);
+        // Use sanitized snapshot that redacts both paths AND sensitive TOI fields
+        const protocols = await harness.protocolSnapshotSanitized();
         return {
           content: [{ type: "text", text: JSON.stringify(protocols, null, 2) }],
           structuredContent: protocols as unknown as Record<string, unknown>,
@@ -585,7 +584,7 @@ Returns a full A2A Agent Card object per the A2A protocol specification.`,
     },
     async () => {
       try {
-        const card = await harness.a2aAgentCard();
+        const card = await harness.a2aAgentCardSanitized();
         return {
           content: [{ type: "text", text: JSON.stringify(card, null, 2) }],
           structuredContent: card as unknown as Record<string, unknown>,

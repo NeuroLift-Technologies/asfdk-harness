@@ -10,18 +10,18 @@
       "Created escalation for THREAD-002/THREAD-010 ownership confirmation (docs/escalations/2026-11-21-kilo-mcp-a2a-ownership.md)",
       "Updated @neurolift-technologies/asfdk dependency from ^0.2.2 (local tarball) to ^0.2.4 (registry)",
       "Added three missing MCP tools to createMcpServer() in src/mcp-server.ts:",
-      "  - asfdk_protocol_status: returns protocol snapshot with path redaction (reuses harness.protocolSnapshot)",
+      "  - asfdk_protocol_status: returns sanitized protocol snapshot with path redaction + TOI field redaction (reuses harness.protocolSnapshotSanitized)",
       "  - asfdk_interop_protocols: returns third-party protocol profiles (reuses getThirdPartyProtocolProfiles)",
-      "  - asfdk_a2a_agent_card: returns governed A2A Agent Card (reuses harness.a2aAgentCard)",
+      "  - asfdk_a2a_agent_card: returns sanitized governed A2A Agent Card with path redaction (reuses harness.a2aAgentCardSanitized)",
       "Updated asfdk_discovery_hub tool to not default to localhost: returns configured: false when ASFDK_A2A_HUB_URL not set",
       "Updated skill strings in MCP server to document new tools",
       "Bumped MCP_SERVER_VERSION from 0.1.0 to 0.2.0",
       "Bumped package.json version from 0.1.0 to 0.2.0",
       "Updated wrangler.jsonc ASFDK_VERSION from ORG-DEV-OTOI-1.0.3 to ORG-DEV-OTOI-1.0.4",
       "Regenerated Cloudflare Worker types (npm run cf:typegen)",
-      "Added test/mcp-server.test.ts with 6 new tests for MCP parity",
-      "All tests pass: 88 pass, 2 fail (pre-existing extension-load.test.ts failures per THREAD-015)",
-      "TypeScript check passes, build passes, cf:check passes"
+      "Added test/mcp-server.test.ts with 12 new tests for MCP parity (including MCP integration tests via InMemoryTransport)",
+      "Regenerated package-lock.json with synchronized 0.2.0 version",
+      "TypeScript check passes, build passes, cf:check passes; 90 tests run (88 pass, 2 pre-existing failures in extension-load.test.ts per THREAD-015)"
     ],
     "work_in_progress": [
       "Workstream B: Worker-native A2A Hub with Durable Objects (A2ARegistry, A2AMailbox) - blocked on Joshua approval per escalation"
@@ -71,6 +71,6 @@
       "npm run cf:check",
       "npm test (90 tests: 88 pass, 2 pre-existing failures)"
     ],
-    "tests_passing": true
+    "tests_passing": false
   }
 }
