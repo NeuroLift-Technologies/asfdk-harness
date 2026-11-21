@@ -27,18 +27,18 @@
       "Workstream B: Worker-native A2A Hub with Durable Objects (A2ARegistry, A2AMailbox) - blocked on Joshua approval per escalation"
     ],
     "blockers": [
-      "Joshua approval required for THREAD-002 ownership transfer from Vibe",
-      "Joshua approval required for THREAD-010 extension (Worker-native A2A Hub)",
-      "Cannot proceed with wrangler.jsonc Durable Object migrations without approval"
+      "Workstream B: Joshua approval required for THREAD-010 extension (Worker-native A2A Hub)",
+      "Workstream B: Cannot proceed with wrangler.jsonc Durable Object migrations without approval"
     ],
     "decisions_made": [
       "Implemented Workstream A (MCP parity) per handoff specification",
       "Used existing harness APIs rather than forking TOI/OTOI policy logic",
+      "Added sanitized projection methods (protocolSnapshotSanitized, a2aAgentCardSanitized) for safe remote exposure",
       "Preserved path redaction behavior matching harness.status()",
-      "Preserved conditional sensitive governance tool exposure"
+      "Preserved conditional sensitive governance tool exposure",
+      "Joshua W. Dorsey, Sr. approved Workstream A and THREAD-002 ownership transfer (2026-11-21)"
     ],
     "decisions_pending": [
-      "Joshua decision on THREAD-002/THREAD-010 ownership",
       "Worker-native A2A Hub architecture (Durable Object classes, authentication, delegation semantics)",
       "Agent identity and authorization model for A2A Hub",
       "Retention/deletion policy for A2A messages"
@@ -55,6 +55,7 @@
     ],
     "files_modified": [
       "src/mcp-server.ts",
+      "src/harness.ts",
       "package.json",
       "wrangler.jsonc",
       "package-lock.json (regenerated)",

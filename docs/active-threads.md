@@ -12,15 +12,15 @@
 | Field | Value |
 |---|---|
 | **Thread ID** | THREAD-016 |
-| **Status** | 🟡 In Progress |
+| **Status** | 🟢 Workstream A Complete — Ready for Merge |
 | **Started** | 2026-11-21 |
-| **Owner** | Kilo |
+| **Owner** | Kilo (authorized by Joshua W. Dorsey, Sr. 2026-11-21) |
 | **Branch** | `feature/mcp-a2a-parity` |
 | **Task** | Bring MCP server to parity with Harness runtime (add asfdk_protocol_status, asfdk_interop_protocols, asfdk_a2a_agent_card tools) and update asfdk_discovery_hub to not default to localhost. Version bumps: package 0.2.0, MCP_SERVER_VERSION 0.2.0, ASFDK dependency ^0.2.4, Worker governance metadata ORG-DEV-OTOI-1.0.4. |
-| **Scope** | `src/mcp-server.ts`, `package.json`, `wrangler.jsonc`, `test/mcp-server.test.ts`, `docs/active-threads.md`, `docs/agent-log/*`, `docs/escalations/*` |
-| **Blockers** | Workstream B (Worker-native A2A Hub with Durable Objects) requires Joshua approval per escalation docs/escalations/2026-11-21-kilo-mcp-a2a-ownership.md. THREAD-002 ownership (Vibe) and THREAD-010 extension (AI CTO Agent) need confirmation. |
-| **Related PR** | TBD from `feature/mcp-a2a-parity` |
-| **Notes** | Workstream A (MCP parity) complete: 3 new tools added, discovery hub fixed, versions bumped, tests passing (88 pass, 2 pre-existing failures in extension-load.test.ts per THREAD-015). Workstream B pending owner approval. |
+| **Scope** | `src/mcp-server.ts`, `src/harness.ts`, `package.json`, `wrangler.jsonc`, `test/mcp-server.test.ts`, `docs/active-threads.md`, `docs/agent-log/*`, `docs/escalations/*` |
+| **Blockers** | Workstream B (Worker-native A2A Hub with Durable Objects) requires separate Joshua approval per escalation docs/escalations/2026-11-21-kilo-mcp-a2a-ownership.md. |
+| **Related PR** | [#39](https://github.com/NeuroLift-Technologies/asfdk-harness/pull/39) |
+| **Notes** | Workstream A (MCP parity) complete and reviewed: 3 new tools with sanitized projections, discovery hub fixed, versions bumped, 12 MCP integration tests. Joshua approved THREAD-002 ownership transfer from Vibe and Workstream A implementation on 2026-11-21. PR #39 ready for merge. Workstream B pending separate approval. |
 
 ### THREAD-015 — Harden policy.ts guardrail gaps; read protocol files once; redact protocol paths
 | Field | Value |

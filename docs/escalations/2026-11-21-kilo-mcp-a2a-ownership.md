@@ -47,17 +47,21 @@ Workstream A has been implemented in PR #39 (`feature/mcp-a2a-parity`) with the 
 - 12 new MCP integration tests via InMemoryTransport
 - Package-lock.json regenerated with synchronized version
 
-**PR #39 requires Joshua's explicit authorization for Workstream A before merge.** Workstream B remains blocked pending separate approval.
+### Decision Record
+
+**2026-11-21 — Joshua W. Dorsey, Sr. approved:**
+1. **Workstream A (MCP parity):** ✅ AUTHORIZED — Kilo authorized to take over THREAD-002 MCP surface from Vibe and merge PR #39
+2. **Workstream B (Worker-native A2A Hub):** ⏳ PENDING — Separate approval required for Worker-native A2A Hub with Durable Objects
+3. **Local discovery hub preservation:** ✅ CONFIRMED — `src/discovery-hub.ts` preserved as-is for backward compatibility
 
 ### Recommendation
 
-Joshua to provide explicit decision on:
-1. Workstream A: Authorize Kilo's MCP parity implementation on THREAD-002 surface (retroactive approval for PR #39)
-2. Workstream B: Separate decision required for Worker-native A2A Hub with Durable Objects
-3. Coordination with Vibe (THREAD-002 owner) and AI CTO Agent (THREAD-010 owner) before merge
+1. **Workstream A:** PR #39 approved for merge. Coordinate with Vibe (THREAD-002) for ownership handoff documentation.
+2. **Workstream B:** Separate escalation/decision required before implementation.
+3. **THREAD-002:** Ownership transferred to Kilo (effective 2026-11-21). Update active-threads.md accordingly.
 
 ### Blockers
 
-- **Workstream A:** Joshua authorization required for PR #39 merge (THREAD-002 ownership)
+- **Workstream A:** None — authorized for merge
 - **Workstream B:** Cannot proceed without separate Joshua approval for Worker-native A2A Hub
-- Cannot proceed with `wrangler.jsonc` Durable Object migrations without approval
+- Cannot proceed with `wrangler.jsonc` Durable Object migrations without separate approval
