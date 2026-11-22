@@ -1,0 +1,41 @@
+{
+  "handoff_record": {
+    "session_id": "feat/universal-installer/services-pi-install",
+    "agent_name": "Pi coding agent",
+    "date": "2026-11-08T06:45:00Z",
+    "otoi_version": "ORG-DEV-OTOI-1.0.3",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "feat/universal-installer",
+    "work_completed": [
+      "Fixed duplicated services:* npm scripts block in package.json introduced during THREAD-013 Windows-services feature work (duplicate JSON keys).",
+      "Verified package.json now parses and services:* scripts are unique; `npm run services:preview` executes and prints correct sc.exe preview (entrypoints dist/discovery-hub.js and dist/mcp-http-server.js resolve; node resolved via Hermes node runtime).",
+      "Re-ran `npm run check` (tsc --noEmit) — clean pass (no errors).",
+      "Installed harness as a Pi package via `pi install .`; registered globally in ~/.pi/agent/settings.json packages (source ..\\..\\nlt-repos\\asfdk-harness). Install completed: 'Installing .... Installed .'",
+      "Confirmed INSTALL.md services section + scripts/services.mjs + scripts/.svc/ launchers are coherent for THREAD-013."
+    ],
+    "work_in_progress": [],
+    "blockers": [],
+    "decisions_made": [
+      "Deduplicated services:* scripts to single occurrences each in package.json.",
+      "Used global (`pi install .`, no -l) registration for user-level Pi setup.",
+      "Preview default / --apply for mutation retained (governance policy in scripts/services.mjs)."
+    ],
+    "decisions_pending": [],
+    "escalations": [],
+    "next_agent_notes": "Next steps: push feat/universal-installer branch / open PR for THREAD-013; in Pi run /reload to pick up the newly installed package; re-verify npm test suite green before PR.",
+    "files_modified": [
+      "package.json",
+      "scripts/services.mjs",
+      "scripts/.svc/asfdk-a2a-hub.cmd",
+      "scripts/.svc/asfdk-governance-mcp.cmd",
+      "INSTALL.md",
+      "docs/agent-log/handoffs/2026-11-08-pi-package-install.json"
+    ],
+    "tests_run": [
+      "npm run services:preview (executed successfully, correct sc.exe commands + entrypoint checks)",
+      "npm run check / tsc --noEmit (clean pass)"
+    ],
+    "tests_passing": true,
+    "pr_url": "[this pull request]"
+  }
+}
