@@ -1,0 +1,23 @@
+{
+  "agent_registration": {
+    "agent_name": "Codex",
+    "platform": "OpenAI Codex",
+    "version": "Not exposed in this session",
+    "session_id": "codex-harness-clean-install-2026-11-22",
+    "entry_date": "2026-11-22",
+    "entry_timestamp": "2026-11-22T22:38:49+00:00",
+    "entry_point": "Joshua requested the next Solidarity Framework repository alignment item.",
+    "acknowledged_otoi": true,
+    "otoi_version": "ORG-DEV-OTOI-1.0.4",
+    "working_repo": "NeuroLift-Technologies/asfdk-harness",
+    "working_branch": "feature/mcp-a2a-parity",
+    "capabilities_self_reported": [
+      "Dependency lockfile repair",
+      "Build and test validation"
+    ],
+    "known_limitations": [
+      "Local verification only"
+    ],
+    "preferred_handoff_format": "Structured JSON"
+  }
+}
