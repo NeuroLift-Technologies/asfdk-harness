@@ -23,11 +23,12 @@
  *   --skip-build               Do not (re)build dist/ in the checkout
  *   --skip-deps                Do not run npm install in the config dir
  *   --verbose                  Print extra detail
+ *   -h                          Same as --help
  *
  * Requires Node 20+. No external dependencies.
  */
 import { spawn, spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync, copyFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync, copyFileSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
@@ -44,6 +45,7 @@ const FLAGS = new Set([
   "--dry-run", "--force", "--skip-build", "--skip-deps", "--verbose", "--help",
 ]);
 
+/** Parse CLI flags, rejecting unknown flags instead of silently performing a real install. */
 function parseArgs(argv) {
   const VALUE_FLAGS = new Set(["--target", "--config-dir", "--repo", "--state-dir", "--tools-gate"]);
   const opts = {
@@ -60,6 +62,7 @@ function parseArgs(argv) {
   };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
+    if (arg === "-h") { printUsage(); process.exit(0); }
     if (!arg.startsWith("--")) continue;
     const eqIdx = arg.indexOf("=");
     const name = eqIdx === -1 ? arg : arg.slice(0, eqIdx);
@@ -79,7 +82,15 @@ function parseArgs(argv) {
       case "--config-dir": opts.configDir = inline ?? argv[++i]; break;
       case "--repo": opts.repo = path.resolve(inline ?? argv[++i]); break;
       case "--state-dir": opts.stateDir = path.resolve(inline ?? argv[++i]); break;
-      case "--tools-gate": opts.toolsGate = (inline ?? argv[++i]) === "approve" ? "approve" : "default"; break;
+      case "--tools-gate": {
+        const value = inline ?? argv[++i];
+        if (value !== "approve" && value !== "default") {
+          log("err", `Invalid value for --tools-gate: ${value}. Expected approve or default.`);
+          process.exit(1);
+        }
+        opts.toolsGate = value;
+        break;
+      }
       case "--dry-run": opts.dryRun = true; break;
       case "--force": opts.force = true; break;
       case "--skip-build": opts.skipBuild = true; break;
@@ -87,11 +98,14 @@ function parseArgs(argv) {
       case "--verbose": opts.verbose = true; break;
       case "--help": printUsage(); process.exit(0); break;
       default:
+        log("err", `Unknown flag ${name}. Run with --help for usage.`);
+        process.exit(1);
     }
   }
   return opts;
 }
 
+/** Print installer usage and exit. */
 function printUsage() {
   console.log(`ASFDK Harness universal installer
 
@@ -108,29 +122,34 @@ Flags:
   --skip-build        do not (re)build dist/ in the checkout
   --skip-deps         do not npm install in the config dir
   --verbose           extra detail
-  --help              this message`);
+  --help, -h          this message`);
 }
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
 
+/** ANSI color prefix when stdout is a TTY, otherwise an empty string. */
 const col = (n) => process.stdout.isTTY ? `\x1b[${n}m` : "";
 
+/** Write a level-tagged installer message to stdout. */
 function log(level, ...args) {
   const map = { info: "36", ok: "32", warn: "33", err: "31", dim: "90" };
   const color = map[level] ?? "";
   process.stdout.write(`${col(color)}[${level.toUpperCase()}]${col(0)} ${args.join(" ")}\n`);
 }
 
+/** Read and parse a JSON file, returning `fallback` on any failure. */
 function readJson(file, fallback = null) {
   try { return JSON.parse(readFileSync(file, "utf8")); } catch { return fallback; }
 }
 
+/** Write an object as pretty-printed JSON with a trailing newline. */
 function writeJson(file, obj) {
   writeFileSync(file, `${JSON.stringify(obj, null, 2)}\n`, "utf8");
 }
 
+/** Strip JSONC comments and trailing commas while respecting string literals. */
 function stripJsonc(src) {
   let out = "";
   let inStr = false, esc = false;
@@ -159,6 +178,7 @@ function stripJsonc(src) {
   return out;
 }
 
+/** Parse a JSONC config file; return a marker object when parsing fails. */
 function readJsonc(file, fallback = null) {
   if (!existsSync(file)) return fallback;
   try { return JSON.parse(stripJsonc(readFileSync(file, "utf8"))); } catch (error) {
@@ -166,6 +186,7 @@ function readJsonc(file, fallback = null) {
   }
 }
 
+/** Run a shell command synchronously, returning status, output, and error. */
 function run(cmdString, opts = {}) {
   const res = spawnSync(cmdString, {
     cwd: opts.cwd ?? process.cwd(),
@@ -177,6 +198,7 @@ function run(cmdString, opts = {}) {
   return { ok: res.status === 0 && !res.error, status: res.status, stdout: res.stdout ?? "", stderr: res.stderr ?? "", error: res.error };
 }
 
+/** Find an executable on PATH, including Windows PATHEXT shims. */
 function which(bin) {
   const exts = process.platform === "win32" ? (process.env.PATHEXT || ".COM;.EXE;.BAT;.CMD").split(";") : [""];
   for (const dir of (process.env.PATH || "").split(path.delimiter)) {
@@ -189,14 +211,17 @@ function which(bin) {
   return null;
 }
 
+/** Resolve the current user's home directory. */
 function home() {
   return process.env.USERPROFILE || process.env.HOME || os.homedir();
 }
 
+/** Create a directory and its parents if needed. */
 function ensureDir(dir) {
   mkdirSync(dir, { recursive: true });
 }
 
+/** Copy a file to a timestamped backup and return its path. */
 function backup(file) {
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const dest = `${file}.bak-asfdk-${stamp}`;
@@ -208,6 +233,7 @@ function backup(file) {
 /* Repo preparation                                                    */
 /* ------------------------------------------------------------------ */
 
+/** Inspect the checkout for the built MCP server and governance config files. */
 function repoInfo(opts) {
   const dist = path.join(opts.repo, "dist", "mcp-server.js");
   const toi = path.join(opts.repo, ".toi.default");
@@ -222,6 +248,7 @@ function repoInfo(opts) {
   };
 }
 
+/** Ensure dist/mcp-server.js exists, installing dependencies and building when needed. */
 function ensureRepoBuilt(opts, info) {
   if (opts.dryRun) return true;
   if (info.hasDist && !opts.force) return true;
@@ -244,8 +271,15 @@ function ensureRepoBuilt(opts, info) {
 /* MCP verify                                                          */
 /* ------------------------------------------------------------------ */
 
+/** Handshake with a local stdio MCP server and verify the tools its gate should expose. */
 function verifyMcp(command, cwd, env, verbose) {
-  // Expected ASFDK governance tool names — must match what mcp-server.js serves.
+  // These three are registered only when the server sees ASFDK_GOVERNANCE_TOOLS=approved
+  // (see canExposeSensitiveGovernanceTools in src/harness.ts).
+  const GATED_TOOLS = [
+    "asfdk_governance_summary",
+    "asfdk_authority_chain",
+    "asfdk_governance_raw",
+  ];
   const EXPECTED_TOOLS = new Set([
     "asfdk_status",
     "asfdk_assess_text",
@@ -253,11 +287,11 @@ function verifyMcp(command, cwd, env, verbose) {
     "asfdk_health_check",
     "asfdk_review_tool_call",
     "asfdk_process_interaction",
-    "asfdk_governance_summary",
-    "asfdk_authority_chain",
-    "asfdk_governance_raw",
     "asfdk_discovery_hub",
   ]);
+  if (env.ASFDK_GOVERNANCE_TOOLS === "approved") {
+    for (const name of GATED_TOOLS) EXPECTED_TOOLS.add(name);
+  }
   return new Promise((resolve) => {
     const child = spawn(command[0], command.slice(1), {
       cwd, env: { ...process.env, ...env }, stdio: ["pipe", "pipe", "pipe"],
@@ -265,6 +299,7 @@ function verifyMcp(command, cwd, env, verbose) {
     let buf = "";
     let done = false;
     let initialized = false;
+    /** Resolve verification once (later error/exit events are ignored). */
     const finish = (ok, msg) => {
       if (done) return;
       done = true;
@@ -311,6 +346,8 @@ function verifyMcp(command, cwd, env, verbose) {
       }
     });
     child.on("error", (error) => { clearTimeout(timer); finish(false, `spawn error: ${error.message}`); });
+    child.stdin.on("error", (error) => { clearTimeout(timer); finish(false, `stdin error: ${error.message}`); });
+    child.on("exit", (code) => { clearTimeout(timer); finish(false, `server exited early (code ${code})`); });
     child.stderr.on("data", (data) => { if (verbose) process.stderr.write(`    [mcp] ${data}`); });
     child.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-03-26", capabilities: {}, clientInfo: { name: "asfdk-installer", version: "1.0.0" } } })}\n`);
     child.stdin.write(`${JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" })}\n`);
@@ -318,6 +355,7 @@ function verifyMcp(command, cwd, env, verbose) {
   });
 }
 
+/** Return platform-specific warnings for the installer summary. */
 function platformGuardrails(opts) {
   const notes = [];
   if (process.platform === "win32") {
@@ -341,6 +379,7 @@ function platformGuardrails(opts) {
 /* opencode / kilo adapter (full automation)                           */
 /* ------------------------------------------------------------------ */
 
+/** Resolve the opencode/kilo config directory with explicit overrides taking priority. */
 function opencodeConfigDir(opts) {
   if (opts.configDir) return opts.configDir;
   const envDir = process.env.OPENCODE_CONFIG_DIR;
@@ -349,6 +388,7 @@ function opencodeConfigDir(opts) {
   return path.join(home(), ".config", "opencode");
 }
 
+/** Install plugins, runtime deps, and MCP wiring for opencode-compatible runtimes. */
 async function installOcodeFamily(opts, { label, configDir }) {
   const done = [];
   const info = repoInfo(opts);
@@ -360,7 +400,9 @@ async function installOcodeFamily(opts, { label, configDir }) {
 
   const pluginsDir = path.join(configDir, "plugins");
   if (!opts.dryRun) ensureDir(pluginsDir);
-  const pluginFiles = ["asfdk-deploy.ts", "a2a-task-watch.ts", "index.ts"];
+  // index.ts is a barrel that re-exports these two plugins. OpenCode auto-discovers
+  // every file in the plugins dir, so copying/registering it would load each plugin twice.
+  const pluginFiles = ["asfdk-deploy.ts", "a2a-task-watch.ts"];
   const srcDir = path.join(opts.repo, "opencode-plugin");
   for (const file of pluginFiles) {
     const src = path.join(srcDir, file);
@@ -374,14 +416,29 @@ async function installOcodeFamily(opts, { label, configDir }) {
     done.push(`installed plugin ${file}`);
   }
 
+  // Older installer runs put the barrel in the auto-discovered plugins dir. Removing the
+  // config entry alone is not enough; delete only byte-identical installer copies.
+  const barrelDest = path.join(pluginsDir, "index.ts");
+  const barrelSrc = path.join(srcDir, "index.ts");
+  if (existsSync(barrelDest) && existsSync(barrelSrc)) {
+    const same = readFileSync(barrelDest, "utf8").trim() === readFileSync(barrelSrc, "utf8").trim();
+    if (same) {
+      if (opts.dryRun) done.push(`would remove duplicate plugin barrel ${barrelDest}`);
+      else { rmSync(barrelDest, { force: true }); done.push(`removed duplicate plugin barrel ${barrelDest}`); }
+    }
+  }
+
+  /** Read a package.json version, or null when unavailable. */
   const readPkgVersion = (pkgPath) => {
     if (!existsSync(pkgPath)) return null;
     try { return readJson(pkgPath, {}).version ?? null; } catch { return null; }
   };
+  /** Compare dotted version strings, treating prereleases as below stable. */
   const gte = (ver, min) => {
     if (!ver) return false;
     // Reject non-numeric versions (e.g. "latest", empty string)
     if (!/^\d+(\.\d+)*([-.].*)?$/.test(String(ver))) return false;
+    /** Split a dotted version into numeric components. */
     const parse = (v) => String(v).split(".").map((n) => parseInt(n, 10) || 0);
     const a = parse(ver), b = parse(min);
     for (let i = 0; i < Math.max(a.length, b.length); i++) {
@@ -394,6 +451,7 @@ async function installOcodeFamily(opts, { label, configDir }) {
     if (pre) return false;
     return true;
   };
+  /** Check whether required runtime deps are installed in a config dir. */
   const cfgNM = (dir) => {
     const asfdkPkg = path.join(dir, "node_modules", "@neurolift-technologies", "asfdk", "package.json");
     const pluginPkg = path.join(dir, "node_modules", "@opencode-ai", "plugin", "package.json");
@@ -404,6 +462,7 @@ async function installOcodeFamily(opts, { label, configDir }) {
       pluginVersion: readPkgVersion(pluginPkg),
     };
   };
+  /** Decide whether runtime deps are missing or below the required versions. */
   const needDeps = (() => {
     const s = cfgNM(configDir);
     if (!s.asfdk || !s.plugin) return true;
@@ -475,16 +534,22 @@ async function installOcodeFamily(opts, { label, configDir }) {
     done.push(`wired mcp.${mcpKey} -> node ${info.dist} (cwd=${stateDir})`);
   }
 
-  const pluginRel = ["./plugins/asfdk-deploy.ts", "./plugins/a2a-task-watch.ts", "./plugins/index.ts"];
-  const pluginList = Array.isArray(cfg.plugin) ? cfg.plugin : (typeof cfg.plugin === "string" ? [cfg.plugin] : []);
-  let changed = false;
+  const pluginRel = ["./plugins/asfdk-deploy.ts", "./plugins/a2a-task-watch.ts"];
+  /** True when a configured plugin reference points at the auto-discovered barrel file. */
+  const isBarrelRef = (ref) => {
+    const normalized = String(ref).replace(/\\/g, "/");
+    return normalized === "./index.ts" || /(?:^|\/)plugins\/index\.ts$/.test(normalized);
+  };
+  const currentPlugins = Array.isArray(cfg.plugin) ? cfg.plugin : (typeof cfg.plugin === "string" ? [cfg.plugin] : []);
+  const pluginList = currentPlugins.filter((ref) => !isBarrelRef(ref));
+  let changed = pluginList.length !== currentPlugins.length || !Array.isArray(cfg.plugin);
   for (const ref of pluginRel) {
     if (!pluginList.includes(ref)) { pluginList.push(ref); changed = true; }
   }
-  if (changed || !Array.isArray(cfg.plugin)) {
-    cfg.plugin = cfg.plugin === undefined || changed ? pluginList : cfg.plugin;
+  if (changed) {
+    cfg.plugin = pluginList;
+    done.push(`registered plugins in config: ${pluginRel.join(", ")}${pluginList.length !== currentPlugins.length ? " (barrel entry removed)" : ""}`);
   }
-  if (changed) done.push(`registered plugins in config: ${pluginRel.join(", ")}`);
 
   cfg.experimental = { ...(cfg.experimental ?? {}), mcp_timeout: 180000 };
   if (!cfg.lsp || cfg.lsp === true) {
@@ -513,6 +578,7 @@ async function installOcodeFamily(opts, { label, configDir }) {
 /* Best-effort adapters                                                */
 /* ------------------------------------------------------------------ */
 
+/** Best-effort Hermes plugin copy plus manual follow-up notes. */
 function installHermes(opts) {
   const notes = [];
   const src = path.join(opts.repo, "hermes-plugin");
@@ -537,6 +603,7 @@ function installHermes(opts) {
   return { done: notes, notes: ["hermes: requires the asfdk Python package (pip install @neurolift-technologies/asfdk) per docs"] };
 }
 
+/** Print the openclaw CLI command for adding the local plugin. */
 function installOpenclaw(opts) {
   const notes = [];
   if (which("openclaw")) {
@@ -547,6 +614,7 @@ function installOpenclaw(opts) {
   return { done: notes, notes: [] };
 }
 
+/** Print manual Zed dev-extension and absolute-path MCP setup steps. */
 function installZed(opts) {
   return {
     done: [
@@ -561,12 +629,12 @@ function installZed(opts) {
   };
 }
 
+/** Print the verified Pi package install command and package contents. */
 function installPi(opts) {
   return {
     done: [
       `pi: asfdk-harness is a Pi cofounder-agent package (skills + prompt + extension):`,
-      `  pi package add ${opts.repo}`,
-      `  pi skill enable asfdk-harness`,
+      `  pi install ${opts.repo}`,
       `  See skills/asfdk-harness/SKILL.md and prompts/asfdk-harness.md`,
     ],
     notes: [],
@@ -577,6 +645,7 @@ function installPi(opts) {
 /* Main                                                                */
 /* ------------------------------------------------------------------ */
 
+/** Install the harness into each selected runtime and print a summary. */
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
 
@@ -627,7 +696,7 @@ async function main() {
   log("info", `--- next steps ---`);
   log("info", "  1. Restart your agent runtime (opencode / kilo / etc.).");
   log("info", "  2. Run `opencode mcp list` — expect `asfdk-governance connected`.");
-  log("info", "  3. Type /mcp in a session to confirm 10 tools register.");
+  log("info", `  3. Type /mcp in a session to confirm the expected tools register (7 with the default gate, 10 with --tools-gate approve).`);
   for (const note of platformGuardrails(opts)) log("warn", `  ${note}`);
 }
 

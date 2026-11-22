@@ -1,0 +1,56 @@
+{
+  "handoff_record": {
+    "session_id": "asfdk-harness-pr38-review-fixes-2026-11-22",
+    "agent_name": "opencode-big-pickle",
+    "date": "2026-11-22T16:40:00Z",
+    "otoi_version": "ORG-DEV-OTOI-1.0.4",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "fix/pr-38-review-comments",
+    "work_completed": [
+      "Checked out PR #38 work via a main-based branch (feat/universal-installer head 527184c merged into origin/main 5384a12 as 39c0882) because the PR base contained Windows-illegal colon paths.",
+      "Resolved merge conflicts in favor of newer origin/main hardening (a2a/register endpoint, ai version, policy hardenings) while preserving PR additions (services.mjs, handoff, installer docs).",
+      "scripts/services.mjs: preview is now strictly read-only; sc.exe is invoked directly with argument arrays (no cmd.exe string layer); elevation is required for apply/remove; existing services are refreshed with sc config; registration existence is detected with sc query (locale-independent); start failures set a failure exit code; launchers are deleted only after a successful sc delete; corrected final log and removed dead code; docstrings added.",
+      "scripts/install.mjs: unknown flags rejected, -h supported, --tools-gate validated (approve|default), MCP verification is gate-aware (7 base tools / 10 with approve), child stdin errors and early exit handled, plugin barrel index.ts is no longer copied or registered and legacy installer copies are removed, Pi command corrected to `pi install <repo>`, next-step text and docstrings updated.",
+      "opencode-plugin/a2a-task-watch.ts and kilo-plugin/a2a-task-watch.ts: registrationUrl() normalizes hub URL forms to /a2a/register; pollTasks() accepts both a bare array and a { tasks: [] } envelope; docstrings added; Kilo mirror kept in sync.",
+      "package.json: added services:preview/status/apply/remove scripts and added scripts, opencode-plugin, hermes-plugin and openclaw-plugin to the npm files allowlist.",
+      "INSTALL.md: gate-aware verification section, corrected Pi command, Windows service preview/apply/status/remove documentation. .gitignore: ignore generated scripts/.svc launchers. opencode-plugin/README.md: note that index.ts is not auto-discovered. Corrected the prior Pi-install handoff (tests_passing false, documented known failures, removed generated launchers from files_modified)."
+    ],
+    "work_in_progress": [
+      "Commit the review fixes and fast-forward push to the PR head branch feat/universal-installer, then reply to/resolve PR #38 review threads and re-check PR mergeability."
+    ],
+    "blockers": [],
+    "decisions_made": [
+      "Kept preview as the default services action; apply/remove require an elevated terminal and never run implicitly.",
+      "Used argv-array sc.exe invocation rather than a cmd.exe command string to avoid indirect command-line injection while preserving sc's `key= value` spacing.",
+      "Treated main's newer A2A/hardening code as authoritative during merge resolution; PR-specific installer/service additions were retained.",
+      "Did not change dependency versions to chase pre-existing local test-environment failures."
+    ],
+    "decisions_pending": [],
+    "escalations": [],
+    "next_agent_notes": "PR #38 review comments are addressed in the working tree. Verification: node --check on both scripts, `npm run check`, `npm run services:preview` (read-only, leaves launchers intact), installer smoke tests in a temp config dir (barrel removed; only two plugin refs registered), and gate-aware MCP initialize (7 tools default / 10 tools approve). `npm run test:unit` reports 78 pass / 3 fail, all pre-existing environmental: asfdk 0.2.4 installed vs 0.2.2 lockfile; pi-coding-agent 0.80.2 imports typebox/build/index.mjs absent from pinned typebox 1.1.38; Windows path-separator expectation in tools.test.ts dev-mode assertion. Do not push to main; push HEAD to feat/universal-installer.",
+    "files_modified": [
+      ".gitignore",
+      "INSTALL.md",
+      "docs/agent-log/handoffs/2026-11-08-pi-package-install.json",
+      "docs/agent-log/handoffs/2026-11-22-opencode-big-pickle-pr38-review-fixes.json",
+      "docs/agent-log/registrations/2026-11-22-opencode-big-pickle-pr38-review-fixes.json",
+      "docs/active-threads.md",
+      "kilo-plugin/a2a-task-watch.ts",
+      "opencode-plugin/README.md",
+      "opencode-plugin/a2a-task-watch.ts",
+      "package.json",
+      "scripts/install.mjs",
+      "scripts/services.mjs"
+    ],
+    "tests_run": [
+      "node --check scripts/install.mjs",
+      "node --check scripts/services.mjs",
+      "npm run check",
+      "npm run services:preview",
+      "npm run test:unit (78 pass / 3 pre-existing environmental failures)",
+      "installer CLI smoke tests (unknown flag, bad --tools-gate, -h, temp config dir barrel cleanup, MCP verify with both gates)"
+    ],
+    "tests_passing": false,
+    "pr_url": "https://github.com/NeuroLift-Technologies/asfdk-harness/pull/38"
+  }
+}
