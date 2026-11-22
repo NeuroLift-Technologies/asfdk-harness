@@ -129,6 +129,7 @@ Flags:
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
 
+/** ANSI color prefix when stdout is a TTY, otherwise an empty string. */
 const col = (n) => process.stdout.isTTY ? `\x1b[${n}m` : "";
 
 /** Write a level-tagged installer message to stdout. */
@@ -298,6 +299,7 @@ function verifyMcp(command, cwd, env, verbose) {
     let buf = "";
     let done = false;
     let initialized = false;
+    /** Resolve verification once (later error/exit events are ignored). */
     const finish = (ok, msg) => {
       if (done) return;
       done = true;
@@ -436,6 +438,7 @@ async function installOcodeFamily(opts, { label, configDir }) {
     if (!ver) return false;
     // Reject non-numeric versions (e.g. "latest", empty string)
     if (!/^\d+(\.\d+)*([-.].*)?$/.test(String(ver))) return false;
+    /** Split a dotted version into numeric components. */
     const parse = (v) => String(v).split(".").map((n) => parseInt(n, 10) || 0);
     const a = parse(ver), b = parse(min);
     for (let i = 0; i < Math.max(a.length, b.length); i++) {
@@ -532,6 +535,7 @@ async function installOcodeFamily(opts, { label, configDir }) {
   }
 
   const pluginRel = ["./plugins/asfdk-deploy.ts", "./plugins/a2a-task-watch.ts"];
+  /** True when a configured plugin reference points at the auto-discovered barrel file. */
   const isBarrelRef = (ref) => {
     const normalized = String(ref).replace(/\\/g, "/");
     return normalized === "./index.ts" || /(?:^|\/)plugins\/index\.ts$/.test(normalized);
