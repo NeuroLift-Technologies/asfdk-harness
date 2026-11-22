@@ -21,6 +21,14 @@ interface A2ATaskWatchOptions {
   fetchTimeoutMs?: number;
 }
 
+/** Resolve the hub's registration endpoint from any supported base URL form. */
+export function registrationUrl(base: string): string {
+  const root = base.replace(/\/+$/, "");
+  if (/\/a2a\/register$/.test(root)) return root;
+  if (/\/a2a$/.test(root)) return `${root}/register`;
+  return `${root}/a2a/register`;
+}
+
 const DEFAULT_OPTIONS: Required<A2ATaskWatchOptions> = {
   hubUrl: "",
   agentId: "opencode-asfdk-deploy",
@@ -49,6 +57,7 @@ export default async function a2aTaskWatch(_input: PluginInput, options: PluginO
   const hubUrl = opts.hubUrl || process.env.ASFDK_A2A_HUB_URL || "";
   const tasksPath = opts.tasksPath || `/agents/${opts.agentId}/tasks`;
 
+  /** Log a tagged message to stderr without polluting stdout. */
   const log = (...args: unknown[]): void => {
     console.error(`[${opts.logPrefix}]`, ...args);
   };
@@ -63,6 +72,7 @@ export default async function a2aTaskWatch(_input: PluginInput, options: PluginO
   const completedOrder: string[] = [];
   const COMPLETED_CAP = 1000;
 
+  /** Lazily initialize and cache the ASFDK foundation instance. */
   async function foundationReady(): Promise<NeuroLiftFoundation | undefined> {
     if (foundation) return foundation;
     try {
@@ -76,6 +86,7 @@ export default async function a2aTaskWatch(_input: PluginInput, options: PluginO
     return foundation;
   }
 
+  /** Fetch JSON with a timeout and consistent content-type headers. */
   async function json(url: string, init?: RequestInit): Promise<unknown> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), opts.fetchTimeoutMs);
@@ -95,6 +106,7 @@ export default async function a2aTaskWatch(_input: PluginInput, options: PluginO
     }
   }
 
+  /** POST this runtime's A2A agent card to the hub registration endpoint. */
   async function registerAgent(): Promise<void> {
     if (!hubUrl) return;
     try {
@@ -110,13 +122,14 @@ export default async function a2aTaskWatch(_input: PluginInput, options: PluginO
         defaultOutputModes: ["text/plain", "application/json"],
         discovery: { protocol: "A2A", mechanism: "Agent Card" },
       };
-      await json(hubUrl.replace(/\/$/, "") + "/a2a/register", { method: "POST", body: JSON.stringify(body) });
+      await json(registrationUrl(hubUrl), { method: "POST", body: JSON.stringify(body) });
       log("registered", opts.agentId);
     } catch (error) {
       log("register-error", String(error));
     }
   }
 
+  /** Poll the hub for peer agents and log newly discovered IDs. */
   async function pollAgents(): Promise<void> {
     if (!hubUrl) return;
     try {
@@ -136,6 +149,7 @@ export default async function a2aTaskWatch(_input: PluginInput, options: PluginO
     }
   }
 
+  /** Poll hub tasks (bare array or `{ tasks }`) and assess new task text. */
   async function pollTasks(): Promise<void> {
     if (disposed) return;
     const foundationInstance = await foundationReady();
@@ -143,7 +157,9 @@ export default async function a2aTaskWatch(_input: PluginInput, options: PluginO
     if (!hubUrl) return;
     try {
       const url = hubUrl.replace(/\/$/, "") + tasksPath;
-      const result = (await json(url)) as Array<{ id?: string; message?: string; text?: string }>;
+      type Task = { id?: string; message?: string; text?: string };
+      const raw = (await json(url)) as Task[] | { tasks?: Task[] } | null;
+      const result = Array.isArray(raw) ? raw : raw?.tasks;
       if (!Array.isArray(result)) return;
       for (const task of result) {
         if (!task?.id) continue;
@@ -181,6 +197,7 @@ export default async function a2aTaskWatch(_input: PluginInput, options: PluginO
     }
   }
 
+  /** Register once, then poll agents/tasks on the configured interval. */
   async function watch(): Promise<void> {
     if (!hubUrl) {
       log("disabled", "no hub URL (set options.hubUrl or ASFDK_A2A_HUB_URL)");

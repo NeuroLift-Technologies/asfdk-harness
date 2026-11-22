@@ -21,20 +21,19 @@
  *   node scripts/services.mjs status               query current service state
  *   node scripts/services.mjs remove               sc delete both services (and stop them first)
  *
- * Governance (NLT-DEV-OTOI-1.0.3): preview is the default; mutation requires --apply.
- * No files are written outside the repo's scripts\.svc\ dir and the Windows service database.
+ * Governance (NLT-DEV-OTOI-1.0.4): preview is the default; mutation requires `apply`
+ * (or `remove`) from an elevated terminal. Preview never writes files.
  */
 
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { fileURLToPath } from "node:url";
-import { execSync, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, "..");
 const svcDir = path.join(__dirname, ".svc");
-const isMainModule = false;
 
 /** Absolute node binary (services run under SYSTEM whose PATH differs from an interactive session). */
 const nodeExe = process.execPath;
@@ -63,11 +62,13 @@ const SERVICES = [
   },
 ];
 
+/** Log a timestamped, level-tagged message. */
 function log(level, msg) {
   const stamp = new Date().toISOString().replace("T", " ").slice(0, 19);
   console.log(`${stamp} [${level}] ${msg}`);
 }
 
+/** Locate the first existing executable from a list of names or absolute paths. */
 function whichExe(candidates) {
   for (const c of candidates) {
     const full = path.isAbsolute(c) ? c : path.join(systemRoot, "System32", c);
@@ -84,7 +85,12 @@ function whichExe(candidates) {
   return null;
 }
 
-/** Write the per-service .cmd launcher that sets cwd + env and runs node dist\entry.js as argv[1]. */
+/** True when a value would be reinterpreted by cmd.exe inside a generated launcher. */
+function unsafeForCmd(value) {
+  return /["%&^!|<>\r\n]/.test(String(value));
+}
+
+/** Build the .cmd launcher body: set cwd + env and run node dist\entry.js as argv[1]. */
 function launcherBody(svc) {
   const lines = ["@echo off", "setlocal"];
   lines.push(`cd /d "${repoRoot}"`);
@@ -96,59 +102,66 @@ function launcherBody(svc) {
   return lines.join("\r\n") + "\r\n";
 }
 
+/** Absolute path of a service's generated launcher. */
 function launcherPath(svc) {
   return path.join(svcDir, `${svc.name}.cmd`);
 }
 
-function ensureSvcsImported() {
-  /* placeholder to keep node --check happy; replaced at runtime by writeLaunchers */
-}
-
+/**
+ * Write launchers when applying; preview only logs what would be written.
+ * Preview must never delete or overwrite an existing launcher: registered
+ * services depend on these files for their next start.
+ */
 function writeLaunchers(apply) {
-  if (!apply && fs.existsSync(svcDir)) {
-    for (const svc of SERVICES) fs.rmSync(launcherPath(svc), { force: true });
-  }
   if (!apply) {
     log("preview", `would create service launchers under scripts\\.svc\\ (repo-local, gitignored):`);
+    for (const svc of SERVICES) log("preview", `  ${launcherPath(svc)}`);
+    return;
   }
-  if (apply) {
-    fs.mkdirSync(svcDir, { recursive: true });
-    for (const svc of SERVICES) {
-      fs.writeFileSync(launcherPath(svc), launcherBody(svc), "utf8");
-      log("ok", `wrote launcher: ${launcherPath(svc)}`);
-    }
+  fs.mkdirSync(svcDir, { recursive: true });
+  for (const svc of SERVICES) {
+    fs.writeFileSync(launcherPath(svc), launcherBody(svc), "utf8");
+    log("ok", `wrote launcher: ${launcherPath(svc)}`);
   }
 }
 
-/** Validate the preconditions that would otherwise make a silently-broken service. */
+/** Validate preconditions that would otherwise make a silently-broken service. */
 function validate(svc) {
   const problems = [];
   if (!fs.existsSync(svc.entry)) problems.push(`missing dist entrypoint: ${svc.entry}`);
   if (!fs.existsSync(nodeExe)) problems.push(`missing node binary: ${nodeExe}`);
   if (!fs.existsSync(scExe)) problems.push(`missing sc.exe: ${scExe}`);
+  for (const value of [repoRoot, nodeExe, svc.entry]) {
+    if (unsafeForCmd(value)) problems.push(`path contains cmd.exe metacharacters: ${value}`);
+  }
   return problems;
 }
 
 /**
- * Run sc.exe with a raw command line composed EXACTLY as a human would type it
- * in cmd.exe. Required: sc.exe parses its own raw command line (binPath=/start=
- * spacing rules), and Node's implicit `cmd /d /s /c "..."` wrapper strips the
- * first+last quote — so the sc.exe path must be wrapped with a DOUBLED leading
- * quote (`cmd.exe /d /s /c ""sc.exe" <fragment>"`) for sc to receive the
- * fragment byte-identical. Verified by parse probe: OpenSCManager FAILED 5 =
- * parsed OK, blocked on admin only. Preview output === applied commands.
+ * Run sc.exe directly with an argument array (no cmd.exe string layer).
+ * Passing arguments as separate argv entries keeps user-chosen checkout paths
+ * from being reinterpreted as command syntax and preserves sc.exe's `key= value`
+ * spacing rules.
  */
-function scRaw(fragment) {
+function scRaw(args) {
   try {
-    const out = execSync(`cmd.exe /d /s /c ""${scExe}" ${fragment}"`, {
+    const res = spawnSync(scExe, args, {
       encoding: "utf8",
+      shell: false,
+      windowsVerbatimArguments: false,
       windowsHide: true,
       stdio: ["ignore", "pipe", "pipe"],
     });
-    return { status: 0, stdout: out ?? "", stderr: "" };
-  } catch (e) {
-    return { status: e.status ?? 1, stdout: e.stdout ?? "", stderr: e.stderr ?? "" };
+    if (res.error) return { status: 1, stdout: res.stdout ?? "", stderr: res.error.message };
+    return { status: res.status ?? 1, stdout: res.stdout ?? "", stderr: res.stderr ?? "" };
+  } catch (error) {
+    return { status: 1, stdout: "", stderr: String(error?.message ?? error) };
   }
+}
+
+/** Render sc.exe arguments for the read-only preview output. */
+function formatScCommand(args) {
+  return args.map((arg) => (/[\s]/.test(arg) && !/^".*"$/.test(arg) ? `"${arg}"` : arg)).join(" ");
 }
 
 /** binPath value: .cmd launcher cd's to repo, sets env, runs node dist\entry.js as argv[1]. */
@@ -156,20 +169,34 @@ function binPathFor(svc) {
   return `"${launcherPath(svc)}"`;
 }
 
-function createCmd(svc) {
-  return `create ${svc.name} binPath= ${binPathFor(svc)} start= auto DisplayName= "${svc.display}"`;
+/** Arguments for `sc create` (service is initially stopped; failure actions set below). */
+function createArgs(svc) {
+  return ["create", svc.name, "binPath=", binPathFor(svc), "start=", "auto", "DisplayName=", svc.display];
 }
 
-function descriptionCmd(svc) {
-  return `description ${svc.name} "${svc.description}"`;
+/** Arguments for `sc config` (refresh an already-registered service's executable). */
+function configArgs(svc) {
+  return ["config", svc.name, "binPath=", binPathFor(svc), "start=", "auto", "DisplayName=", svc.display];
 }
 
-function failureCmd(svc) {
-  return `failure ${svc.name} reset= 86400 actions= restart/5000/restart/10000/restart/30000`;
+/** Arguments for `sc description`. */
+function descriptionArgs(svc) {
+  return ["description", svc.name, svc.description];
 }
 
+/** Arguments for `sc failure` (auto-restart on crash). */
+function failureArgs(svc) {
+  return ["failure", svc.name, "reset=", "86400", "actions=", "restart/5000/restart/10000/restart/30000"];
+}
+
+/** True when Windows already has a service registration with this name (locale-independent). */
+function serviceExists(svc) {
+  return scRaw(["query", svc.name]).status === 0;
+}
+
+/** Human-readable service state from `sc query`. */
 function serviceStatus(svc) {
-  const res = scRaw(`query ${svc.name}`);
+  const res = scRaw(["query", svc.name]);
   if (res.status !== 0) return `not-installed (sc query rc=${res.status})`;
   const out = res.stdout || "";
   const m = out.match(/STATE\s*:\s*\d+\s+([A-Z_]+)/i);
@@ -178,12 +205,14 @@ function serviceStatus(svc) {
   return `${state}${started ? " (RUNNING)" : ""}`;
 }
 
+/** Print the exact sc.exe commands and preflight results without changing anything. */
 function previewActions() {
-  log("preview", ">>> sc.exe commands that WILL run with `--apply` (run the script elevated):");
+  log("preview", ">>> sc.exe commands that WILL run with `apply` (run the script elevated):");
   for (const svc of SERVICES) {
-    console.log(`  sc ${createCmd(svc)}`);
-    console.log(`  sc ${descriptionCmd(svc)}`);
-    console.log(`  sc ${failureCmd(svc)}`);
+    // Match apply(): an existing registration is refreshed with `sc config`, not recreated.
+    console.log(`  sc ${formatScCommand(serviceExists(svc) ? configArgs(svc) : createArgs(svc))}`);
+    console.log(`  sc ${formatScCommand(descriptionArgs(svc))}`);
+    console.log(`  sc ${formatScCommand(failureArgs(svc))}`);
   }
   for (const svc of SERVICES) {
     const probs = validate(svc);
@@ -195,20 +224,20 @@ function previewActions() {
   }
 }
 
+/** True when the current process has the Windows Administrators group in its token. */
+function isElevated() {
+  try {
+    const whoami = spawnSync("whoami", ["/groups"], { encoding: "utf8", windowsHide: true });
+    return /\bS-1-5-32-544\b/.test(whoami.stdout || "");
+  } catch {
+    return false;
+  }
+}
+
+/** Register (or reconfigure), describe, and start both services; set exit code on failure. */
 function doApply() {
-  const isAdmin = (() => {
-    try {
-      const whoami = spawnSync("whoami", ["/groups"], { encoding: "utf8", windowsHide: true });
-      return /\bS-1-5-32-544\b/.test(whoami.stdout || "");
-    } catch {
-      return false;
-    }
-  })();
-  if (!isAdmin) {
-    log(
-      "error",
-      "elevation required. Re-run from an elevated terminal: node scripts/services.mjs apply`",
-    );
+  if (!isElevated()) {
+    log("error", "elevation required. Re-run from an elevated terminal: node scripts/services.mjs apply");
     process.exitCode = 2;
     return;
   }
@@ -223,20 +252,36 @@ function doApply() {
       anyFail = true;
       continue;
     }
-    log("info", `${svc.name}: registering service...`);
-    const create = scRaw(createCmd(svc));
-    if (create.status !== 0 && !/the specified service already exists/i.test(create.stderr || create.stdout || "")) {
-      log("error", `${svc.name}: sc create failed -> ${create.stderr || create.stdout || create.status}`);
+    const exists = serviceExists(svc);
+    log("info", `${svc.name}: ${exists ? "reconfiguring" : "registering"} service...`);
+    if (exists) {
+      // A moved checkout or a different node.exe leaves a stale binPath behind.
+      const config = scRaw(configArgs(svc));
+      if (config.status !== 0) {
+        log("error", `${svc.name}: sc config rc=${config.status}: ${(config.stderr || "").trim()}`);
+        anyFail = true;
+        continue;
+      }
+    } else {
+      const create = scRaw(createArgs(svc));
+      if (create.status !== 0) {
+        log("error", `${svc.name}: sc create failed -> ${create.stderr || create.stdout || create.status}`);
+        anyFail = true;
+        continue;
+      }
+    }
+    const desc = scRaw(descriptionArgs(svc));
+    if (desc.status !== 0) log("warn", `${svc.name}: sc description rc=${desc.status}: ${(desc.stderr || "").trim()}`);
+    const fail = scRaw(failureArgs(svc));
+    if (fail.status !== 0) log("warn", `${svc.name}: sc failure rc=${fail.status}: ${(fail.stderr || "").trim()}`);
+
+    const start = scRaw(["start", svc.name]);
+    const output = `${start.stderr || ""} ${start.stdout || ""}`;
+    const alreadyRunning = start.status === 1056 || /\b1056\b|already running/i.test(output);
+    if (start.status !== 0 && !alreadyRunning) {
+      log("error", `${svc.name}: sc start rc=${start.status}: ${(start.stderr || "").trim()}`);
       anyFail = true;
       continue;
-    }
-    const desc = scRaw(descriptionCmd(svc));
-    if (desc.status !== 0) log("warn", `${svc.name}: sc description rc=${desc.status}: ${(desc.stderr || '').trim()}`);
-    const fail = scRaw(failureCmd(svc));
-    if (fail.status !== 0) log("warn", `${svc.name}: sc failure rc=${fail.status}: ${(fail.stderr || '').trim()}`);
-    const start = scRaw(`start ${svc.name}`);
-    if (start.status !== 0) {
-      log("warn", `${svc.name}: sc start rc=${start.status}: ${(start.stderr || '').trim()}`);
     }
     log("ok", `${svc.name}: registered (auto-start on boot, restart on crash)`);
   }
@@ -244,6 +289,7 @@ function doApply() {
   if (anyFail) process.exitCode = 1;
 }
 
+/** Print the current state of both services. */
 function doStatus() {
   log("info", `services: node ${nodeExe}`);
   for (const svc of SERVICES) {
@@ -251,21 +297,41 @@ function doStatus() {
   }
 }
 
+/** Stop and delete both services; only remove launchers whose service was actually deleted. */
 function doRemove() {
-  for (const svc of SERVICES) {
-    scRaw(`stop ${svc.name}`);
-    const res = scRaw(`delete ${svc.name}`);
-    if (res.status === 0) log("ok", `${svc.name}: deleted`);
-    else log("warn", `${svc.name}: sc delete rc=${res.status}: ${(res.stderr || '').trim()}`);
+  if (!isElevated()) {
+    log("error", "elevation required. Re-run from an elevated terminal: node scripts/services.mjs remove");
+    process.exitCode = 2;
+    return;
   }
-  const leftovers = path.join(svcDir, "*.cmd");
-  if (fs.existsSync(svcDir)) {
-    for (const f of fs.readdirSync(svcDir)) if (f.endsWith(".cmd")) fs.rmSync(path.join(svcDir, f), { force: true });
+
+  const removed = [];
+  const failed = [];
+  for (const svc of SERVICES) {
+    scRaw(["stop", svc.name]);
+    const res = scRaw(["delete", svc.name]);
+    if (res.status === 0) {
+      removed.push(svc);
+      log("ok", `${svc.name}: deleted`);
+    } else {
+      failed.push(svc.name);
+      log("warn", `${svc.name}: sc delete rc=${res.status}: ${(res.stderr || "").trim()} (launcher kept)`);
+    }
+  }
+
+  for (const svc of removed) fs.rmSync(launcherPath(svc), { force: true });
+  if (fs.existsSync(svcDir) && fs.readdirSync(svcDir).length === 0) {
     try { fs.rmdirSync(svcDir); } catch { /* keep */ }
   }
-  log("ok", `removed launchers under scripts\\.svc\\${leftovers}`);
+
+  log("ok", `removed ${removed.length}/${SERVICES.length} service(s); deleted launchers for successful removals`);
+  if (failed.length) {
+    log("warn", `failed to delete: ${failed.join(", ")}`);
+    process.exitCode = 1;
+  }
 }
 
+/** Dispatch the requested service action (preview by default). */
 function main() {
   const cmd = process.argv[2] ?? "preview";
   switch (cmd) {

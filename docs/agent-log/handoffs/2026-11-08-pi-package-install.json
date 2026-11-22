@@ -13,8 +13,12 @@
       "Installed harness as a Pi package via `pi install .`; registered globally in ~/.pi/agent/settings.json packages (source ..\\..\\nlt-repos\\asfdk-harness). Install completed: 'Installing .... Installed .'",
       "Confirmed INSTALL.md services section + scripts/services.mjs + scripts/.svc/ launchers are coherent for THREAD-013."
     ],
-    "work_in_progress": [],
-    "blockers": [],
+    "work_in_progress": [
+      "Full `npm test` unit suite was not run in this session; only `npm run check` and the services preview were verified."
+    ],
+    "blockers": [
+      "Known environmental failures outside this change: asfdk lockfile version drift and a Windows path-separator expectation in the MCP/server tests."
+    ],
     "decisions_made": [
       "Deduplicated services:* scripts to single occurrences each in package.json.",
       "Used global (`pi install .`, no -l) registration for user-level Pi setup.",
@@ -26,8 +30,6 @@
     "files_modified": [
       "package.json",
       "scripts/services.mjs",
-      "scripts/.svc/asfdk-a2a-hub.cmd",
-      "scripts/.svc/asfdk-governance-mcp.cmd",
       "INSTALL.md",
       "docs/agent-log/handoffs/2026-11-08-pi-package-install.json"
     ],
@@ -35,7 +37,7 @@
       "npm run services:preview (executed successfully, correct sc.exe commands + entrypoint checks)",
       "npm run check / tsc --noEmit (clean pass)"
     ],
-    "tests_passing": true,
+    "tests_passing": false,
     "pr_url": "[this pull request]"
   }
 }

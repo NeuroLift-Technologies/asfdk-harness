@@ -148,6 +148,9 @@ vite.config.ts.timestamp-*
 # Hub persistence file (local runtime data)
 .asfdk-hub-state.json
 
+# Generated Windows service launchers (scripts/services.mjs apply)
+scripts/.svc/
+
 # Personal TOI files
 .toi
 .toi.backup-*
