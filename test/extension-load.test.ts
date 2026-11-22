@@ -22,7 +22,7 @@ const ASFDK_TOOL_NAMES = [
   "asfdk_update_preferences",
 ];
 const ASFDK_COMMAND_NAMES = ["asfdk-status", "asfdk-assess", "asfdk-protocols", "asfdk-interop", "asfdk-a2a-card"];
-const ASFDK_HOOKS = ["session_start", "session_shutdown", "before_agent_start", "tool_call"];
+const ASFDK_HOOKS = ["session_start", "session_shutdown", "tool_call"];
 
 function makeMockPi() {
   const tools: Array<{ name: string }> = [];
@@ -63,23 +63,10 @@ test("tool_call hook gates destructive commands via the policy", async () => {
   assert.equal(allowed, undefined, "ordinary commands should pass through (undefined = no block)");
 });
 
-test("before_agent_start injects the governance system prompt and a hidden preflight message", async () => {
+test("automatic per-turn preflight is disabled", () => {
   const { pi, events } = makeMockPi();
   asfdkPiHarness(pi as never);
-  try {
-    const res = await events.before_agent_start({
-      type: "before_agent_start",
-      prompt: "hello there",
-      systemPrompt: "BASE_PROMPT",
-      systemPromptOptions: { cwd: process.cwd(), selectedTools: [] },
-    });
-    assert.ok(res?.systemPrompt.startsWith("BASE_PROMPT"), "must preserve the base system prompt");
-    assert.match(res.systemPrompt, /ASFDK governance active/, "must inject the governance note");
-    assert.equal(res.message.customType, "asfdk-preflight");
-    assert.equal(res.message.display, false, "preflight context must be hidden from the user");
-  } finally {
-    cleanupSwpStorage();
-  }
+  assert.equal(events.before_agent_start, undefined);
 });
 
 // --- Integration: loads through Pi's real resource loader with this repo's extension path.

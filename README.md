@@ -38,7 +38,9 @@ Then restart or run `/reload` in Pi.
 ## Development
 
 ```bash
-npm run check
+npm ci
+npm run cf:typegen
+npm test
 npm run build
 npm run harness -- "What files are in this repo?"
 ```

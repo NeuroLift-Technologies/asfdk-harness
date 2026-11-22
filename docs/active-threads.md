@@ -20,19 +20,19 @@
 | **Scope** | `src/mcp-server.ts`, `src/harness.ts`, `package.json`, `wrangler.jsonc`, `test/mcp-server.test.ts`, `docs/active-threads.md`, `docs/agent-log/*`, `docs/escalations/*` |
 | **Blockers** | Workstream B (Worker-native A2A Hub with Durable Objects) requires separate Joshua approval per escalation docs/escalations/2026-11-21-kilo-mcp-a2a-ownership.md. |
 | **Related PR** | [#39](https://github.com/NeuroLift-Technologies/asfdk-harness/pull/39) |
-| **Notes** | Workstream A (MCP parity) complete and reviewed: 3 new tools with sanitized projections, discovery hub fixed, versions bumped, 12 MCP integration tests. Joshua approved THREAD-002 ownership transfer from Vibe and Workstream A implementation on 2026-11-21. PR #39 ready for merge. Workstream B pending separate approval. |
+| **Notes** | Workstream A (MCP parity) complete and reviewed: 3 new tools with sanitized projections, discovery hub fixed, versions bumped, 12 MCP integration tests. Joshua approved THREAD-002 ownership transfer from Vibe and Workstream A implementation on 2026-11-21. PR #39 includes a clean-install repair. Registry ASFDK 0.2.4 verified with the existing dependency graph, Worker types generated locally, and 94 tests passed. Workstream B pending separate approval. |
 
 ### THREAD-015 — Harden policy.ts guardrail gaps; read protocol files once; redact protocol paths
 | Field | Value |
 |---|---|
 | **Thread ID** | THREAD-015 |
-| **Status** | 🟡 In Progress (draft PR) |
+| **Status** | 🟢 Merged (PR #36) |
 | **Started** | 2026-11-04 |
 | **Owner** | Claude Code (owner-directed from nlt-pi) |
 | **Branch** | `ccr-0d5033af-1rkbla` |
 | **Task** | Fix gaps found while vendoring the harness into nlt-pi: policy.ts allowed `rm -fr ~`, `rm -rf -- /etc`, `rm -r -f /`, `rm --recursive --force ~`, `cat .en?`, `cat .e*`; protocols.ts access()+readFile() file race (CodeQL js/file-system-race); asfdk_protocol_status returned unredacted absolute paths. |
 | **Scope** | `src/policy.ts`, `src/protocols.ts`, `src/tools.ts`, tests, `docs/agent-log/*`, `docs/escalations/*`, this file |
-| **Blockers** | 3 unit tests fail on the unmodified base in the cloud environment (not investigated); `npm ci` fails on main because package-lock.json references a local tarball path. |
+| **Blockers** | Clean-install follow-up tracked in PR #39. |
 | **Related PR** | [asfdk-harness#36](https://github.com/NeuroLift-Technologies/asfdk-harness/pull/36); related: rrt-advocate#49, #50, asfdk#41, nlt-pi#16 |
 | **Notes** | policy.ts is an escalate-before-change file; the owner approved the change in the originating session (see `docs/escalations/2026-11-04-policy-ts-hardening-approved.md`). Additive blocking only. Re-sync into nlt-pi (which vendors these files) after merge. |
 
