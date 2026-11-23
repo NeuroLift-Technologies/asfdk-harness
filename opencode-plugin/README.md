@@ -9,7 +9,7 @@ these files into a runtime's plugin directory and wires the MCP server.
 |---|---|
 | `asfdk-deploy.ts` | Monitor-only governance: observes chat messages and tool results through the ASFDK foundation (TOI/OTOI, RRT AIdvocAIte, Sleepwalker). Logs gate-up escalations; does not block. |
 | `a2a-task-watch.ts` | Optional A2A task poller for the discovery hub. No-op unless `hubUrl` option or `ASFDK_A2A_HUB_URL` is set. |
-| `index.ts` | Named re-exports for programmatic loading. |
+| `index.ts` | Named re-exports for programmatic loading. Not copied into a runtime's auto-discovered `plugins/` dir (would load each plugin twice). |
 | `package.json` | Metadata + dependency contract for the config-dir install. |
 
 ## API compatibility

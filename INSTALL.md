@@ -78,10 +78,12 @@ missing keys are added, existing entries are left alone unless `--force`.
 
 1. Restart the runtime.
 2. `opencode mcp list` → expect `asfdk-governance connected`.
-3. Open a session and run `/mcp` → expect these 10 tools:
+3. Open a session and run `/mcp` → expect these 7 base tools:
    `asfdk_status`, `asfdk_assess_text`, `asfdk_update_preferences`, `asfdk_health_check`,
-   `asfdk_review_tool_call`, `asfdk_process_interaction`, `asfdk_governance_summary`,
-   `asfdk_authority_chain`, `asfdk_governance_raw`, `asfdk_discovery_hub`.
+   `asfdk_review_tool_call`, `asfdk_process_interaction`, `asfdk_discovery_hub`.
+   With the default `--tools-gate approve` the three sensitive governance tools
+   (`asfdk_governance_summary`, `asfdk_authority_chain`, `asfdk_governance_raw`)
+   are also registered — 10 tools total. With `--tools-gate default` they stay hidden.
 4. Plugin lifecycle messages appear on stderr:
    `[asfdk-deploy] foundation-ready ...` and `[asfdk-deploy] message-assessment ...`.
    `[a2a-task-watch] disabled no hub URL ...` is benign (A2A hub is optional).
@@ -95,7 +97,7 @@ missing keys are added, existing entries are left alone unless `--force`.
 | hermes | Best-effort copy | `~/.hermes/plugins/`; requires the asfdk Python package. |
 | openclaw | Command print / run | `openclaw plugin add <repo>/openclaw-plugin`. |
 | zed | Manual (documented) | Rust dev extension; MCP `context_servers` with **absolute** node + `dist/mcp-server.js` paths (see `zed-extension/README.md`, THREAD-012). |
-| pi | Manual (documented) | `pi package add <repo>`; skills/prompts in `skills/`, `prompts/`. |
+| pi | Manual (documented) | `pi install <repo>` (verified); extension, skills/prompts are declared in `package.json`. |
 
 ## Troubleshooting
 
@@ -139,9 +141,57 @@ with the asfdk repo.
 Do not. esbuild/bundling `dist/mcp-server.js` breaks zod v4 (`TypeError: Class2 is not a
 constructor`). The stdio server is meant to run from Node with `node_modules` present.
 
+## Run the A2A hub and governance MCP as auto-start Windows services
+
+Use this when you want the **A2A discovery hub** and the **asfdk-governance MCP
+server** (HTTP transport) to boot with Windows and keep running unattended —
+auto-start on boot, automatic restart if they crash. Build `dist/` first
+(`npm run build`).
+
+| Service name | Runs | Listens on |
+|---|---|---|
+| `asfdk-a2a-hub` | `node dist\discovery-hub.js` | `127.0.0.1:3001` (`ASFDK_A2A_HOST/PORT`) |
+| `asfdk-governance-mcp` | `node dist\mcp-http-server.js` | `127.0.0.1:8788` (`MCP_HTTP_HOST/PORT`, path `/mcp`) |
+
+### 1. Preview (default, read-only)
+```powershell
+npm run services:preview
+```
+Prints the exact `sc.exe` commands and launchers. Preview never creates, deletes,
+or overwrites launcher files.
+
+### 2. Apply (creates the services — requires an elevated PowerShell)
+```powershell
+npm run services:apply
+```
+- Registers both services with `start= auto` (boot start) and `sc failure`
+  restart actions (crash → auto-restart). Existing services are reconfigured with
+  the current launcher path.
+- Each service runs a small `.cmd` launcher (generated into `scripts\.svc\`,
+  gitignored) that `cd`s to the repo and runs the **dist JS directly as
+  `argv[1]`** — the `isMainModule` guard needs that to match. The absolute
+  `node.exe` is baked into the launcher because services run under SYSTEM,
+  whose PATH differs from an interactive session.
+- Requires elevation: run from an **Administrator** PowerShell. Non-elevated
+  runs abort with a clear message and change nothing.
+
+### 3. Status / remove
+```powershell
+npm run services:status   # query both services
+npm run services:remove   # stop + delete both services (elevated)
+```
+`remove` also requires elevation and only deletes launchers for services that
+were successfully deleted. A failed `sc delete` leaves its launcher in place.
+
+> Note: services run as `LocalSystem`; they bind loopback only
+> (`127.0.0.1`), so nothing is exposed off-machine. Heavy-lift changes (service
+> account, network egress, multi-instance scaling) are governance decisions —
+> escalate before adding them.
+
 ## Files owned by this feature
 
 - `scripts/install.mjs` — universal installer
+- `scripts/services.mjs` — Windows service preview/apply/status/remove CLI
 - `opencode-plugin/` — canonical opencode/kilo plugins (`asfdk-deploy.ts`,
   `a2a-task-watch.ts`, `index.ts`)
 - `kilo-plugin/` — mirror of the above (keep in sync)

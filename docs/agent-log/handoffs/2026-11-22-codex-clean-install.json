@@ -10,7 +10,8 @@
     "work_completed": [
       "Repaired PR #39 lockfile using the main locked graph and the npm registry metadata for ASFDK 0.2.4.",
       "Updated the Pi fixture to assert the deliberately disabled per-turn hook and documented the clean verification sequence.",
-      "Reconciled merged PR #36 in the thread tracker."
+      "Reconciled merged PR #36 in the thread tracker.",
+      "Reconciled the active-thread timestamp with main after PR #38 merged and preserved the installer and MCP records."
     ],
     "work_in_progress": [
       "Maintainer review of PR #39"

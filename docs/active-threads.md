@@ -2,7 +2,7 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-11-21T19:30:00Z
+**Last updated:** 2026-11-23T00:53:59Z
 
 ---
 
@@ -54,15 +54,15 @@
 | Field | Value |
 |---|---|
 | **Thread ID** | THREAD-013 |
-| **Status** | 🟡 In Progress |
+| **Status** | 🟢 Merged (PR #38) |
 | **Started** | 2026-09-18 |
 | **Owner** | opencode-big-pickle |
 | **Branch** | `feat/universal-installer` |
 | **Task** | Make ASFDK installable into any agent runtime with one command; ship the corrected opencode/kilo plugins (SDK >= 1.18 API). |
-| **Scope** | `scripts/install.mjs` (new), `INSTALL.md` (new), `opencode-plugin/` (new canonical plugin sources: `asfdk-deploy.ts`, `a2a-task-watch.ts`, `index.ts`, `package.json`, `README.md`), `kilo-plugin/` (mirror — `asfdk-deploy.ts` `chat.message` → `output.parts` fix, `index.ts` mirror, `README.md`), `package.json` (`install:runtimes` script), `docs/agent-log/`, this file |
-| **Blockers** | None. Other-runtime (kilo/hermes/openclaw/zed/pi) adapters are best-effort — their config formats aren't fully specified in-repo; opencode is the only locally verifiable runtime. |
-| **Related PR** | TBD from `feat/universal-installer` |
-| **Notes** | Installer: no external deps, Node 20+, cross-platform; opencode/kilo fully automated (config-dir deps via npm, plugin file copy, MCP `asfdk-governance` local stdio → `dist/mcp-server.js`, timeout 180000, env TOI/OTOI paths, config backup + merge, raw `initialize` handshake verification); hermes/openclaw/zed/pi print documented commands when CLIs absent. Plugin refresh: canonical sources now live in `opencode-plugin/`, `kilo-plugin/` mirrors them (manual-sync policy, READMEs added). Includes hard-won opencode lessons (timeouts, Defender exclusions, LSP trim, no-esbuild-zod-v4, output.parts) in INSTALL.md Troubleshooting. Prior MCP connection work (asfdk-governance live in opencode) completed in an earlier session. |
+| **Scope** | `scripts/install.mjs`, `scripts/services.mjs`, `INSTALL.md`, `opencode-plugin/`, `kilo-plugin/`, `package.json`, `.gitignore`, `docs/agent-log/`, this file |
+| **Blockers** | None. Other-runtime (kilo/hermes/openclaw/zed/pi) adapters are best-effort — their config formats aren't fully specified in-repo; opencode is the only locally verifiable runtime. Three pre-existing unit-test failures remain environmental (asfdk lockfile drift, typebox layout mismatch in pi-coding-agent, Windows path separator in `tools.test.ts`). |
+| **Related PR** | [#38](https://github.com/NeuroLift-Technologies/asfdk-harness/pull/38) (`feat/universal-installer`) |
+| **Notes** | Installer: no external deps, Node 20+, cross-platform; opencode/kilo automated (config-dir deps, plugin copy, MCP `asfdk-governance` stdio → `dist/mcp-server.js`, config backup + merge, raw `initialize` verification); hermes/openclaw/zed/pi print documented commands. **2026-11-22 PR #38 review fixes:** merged PR head into latest `origin/main` on `fix/pr-38-review-comments` (conflicts resolved in favor of main's newer A2A/hardening code). `services.mjs` now keeps preview read-only, invokes `sc.exe` via argv arrays (CodeQL indirect-command-line fix), requires elevation for apply/remove, reconfigures existing services via `sc config` with locale-independent existence checks, reports start failures, and only deletes launchers after a successful `sc delete`. `install.mjs` rejects unknown flags, validates `--tools-gate`, verifies gate-appropriate tool sets (7/10), handles child stdin/exit errors, stops copying/registering the plugin barrel `index.ts` (and removes legacy copies), and uses `pi install <repo>`. A2A task-watch plugins (opencode + Kilo mirror) normalize hub URLs to `/a2a/register` and accept both bare task arrays and `{ tasks: [] }`. Added `services:*` scripts and npm `files` entries; documented Windows services and gate-aware verification. Verified with `node --check`, `npm run check`, `npm run services:preview`, installer smoke tests, and gate-aware MCP initialize (7/10 tools). Handoff: `docs/agent-log/handoffs/2026-11-22-opencode-big-pickle-pr38-review-fixes.json`. |
 
 ### THREAD-012 — Package ASFDK Harness as a Zed Dev Extension
 | Field | Value |
