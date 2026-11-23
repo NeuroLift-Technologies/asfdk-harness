@@ -1,0 +1,47 @@
+{
+  "handoff_record": {
+    "session_id": "codex-harness-clean-install-2026-11-22",
+    "agent_name": "Codex / OpenAI Codex",
+    "date": "2026-11-22",
+    "timestamp": "2026-11-22T22:39:24+00:00",
+    "otoi_version": "ORG-DEV-OTOI-1.0.4",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "feature/mcp-a2a-parity",
+    "work_completed": [
+      "Repaired PR #39 lockfile using the main locked graph and the npm registry metadata for ASFDK 0.2.4.",
+      "Updated the Pi fixture to assert the deliberately disabled per-turn hook and documented the clean verification sequence.",
+      "Reconciled merged PR #36 in the thread tracker.",
+      "Reconciled the active-thread timestamp with main after PR #38 merged and preserved the installer and MCP records."
+    ],
+    "work_in_progress": [
+      "Maintainer review of PR #39"
+    ],
+    "blockers": [],
+    "decisions_made": [
+      "Retained the main dependency graph around the registry ASFDK swap. PR #35 still owns its separate ip-address update."
+    ],
+    "decisions_pending": [
+      "Workstream B remains under its existing owner approval gate."
+    ],
+    "escalations": [],
+    "next_agent_notes": "Run npm ci, npm run cf:typegen, npm test, and npm run build on a fresh checkout. The generated Worker type file is ignored. Q&A on the installer belongs in PR #38.",
+    "files_modified": [
+      "package-lock.json",
+      "README.md",
+      "test/extension-load.test.ts",
+      "docs/active-threads.md",
+      "docs/agent-log/registrations/2026-11-22-codex-clean-install.json",
+      "docs/agent-log/handoffs/2026-11-22-codex-clean-install.json"
+    ],
+    "tests_run": [
+      "npm ci",
+      "npm run cf:typegen",
+      "npm test (94 passed)",
+      "npm run build",
+      "npm pack",
+      "git diff --check with the repository CRLF files honored"
+    ],
+    "tests_passing": true,
+    "pr_url": "https://github.com/NeuroLift-Technologies/asfdk-harness/pull/39"
+  }
+}

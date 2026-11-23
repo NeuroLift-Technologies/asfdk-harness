@@ -1,0 +1,30 @@
+{
+  "agent_registration": {
+    "agent_name": "Kilo",
+    "platform": "Kilo Cloud Agent",
+    "version": "NVIDIA: Nemotron 3 Ultra (free)",
+    "session_id": "workspace_c5a9738d-5af4-4b1f-a487-ceb31661b1e0",
+    "entry_date": "2026-11-21",
+    "entry_point": "Handoff NLT-HND-2026-KILO-MCP-A2A-001 (MCP Parity and Cloudflare A2A Hub)",
+    "acknowledged_otoi": true,
+    "otoi_version": "ORG-DEV-OTOI-1.0.4",
+    "working_repo": "NeuroLift-Technologies/asfdk-harness",
+    "working_branch": "feature/mcp-a2a-parity",
+    "capabilities_self_reported": [
+      "TypeScript/Node.js development",
+      "Cloudflare Workers development",
+      "MCP server implementation",
+      "A2A protocol implementation",
+      "Test-driven development",
+      "Governance contract compliance"
+    ],
+    "known_limitations": [
+      "No access to production Cloudflare environment",
+      "Cannot deploy to production without explicit approval",
+      "Cannot rotate credentials or secrets",
+      "Cannot amend NLT-DEV-OTOI.md governance contract",
+      "Must escalate architectural/deployment decisions to Joshua W. Dorsey, Sr."
+    ],
+    "preferred_handoff_format": "Structured JSON with work_completed, work_in_progress, blockers, decisions_made, decisions_pending, escalations, next_agent_notes, files_modified, tests_run, tests_passing, pr_url"
+  }
+}

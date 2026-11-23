@@ -237,6 +237,37 @@ export class AsfdkHarness {
     });
   }
 
+  /**
+   * Generate a sanitized A2A Agent Card for remote MCP clients.
+   * Redacts filesystem paths (cwd, toiPath, otoiPath, diagnostics) unless in DEVELOPMENT mode.
+   * This is the safe version for exposure via MCP to untrusted clients.
+   */
+  async a2aAgentCardSanitized(cwd?: string): Promise<A2AAgentCard> {
+    const card = await this.a2aAgentCard(cwd);
+    if (this.mode === FoundationMode.DEVELOPMENT) {
+      return card;
+    }
+    // Create a deep copy with redacted paths
+    const sanitized: A2AAgentCard = {
+      ...card,
+      governance: {
+        ...card.governance,
+        toiPath: this.redactPath(card.governance.toiPath),
+        otoiPath: this.redactPath(card.governance.otoiPath),
+        // Keep other governance fields (author, privacy, agency, guardrails, authority, otoi)
+        // as they don't contain filesystem paths
+      },
+      metadata: {
+        ...card.metadata,
+        cwd: this.redactPath(card.metadata.cwd),
+        diagnostics: card.metadata.diagnostics.map((d) =>
+          typeof d === "string" ? this.redactPathInString(d) : d,
+        ),
+      },
+    };
+    return sanitized;
+  }
+
   async foundation(): Promise<NeuroLiftFoundation> {
     if (!this.#foundation) await this.start();
     if (!this.#foundation) throw new Error("ASFDK foundation failed to initialize");
@@ -298,6 +329,36 @@ export class AsfdkHarness {
     return text
       .replace(/(^|[\s([{:;,"'])((?:\/[A-Za-z0-9._-]+){2,})(?=$|[\s)\]}:;,"'])/g, "$1[REDACTED_PATH]")
       .replace(/\b[A-Za-z]:\\[A-Za-z0-9._-]+(?:\\[A-Za-z0-9._-]+)+\b/g, "[REDACTED_PATH]");
+  }
+
+  /**
+   * Generate a sanitized protocol snapshot for remote MCP clients.
+   * Redacts filesystem paths AND limits TOI field exposure unless in DEVELOPMENT mode.
+   * Safe fields exposed: tier, author, ethicalPillars.
+   * Sensitive fields redacted: communication, privacy, agency (full objects).
+   */
+  protocolSnapshotSanitized(cwd?: string): Promise<GovernanceProtocolSnapshot> {
+    return (async () => {
+      const snapshot = await this.protocolSnapshot(cwd);
+      if (this.mode === FoundationMode.DEVELOPMENT) {
+        return snapshot;
+      }
+      // Create a sanitized copy
+      const sanitized = this.redactProtocolPaths(snapshot);
+      // Redact sensitive TOI fields
+      if (sanitized.toi) {
+        sanitized.toi = {
+          tier: sanitized.toi.tier,
+          author: sanitized.toi.author,
+          ethicalPillars: sanitized.toi.ethicalPillars,
+          // Redact sensitive fields
+          communication: { redacted: "use authorized governance tools" },
+          privacy: { redacted: "use authorized governance tools" },
+          agency: { redacted: "use authorized governance tools" },
+        };
+      }
+      return sanitized;
+    })();
   }
 }
 
