@@ -4,6 +4,9 @@
   "compatibility_date": "2026-06-01",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "main": "src/server.ts",
+  // Keep variables set in the dashboard (ACCESS_CLIENT_ID, ACCESS_*_URL) on deploy;
+  // without this, wrangler deletes every plain-text var not listed under "vars".
+  "keep_vars": true,
   "ai": {
     "binding": "AI"
   },

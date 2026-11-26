@@ -56,6 +56,8 @@ npx wrangler secret put ACCESS_JWKS_URL            # …/cdn-cgi/access/sso/oidc
 npx wrangler secret put RRT_BEHAVIORAL_TOKEN_KEY   # openssl rand -hex 32 — required, see below
 ```
 
+The non-secret values (`ACCESS_CLIENT_ID` and the three URLs) can also be plain-text variables set in the dashboard. `wrangler.jsonc` sets `keep_vars: true` so deploys keep them.
+
 Optional: `ACCESS_ISSUER`. By default the expected ID-token issuer is the authorization URL without `/authorization`. Set it only if sign-in fails with an "issuer mismatch" message in the Worker logs; that message names the issuer Access actually sent.
 
 **`RRT_BEHAVIORAL_TOKEN_KEY` is required for the Worker to start.** `@neurolift-technologies/rrt-advocate@0.1.1` generates a random HMAC key at module load when this variable is unset. The Workers runtime forbids that, so without the secret the Worker fails to start and `wrangler deploy` is rejected. This is the case on `main` too, not only with OAuth. A fixed key also keeps behavioral hashing consistent across Worker isolates. The lasting fix is upstream in rrt-advocate (generate the key lazily).
