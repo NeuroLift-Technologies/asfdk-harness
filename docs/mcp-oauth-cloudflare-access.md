@@ -40,7 +40,7 @@ Use the endpoints Cloudflare One shows for this SaaS app, not the ones from your
 
 ### 2. Make the OAuth paths public in the self-hosted Access application
 
-The **`asfdk-governance-agent - Cloudflare Workers`** self-hosted application covers the whole Worker. MCP clients can't sign in through an Access login page, so the OAuth and MCP paths need to bypass it. They are still protected: `/mcp` needs an OAuth token, and the sign-in itself goes through the SaaS app.
+The **`asfdk-governance-agent - Cloudflare Workers`** self-hosted application covers the whole Worker. MCP clients can't sign in through an Access login page, so the OAuth and MCP paths need to bypass it. They are still protected. `/mcp` needs an OAuth access token, or the legacy `ASFDK_API_TOKEN` while that secret is set (see [Legacy static token](#legacy-static-token)). The sign-in itself goes through the SaaS app.
 
 Done on 2026-11-26: the app's Worker destination has **public overrides** for these paths only:
 
@@ -92,7 +92,21 @@ Point the client at `https://asfdk-governance-agent.joshdorsey.workers.dev/mcp` 
 2. Sign in with Cloudflare Access.
 3. The browser hands control back to the client, which now has a token.
 
-Access tokens last 1 hour and refresh automatically. A grant lasts 7 days, matching the Access application's 168h session. After that, or after someone is removed from the Access policy, the client asks them to sign in again.
+### When the Access policy is checked
+
+The Access policy is checked **only when someone signs in** through `/authorize`. After that:
+
+- Access tokens last 1 hour. The client refreshes them from the stored grant without going back to Access.
+- A grant lasts **7 days from sign-in**, however often it is refreshed. That matches the Access application's 168h session. When it ends, the client asks the person to sign in again, and the policy is checked again.
+
+So **someone removed from the Access policy keeps MCP access until their grant expires**, up to 7 days after their last sign-in. To cut them off sooner, delete their keys in the `OAUTH_KV` namespace:
+
+- `grant:<user-id>:…`
+- `token:<user-id>:…`
+
+`<user-id>` is their Cloudflare Access user ID (the ID token's `sub`), URL-encoded. Every access token is checked against `OAUTH_KV`, so this takes effect within about a minute (KV propagation).
+
+The legacy static token isn't tied to a person. To cut off its holders, rotate or delete `ASFDK_API_TOKEN`.
 
 ## Legacy static token
 
