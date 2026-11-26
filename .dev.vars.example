@@ -1,0 +1,16 @@
+# Copy to .dev.vars for `wrangler dev`. Never commit .dev.vars.
+# See docs/mcp-oauth-cloudflare-access.md for where each value comes from.
+
+# Cloudflare Access for SaaS (OIDC) application
+ACCESS_CLIENT_ID=
+ACCESS_CLIENT_SECRET=
+ACCESS_AUTHORIZATION_URL=https://<team>.cloudflareaccess.com/cdn-cgi/access/sso/oidc/<client_id>/authorization
+ACCESS_TOKEN_URL=https://<team>.cloudflareaccess.com/cdn-cgi/access/sso/oidc/<client_id>/token
+ACCESS_JWKS_URL=https://<team>.cloudflareaccess.com/cdn-cgi/access/sso/oidc/<client_id>/jwks
+# ACCESS_ISSUER=   # optional override for the expected ID-token issuer
+
+# Required for the Worker to start (rrt-advocate HMAC key): openssl rand -hex 32
+RRT_BEHAVIORAL_TOKEN_KEY=
+
+# Legacy shared secret: still accepted on /mcp, required on /agents/*
+ASFDK_API_TOKEN=

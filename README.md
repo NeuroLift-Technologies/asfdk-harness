@@ -104,7 +104,9 @@ It listens on `http://127.0.0.1:8788/mcp` by default. Override `MCP_HTTP_HOST`, 
 
 ### Cloudflare Worker MCP
 
-The Cloudflare Worker now also serves `/mcp` behind the same bearer token gate as the agent route. After deploy, the MCP URL is the Worker origin plus `/mcp`.
+The Cloudflare Worker also serves `/mcp`. After deploy, the MCP URL is the Worker origin plus `/mcp`.
+
+`/mcp` is protected by **OAuth 2.1** (`@cloudflare/workers-oauth-provider`), and people sign in through **Cloudflare Access**. MCP clients find the sign-in flow on their own: give them the URL with no `Authorization` header. Setup, the Zero Trust steps and required secrets are in [docs/mcp-oauth-cloudflare-access.md](docs/mcp-oauth-cloudflare-access.md). The older `ASFDK_API_TOKEN` bearer token is still accepted on `/mcp` while existing clients move over.
 
 #### Verify the endpoint
 
@@ -115,7 +117,7 @@ export ASFDK_TOKEN="cfat_...your_token..."
 curl -sS -X POST https://<your-worker-origin>/mcp -H "Authorization: Bearer $ASFDK_TOKEN" -H "Content-Type: application/json" -H "Accept: application/json, text/event-stream" --data '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"diag","version":"0.0.0"}}}'
 ```
 
-A healthy server returns HTTP 200 and an SSE event containing `"serverInfo":{"name":"asfdk-harness",...}`. A missing/invalid token returns `401 Unauthorized`.
+A healthy server returns HTTP 200 and an SSE event containing `"serverInfo":{"name":"asfdk-harness",...}`. A missing/invalid token returns `401 Unauthorized` with a `WWW-Authenticate` header pointing MCP clients at the OAuth metadata.
 
 ## Environment
 
