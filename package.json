@@ -74,6 +74,7 @@
   ],
   "author": "NeuroLift Technologies <info@neuroliftsolutions.com>",
   "license": "Apache-2.0",
+  "packageManager": "npm@11.21.3",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/NeuroLift-Technologies/asfdk-harness.git"

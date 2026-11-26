@@ -71,7 +71,12 @@ Optional: `ACCESS_ISSUER`. By default the expected ID-token issuer is the author
 
 ### 4. Deploy
 
+The repository is connected to the Worker through **Workers Builds** (production branch `main`). Merging to `main` runs `npm ci`, then `npm run build`, then `npm run cf:deploy`. `package.json` pins `"packageManager": "npm@11.21.3"` because npm 10, the build image's default, rejects this lockfile with ERESOLVE.
+
+To deploy by hand instead:
+
 ```bash
+npm ci            # npm 11; on npm 10 use: npm ci --force
 npm run cf:typegen
 npm test
 npm run cf:deploy
