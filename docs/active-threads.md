@@ -2,7 +2,7 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-11-26T12:40:00Z
+**Last updated:** 2026-11-26T13:00:00Z
 
 ---
 
@@ -32,7 +32,7 @@
 | **Branch** | `ccr-45fa6cf9-cxr7a1` |
 | **Task** | Add OAuth to the Worker `/mcp` endpoint with `@cloudflare/workers-oauth-provider`, signing people in through Cloudflare Access. |
 | **Scope** | `src/server.ts`, `src/oauth/*`, `test/oauth-access.test.ts`, `wrangler.jsonc`, tsconfigs, `package.json`/lock, `README.md`, `src/CLAUDE.md`, `.dev.vars.example`, `docs/mcp-oauth-cloudflare-access.md`, `docs/agent-log/*` |
-| **Blockers** | Deploy waits for PR #40 to merge (Joshua chose not to deploy from the branch). Deploying needs Cloudflare credentials: `npm run cf:deploy` on Joshua's machine, or an API credential for this cloud environment. Done 2026-11-26: Joshua created the Access for SaaS OIDC app `asfdk-governance-agent` and set the `ACCESS_*` variables and secrets plus `RRT_BEHAVIORAL_TOKEN_KEY` on the Worker. Claude added public path overrides for the OAuth/MCP paths on the self-hosted Access app, with Joshua's approval; `/agents/*` and all other paths stay behind Access. |
+| **Blockers** | Deploy waits for PR #40 to merge (Joshua chose not to deploy from the branch). Joshua connected the repo to the Worker through Workers Builds (production branch `main`; `npm ci`, then `npm run build`, then `npm run cf:deploy`), so the merge deploys automatically. `package.json` pins npm 11 because the build image's npm 10 rejects the lockfile (ERESOLVE). Done 2026-11-26: Joshua created the Access for SaaS OIDC app `asfdk-governance-agent` and set the `ACCESS_*` variables and secrets plus `RRT_BEHAVIORAL_TOKEN_KEY` on the Worker. Claude added public path overrides for the OAuth/MCP paths on the self-hosted Access app, with Joshua's approval; `/agents/*` and all other paths stay behind Access. |
 | **Related PR** | [#40](https://github.com/NeuroLift-Technologies/asfdk-harness/pull/40) |
 | **Notes** | Consent page, then Access (PKCE, browser-bound single-use state), then ID-token verification (RS256/JWKS, iss, aud, exp). DCR + CIMD; 1h access tokens; 7-day grants matching the Access session. Legacy `ASFDK_API_TOKEN` is still accepted on `/mcp`; `/agents/*` is unchanged. Verified: 22 unit tests, 23/23 end-to-end checks against `wrangler dev` with a stand-in OIDC provider, deploy dry-run. Answers escalation 2026-06-25 decision (1) for `/mcp`. `wrangler.jsonc` sets `keep_vars: true` because the `ACCESS_*` values are dashboard plain-text vars that a deploy would otherwise delete. Until the deploy, the old Worker answers the public paths with its static-token gate (401 without the token). Handoff: `docs/agent-log/handoffs/2026-11-26-claude-code-mcp-oauth.json`. |
 
