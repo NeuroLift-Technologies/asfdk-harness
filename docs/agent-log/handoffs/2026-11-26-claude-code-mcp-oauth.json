@@ -58,6 +58,6 @@
       "wrangler deploy --dry-run with the real wrangler.jsonc (bundles; OAUTH_KV and AI bindings listed)"
     ],
     "test_result": "new_tests_pass; e2e_pass; no_regression_vs_base; 1_preexisting_failure",
-    "pr_url": "TBD"
+    "pr_url": "https://github.com/NeuroLift-Technologies/asfdk-harness/pull/40"
   }
 }
