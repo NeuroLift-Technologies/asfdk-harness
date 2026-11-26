@@ -173,3 +173,6 @@ agents/**/*.js.map
 
 # Zed extension build output
 zed-extension/target/
+
+# Claude Code worktrees (local only; a committed gitlink here breaks Workers Builds clones)
+.claude/worktrees/
