@@ -1,6 +1,6 @@
 # `.claude/hooks/` — Session Lifecycle Hooks
 
-**Governed by:** ORG-DEV-OTOI-1.0.2
+**Governed by:** ORG-DEV-OTOI-1.0.4
 
 ---
 
@@ -26,4 +26,4 @@ For repo-specific additions (e.g., a project-specific test runner check), add th
 
 ---
 
-*NeuroLift Technologies — Internal Governance | ORG-DEV-OTOI-1.0.2*
+*NeuroLift Technologies — Internal Governance | ORG-DEV-OTOI-1.0.4*

@@ -3,7 +3,7 @@ description: File an escalation record and GitHub issue per OTOI §4.3
 argument-hint: "<brief topic, e.g. 'database choice'>"
 ---
 
-Create a complete escalation record per ORG-DEV-OTOI-1.0.2 Section 4.3 and file a GitHub issue.
+Create a complete escalation record per ORG-DEV-OTOI-1.0.4 Section 4.3 and file a GitHub issue.
 
 **Topic:** $ARGUMENTS
 
@@ -35,7 +35,7 @@ Use this command immediately when any of the following is true:
    - **Date** (ISO 8601 with time, UTC)
    - **Agent**: Claude Code
    - **Session**: current branch
-   - **OTOI Version**: ORG-DEV-OTOI-1.0.2
+   - **OTOI Version**: ORG-DEV-OTOI-1.0.4
    - **Escalation Target**: Joshua W. Dorsey, Sr.
    - **Priority**
    - **Trigger** (what caused this escalation)
@@ -55,7 +55,7 @@ Use this command immediately when any of the following is true:
 
 6. Commit with:
    ```
-   [Claude] docs(escalation): file <topic> escalation (ORG-DEV-OTOI-1.0.2)
+   [Claude] docs(escalation): file <topic> escalation (ORG-DEV-OTOI-1.0.4)
    ```
 
 7. Report back: the issue URL, the record path, and a one-sentence summary.

@@ -2,7 +2,7 @@
 name: SWE
 description: 'Senior software engineer subagent for implementation tasks: feature development, debugging, refactoring, and testing. Use when the task is concrete implementation work (not review, not governance, not research). Produces minimal, correct diffs with tests.'
 version: 1.0.0
-nlt-otoi-version: ORG-DEV-OTOI-1.0.2
+nlt-otoi-version: ORG-DEV-OTOI-1.0.4
 nlt-solidarity-framework: true
 nlt-haief: true
 nlt-authority: Joshua W. Dorsey, Sr.

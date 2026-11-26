@@ -2,7 +2,7 @@
   "handoff_record": {
     "session_id": "session_01UNjnjkTjXhqaVVdLSgTQrD",
     "agent_name": "Claude Code",
-    "date": "2026-11-26T10:20:00Z",
+    "date": "2026-11-26T12:30:00Z",
     "otoi_version": "ORG-DEV-OTOI-1.0.4",
     "repo": "NeuroLift-Technologies/asfdk-harness",
     "branch": "ccr-45fa6cf9-cxr7a1",
@@ -10,13 +10,15 @@
       "Worker /mcp is now an OAuth 2.1 protected resource via @cloudflare/workers-oauth-provider 1.4.0 (DCR + CIMD, PKCE S256, RFC 9728/8414 discovery, 1h access tokens, 7-day grants matching the Access session).",
       "Sign-in goes through a Cloudflare Access for SaaS (OIDC) application: consent page first (MCP confused-deputy guidance), then Access with PKCE and a browser-bound single-use state, then ID-token verification (RS256 via JWKS, iss, aud, exp/nbf/iat).",
       "Legacy ASFDK_API_TOKEN still accepted on /mcp through resolveExternalToken (constant-time compare); /agents/* keeps its static-token gate unchanged.",
-      "Added docs/mcp-oauth-cloudflare-access.md, .dev.vars.example, README and src/CLAUDE.md updates, and 22 unit tests."
+      "Added docs/mcp-oauth-cloudflare-access.md, .dev.vars.example, README and src/CLAUDE.md updates, and 22 unit tests.",
+      "THREAD-018: synced ORG-DEV-OTOI references from 1.0.2/1.0.3 to 1.0.4 across 41 files to match NeuroLift-Technologies/.github (version strings only; dated history, escalations, agent logs and .otoi unchanged)."
     ],
     "work_in_progress": [],
     "blockers": [
       "The Worker cannot start on main or on this branch unless RRT_BEHAVIORAL_TOKEN_KEY is set: @neurolift-technologies/rrt-advocate@0.1.1 calls randomBytes at module scope, which the Workers runtime forbids. Documented as a required secret; the lasting fix belongs in rrt-advocate.",
       "npm ci fails on main with ERESOLVE (agents@0.20.1 wants @cloudflare/codemode>=0.5, @cloudflare/think@0.10 pins ^0.4). npm ci --force installs the lockfile as-is; --legacy-peer-deps omits peers that the Worker bundle needs.",
-      "The existing self-hosted Access application covers the whole Worker, so MCP clients would hit the Access login page instead of OAuth until it is removed or narrowed to /agents."
+      "The existing self-hosted Access application covers the whole Worker, so MCP clients would hit the Access login page instead of OAuth until it is removed or narrowed to /agents.",
+      ".github-private still carries ORG-DEV-OTOI-1.0.2/1.0.3 in the .claude/ template it propagates nightly; it needs the same bump or the old numbers return."
     ],
     "decisions_made": [
       "Access for SaaS (OIDC) as the upstream identity provider, following Cloudflare's documented pattern for workers-oauth-provider, instead of validating the self-hosted app's Cf-Access-Jwt-Assertion on /authorize.",
@@ -29,7 +31,8 @@
       "Joshua: create the Access for SaaS app, remove or narrow the self-hosted Access app, set the secrets, and approve a deploy.",
       "Joshua: when to retire the legacy ASFDK_API_TOKEN on /mcp.",
       "Joshua: whether /agents/* should also move to OAuth or Access.",
-      "Answers decision (1) of docs/escalations/2026-06-25-round2-architectural-decisions.md for /mcp: Cloudflare Access with per-user identity."
+      "Answers decision (1) of docs/escalations/2026-06-25-round2-architectural-decisions.md for /mcp: Cloudflare Access with per-user identity.",
+      "Joshua: whether to update the stale NLT-DEV-OTOI.md sha256 pinned in .otoi (user-declared terms, left unchanged)."
     ],
     "files_modified": [
       "src/server.ts",
@@ -48,7 +51,21 @@
       "docs/mcp-oauth-cloudflare-access.md",
       "docs/active-threads.md",
       "docs/agent-log/registrations/2026-11-26-claude-code-mcp-oauth.json",
-      "docs/agent-log/handoffs/2026-11-26-claude-code-mcp-oauth.json"
+      "docs/agent-log/handoffs/2026-11-26-claude-code-mcp-oauth.json",
+      "nltotoi.json",
+      "CLAUDE.md",
+      "AGENTS.md",
+      "NLT-DEV-OTOI.md",
+      ".claude/**",
+      "SOPs/*",
+      "templates/*",
+      "ISSUE_TEMPLATE/*",
+      "PULL_REQUEST_TEMPLATE/agent-contribution.md",
+      "REVIEW.md",
+      "INSTALL.md",
+      "src/AGENTS.md",
+      "src/README.md",
+      "agents/asfdk-governance/agent.ts"
     ],
     "tests_run": [
       "npm run check; npm run cf:check (clean)",

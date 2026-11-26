@@ -3,14 +3,14 @@
 # Prints OTOI reading order and validates governance file presence at session start.
 # Informational only — always exits 0 so it never blocks the session.
 #
-# Governed by: ORG-DEV-OTOI-1.0.2
+# Governed by: ORG-DEV-OTOI-1.0.4
 # Authority:   Joshua W. Dorsey, Sr.
 # SOP:         SOP-NLT-002 (repo-governance-setup.md)
 
 set -uo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
-OTOI_VERSION="${NLT_OTOI_VERSION:-ORG-DEV-OTOI-1.0.2}"
+OTOI_VERSION="${NLT_OTOI_VERSION:-ORG-DEV-OTOI-1.0.4}"
 AUTHORITY="${NLT_AUTHORITY:-Joshua W. Dorsey, Sr.}"
 ESCALATION="${NLT_ESCALATION_TARGET:-info@neuroliftsolutions.com}"
 

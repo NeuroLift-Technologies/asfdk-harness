@@ -49,7 +49,7 @@
     ]
   },
   "env": {
-    "NLT_OTOI_VERSION": "ORG-DEV-OTOI-1.0.2",
+    "NLT_OTOI_VERSION": "ORG-DEV-OTOI-1.0.4",
     "NLT_AUTHORITY": "Joshua W. Dorsey, Sr.",
     "NLT_ESCALATION_TARGET": "info@neuroliftsolutions.com",
     "NLT_GOVERNANCE_SOURCE": "NeuroLift-Technologies/.github-private"

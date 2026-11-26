@@ -2,11 +2,25 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-11-26T10:20:00Z
+**Last updated:** 2026-11-26T12:30:00Z
 
 ---
 
 ## Active Threads
+
+### THREAD-018 — Sync ORG-DEV-OTOI references to 1.0.4
+| Field | Value |
+|---|---|
+| **Thread ID** | THREAD-018 |
+| **Status** | 🟡 In PR #40 — needs the matching upstream bump in `.github-private` |
+| **Started** | 2026-11-26 |
+| **Owner** | Claude Code (requested by Joshua W. Dorsey, Sr.) |
+| **Branch** | `ccr-45fa6cf9-cxr7a1` |
+| **Task** | Bring the repo's governance references in line with `NeuroLift-Technologies/.github`, which is at ORG-DEV-OTOI-1.0.4. PR #37 bumped `NLT-DEV-OTOI.md`'s header and history but left its body and the rest of the repo at 1.0.3 (and `.claude/` at 1.0.2). |
+| **Scope** | Version strings only, in 41 files: `NLT-DEV-OTOI.md` body, `CLAUDE.md`, `AGENTS.md`, `src/*.md`, `nltotoi.json`, `.claude/**`, `SOPs/*`, `templates/*`, `ISSUE_TEMPLATE/*`, `PULL_REQUEST_TEMPLATE/*`, `REVIEW.md`, `INSTALL.md`, `agents/asfdk-governance/agent.ts` fallback. Unchanged: the contract's dated version-history rows, `docs/escalations/*`, `docs/agent-log/*`, `.otoi`. |
+| **Blockers** | `.claude/` (and probably the SOPs and templates) is propagated nightly from `.github-private`, which still has 1.0.2/1.0.3. The same bump is needed there, or `governance-auto-propagate.yml` will bring the old numbers back. This session cannot reach `.github-private`. |
+| **Related PR** | [#40](https://github.com/NeuroLift-Technologies/asfdk-harness/pull/40) |
+| **Notes** | `nltotoi.json` now points `org_developer_otoi` at this repo's `NLT-DEV-OTOI.md` with its real SHA-256, as 1.0.4 already did for `.otoi`. `.otoi`'s own pinned SHA-256 (`e365bb…`) matches no version of the file; it was left alone because `.otoi` is the user's declared terms. `CLAUDE.md`'s public-mirror link pointed at a `governance/NLT-DEV-OTOI.md` that does not exist in `.github`; it now points at `.github`'s `governance.yaml`. |
 
 ### THREAD-017 — OAuth for the Worker MCP endpoint (Cloudflare Access sign-in)
 | Field | Value |

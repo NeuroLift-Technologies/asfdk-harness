@@ -199,4 +199,4 @@ were successfully deleted. A failed `sc delete` leaves its launcher in place.
   setup guides using the remote Cloudflare Worker MCP (`ASFDK_GOVERNANCE_TOOLS`
   token) instead of the local server.
 
-*Governance: configured per ORG-DEV-OTOI-1.0.3. Final authority: Joshua W. Dorsey, Sr.*
+*Governance: configured per ORG-DEV-OTOI-1.0.4. Final authority: Joshua W. Dorsey, Sr.*

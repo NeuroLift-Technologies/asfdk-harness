@@ -10,7 +10,7 @@
 **Date:** [ISO 8601, e.g. 2026-03-31T15:00:00Z]
 **Agent:** [Agent name / platform]
 **Session:** [Branch or session ID]
-**OTOI Version:** ORG-DEV-OTOI-1.0.3
+**OTOI Version:** ORG-DEV-OTOI-1.0.4
 **Working repo:** [e.g. NeuroLift-Technologies/some-repo]
 
 ---

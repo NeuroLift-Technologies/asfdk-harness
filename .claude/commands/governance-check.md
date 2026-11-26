@@ -22,6 +22,6 @@ Run NLT governance compliance validation.
 4. If anything fails, propose remediation:
    - **Missing governance files** → trigger `sync-governance-public.yml` in `.github-private` or follow SOP-NLT-002
    - **Missing `.claude/` template** → next nightly run of `governance-auto-propagate.yml` will open a sync PR; or manually copy from `.github-private/.claude/`
-   - **Content marker missing** (e.g., `ORG-DEV-OTOI-1.0.2` not present in `NLT-DEV-OTOI.md`) → do NOT edit the marker out; this indicates a content drift that needs investigation
+   - **Content marker missing** (e.g., `ORG-DEV-OTOI-1.0.4` not present in `NLT-DEV-OTOI.md`) → do NOT edit the marker out; this indicates a content drift that needs investigation
 
 5. Do not attempt to fix governance content yourself. Surface findings and let the human decide.

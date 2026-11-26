@@ -71,7 +71,7 @@ Every agent beginning a session in any NLT repo should self-register using the f
     "entry_date":         "[ISO 8601 date, e.g. 2026-03-31]",
     "entry_point":        "[Which file, task, or conversation brought you in]",
     "acknowledged_otoi":  true,
-    "otoi_version":       "ORG-DEV-OTOI-1.0.3",
+    "otoi_version":       "ORG-DEV-OTOI-1.0.4",
     "working_repo":       "[e.g. NeuroLift-Technologies/some-repo]",
     "working_branch":     "[e.g. feature/my-feature]",
     "capabilities_self_reported": [
@@ -93,7 +93,7 @@ The standalone template is also available at `templates/agent-registration.json`
 
 ### 4.1 Session Start Protocol
 
-1. Read this document (ORG-DEV-OTOI-1.0.3)
+1. Read this document (ORG-DEV-OTOI-1.0.4)
 2. Read the repo-level CLAUDE.md (if present)
 3. Read `docs/active-threads.md` in the working repo (if present)
 4. Self-register (Section 3)
@@ -294,4 +294,4 @@ Agents may not self-amend this document.
 
 ---
 
-*ORG-DEV-OTOI-1.0.3 | NeuroLift Technologies | Governed by Solidarity Framework & HAIEF*
+*ORG-DEV-OTOI-1.0.4 | NeuroLift Technologies | Governed by Solidarity Framework & HAIEF*

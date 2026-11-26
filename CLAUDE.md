@@ -6,8 +6,8 @@
 > **Mandatory reading (in order):**
 > 1. Org-level governance: `NLT-DEV-OTOI.md`
 >    Private canonical source: https://github.com/NeuroLift-Technologies/.github-private/blob/main/NLT-DEV-OTOI.md
->    Public mirror (if private link returns 404):
->    https://github.com/NeuroLift-Technologies/.github/blob/main/governance/NLT-DEV-OTOI.md
+>    Public contract (if the private link returns 404):
+>    https://github.com/NeuroLift-Technologies/.github/blob/main/governance.yaml
 > 2. Internal gateway: `AGENTS.md`
 > 3. Active threads: `docs/active-threads.md`
 >
@@ -15,7 +15,7 @@
 > deployment, UX, and strategic decisions. Escalate. Do not guess.
 >
 > **Governed by:** Solidarity Framework | HAIEF | https://elevaitionfoundation.org
-> **OTOI Version:** ORG-DEV-OTOI-1.0.3
+> **OTOI Version:** ORG-DEV-OTOI-1.0.4
 
 ---
 

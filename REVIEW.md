@@ -18,7 +18,7 @@ This file defines the canonical format for agent-conducted reviews in NLT reposi
 **Review Date:** [ISO 8601 date]
 **Review Type:** [Code | Content | Governance | Security]
 **Scope:** [Files, pages, or sections reviewed]
-**OTOI Version:** ORG-DEV-OTOI-1.0.3
+**OTOI Version:** ORG-DEV-OTOI-1.0.4
 
 ---
 
@@ -99,4 +99,4 @@ This file defines the canonical format for agent-conducted reviews in NLT reposi
 
 ---
 
-*This review was conducted following the format defined in `REVIEW.md` under ORG-DEV-OTOI-1.0.3.*
+*This review was conducted following the format defined in `REVIEW.md` under ORG-DEV-OTOI-1.0.4.*
