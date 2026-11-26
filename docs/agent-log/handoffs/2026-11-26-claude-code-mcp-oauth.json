@@ -2,7 +2,7 @@
   "handoff_record": {
     "session_id": "session_01UNjnjkTjXhqaVVdLSgTQrD",
     "agent_name": "Claude Code",
-    "date": "2026-11-26T12:30:00Z",
+    "date": "2026-11-26T12:40:00Z",
     "otoi_version": "ORG-DEV-OTOI-1.0.4",
     "repo": "NeuroLift-Technologies/asfdk-harness",
     "branch": "ccr-45fa6cf9-cxr7a1",
@@ -11,24 +11,27 @@
       "Sign-in goes through a Cloudflare Access for SaaS (OIDC) application: consent page first (MCP confused-deputy guidance), then Access with PKCE and a browser-bound single-use state, then ID-token verification (RS256 via JWKS, iss, aud, exp/nbf/iat).",
       "Legacy ASFDK_API_TOKEN still accepted on /mcp through resolveExternalToken (constant-time compare); /agents/* keeps its static-token gate unchanged.",
       "Added docs/mcp-oauth-cloudflare-access.md, .dev.vars.example, README and src/CLAUDE.md updates, and 22 unit tests.",
-      "THREAD-018: synced ORG-DEV-OTOI references from 1.0.2/1.0.3 to 1.0.4 across 41 files to match NeuroLift-Technologies/.github (version strings only; dated history, escalations, agent logs and .otoi unchanged)."
+      "THREAD-018: synced ORG-DEV-OTOI references from 1.0.2/1.0.3 to 1.0.4 across 41 files to match NeuroLift-Technologies/.github (version strings only; dated history, escalations, agent logs and .otoi unchanged).",
+      "wrangler.jsonc: keep_vars: true, so deploys keep the ACCESS_* plain-text variables Joshua set in the dashboard.",
+      "Zero Trust (Joshua approved narrowing the self-hosted app): added public path overrides on the self-hosted Access app's Worker destination for /mcp, /mcp/*, /authorize, /callback, /token, /register and the two /.well-known/oauth-* paths (with /*). Verified at the edge: those 10 paths reach the Worker (401 from the old static-token gate), while /agents/*, / and other paths still redirect to the Access login."
     ],
     "work_in_progress": [],
     "blockers": [
       "The Worker cannot start on main or on this branch unless RRT_BEHAVIORAL_TOKEN_KEY is set: @neurolift-technologies/rrt-advocate@0.1.1 calls randomBytes at module scope, which the Workers runtime forbids. Documented as a required secret; the lasting fix belongs in rrt-advocate.",
       "npm ci fails on main with ERESOLVE (agents@0.20.1 wants @cloudflare/codemode>=0.5, @cloudflare/think@0.10 pins ^0.4). npm ci --force installs the lockfile as-is; --legacy-peer-deps omits peers that the Worker bundle needs.",
-      "The existing self-hosted Access application covers the whole Worker, so MCP clients would hit the Access login page instead of OAuth until it is removed or narrowed to /agents.",
-      ".github-private still carries ORG-DEV-OTOI-1.0.2/1.0.3 in the .claude/ template it propagates nightly; it needs the same bump or the old numbers return."
+      ".github-private still carries ORG-DEV-OTOI-1.0.2/1.0.3 in the .claude/ template it propagates nightly; it needs the same bump or the old numbers return.",
+      "Deploy waits for PR #40 to merge (Joshua's decision). The cloud session has no Cloudflare credentials; deploy with `npm ci --force && npm run cf:typegen && npm run cf:deploy` or provide an API credential."
     ],
     "decisions_made": [
       "Access for SaaS (OIDC) as the upstream identity provider, following Cloudflare's documented pattern for workers-oauth-provider, instead of validating the self-hosted app's Cf-Access-Jwt-Assertion on /authorize.",
       "OAuth resource derived from the request origin (one provider per origin), so workers.dev, previews, custom domains and wrangler dev need no extra config.",
       "Only identity claims (sub, email, name) are kept in grant props; the Access access token is discarded.",
       "Refresh-token lifetime 7 days to match the Access application's 168h session.",
-      "OAUTH_KV binding without an id so wrangler provisions a dedicated namespace on deploy, instead of sharing the SESSION/GOVERNANCE namespace."
+      "OAUTH_KV binding without an id so wrangler provisions a dedicated namespace on deploy, instead of sharing the SESSION/GOVERNANCE namespace.",
+      "Used Access destination path overrides (public allow-list) instead of moving the destination to /agents, so unknown paths stay behind Access."
     ],
     "decisions_pending": [
-      "Joshua: create the Access for SaaS app, remove or narrow the self-hosted Access app, set the secrets, and approve a deploy.",
+      "Joshua: merge PR #40, then deploy the Worker.",
       "Joshua: when to retire the legacy ASFDK_API_TOKEN on /mcp.",
       "Joshua: whether /agents/* should also move to OAuth or Access.",
       "Answers decision (1) of docs/escalations/2026-06-25-round2-architectural-decisions.md for /mcp: Cloudflare Access with per-user identity.",

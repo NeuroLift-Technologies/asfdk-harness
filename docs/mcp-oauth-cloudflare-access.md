@@ -38,12 +38,19 @@ Zero Trust dashboard → **Access controls → Applications → Add an applicati
 
 Use the endpoints Cloudflare One shows for this SaaS app, not the ones from your upstream identity provider.
 
-### 2. Change the existing self-hosted Access application
+### 2. Make the OAuth paths public in the self-hosted Access application
 
-The **`asfdk-governance-agent - Cloudflare Workers`** self-hosted application (created 2026-11-26) currently covers the whole Worker. MCP clients can't sign in through an Access login page: their requests to `/mcp`, `/.well-known/*`, `/token` and `/register` would get the Access login screen instead of OAuth. Pick one:
+The **`asfdk-governance-agent - Cloudflare Workers`** self-hosted application covers the whole Worker. MCP clients can't sign in through an Access login page, so the OAuth and MCP paths need to bypass it. They are still protected: `/mcp` needs an OAuth token, and the sign-in itself goes through the SaaS app.
 
-- **Remove it.** The SaaS app from step 1 now decides who can sign in, and `/agents/*` is still behind `ASFDK_API_TOKEN`.
-- **Or narrow it to `/agents/*`.** Change its destination from the whole Worker to `asfdk-governance-agent.joshdorsey.workers.dev/agents` (and the preview hostname pattern, if you use previews). The agent routes then keep Access in front of them.
+Done on 2026-11-26: the app's Worker destination has **public overrides** for these paths only:
+
+```
+/mcp   /mcp/*   /authorize   /callback   /token   /register
+/.well-known/oauth-protected-resource     /.well-known/oauth-protected-resource/*
+/.well-known/oauth-authorization-server   /.well-known/oauth-authorization-server/*
+```
+
+Everything else, including `/agents/*`, `/` and any path added later, stays behind Access. To change the list: Zero Trust → Access controls → Applications → the self-hosted app → destination → path overrides. You can also use the API (`destinations[].overrides`).
 
 ### 3. Set the Worker secrets
 
