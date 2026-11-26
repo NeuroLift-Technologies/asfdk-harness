@@ -82,7 +82,7 @@ npm test
 npm run cf:deploy
 ```
 
-The first deploy creates the `OAUTH_KV` namespace automatically (its binding in `wrangler.jsonc` has no `id`). Grants, tokens and registered clients live there. Tokens are stored only as hashes, and grant props are encrypted.
+Grants, tokens and registered clients live in the `OAUTH_KV` namespace (`asfdk-governance-OAUTH`, pinned by `id` in `wrangler.jsonc`). Tokens are stored only as hashes, and grant props are encrypted.
 
 ## Connecting a client
 

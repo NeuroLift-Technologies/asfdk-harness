@@ -2,7 +2,7 @@
   "handoff_record": {
     "session_id": "session_01UNjnjkTjXhqaVVdLSgTQrD",
     "agent_name": "Claude Code",
-    "date": "2026-11-26T13:00:00Z",
+    "date": "2026-11-26T13:10:00Z",
     "otoi_version": "ORG-DEV-OTOI-1.0.4",
     "repo": "NeuroLift-Technologies/asfdk-harness",
     "branch": "ccr-45fa6cf9-cxr7a1",
@@ -14,22 +14,23 @@
       "THREAD-018: synced ORG-DEV-OTOI references from 1.0.2/1.0.3 to 1.0.4 across 41 files to match NeuroLift-Technologies/.github (version strings only; dated history, escalations, agent logs and .otoi unchanged).",
       "wrangler.jsonc: keep_vars: true, so deploys keep the ACCESS_* plain-text variables Joshua set in the dashboard.",
       "Zero Trust (Joshua approved narrowing the self-hosted app): added public path overrides on the self-hosted Access app's Worker destination for /mcp, /mcp/*, /authorize, /callback, /token, /register and the two /.well-known/oauth-* paths (with /*). Verified at the edge: those 10 paths reach the Worker (401 from the old static-token gate), while /agents/*, / and other paths still redirect to the Access login.",
-      "package.json: packageManager npm@11.21.3. Workers Builds (connected by Joshua, production branch main) runs npm ci on npm 10, which rejects the lockfile with ERESOLVE; npm 11 installs it. Simulated the build in a clean checkout (npm 11 ci, then npm run build, then wrangler deploy --dry-run): passes."
+      "package.json: packageManager npm@11.21.3. Workers Builds (connected by Joshua, production branch main) runs npm ci on npm 10, which rejects the lockfile with ERESOLVE; npm 11 installs it. Simulated the build in a clean checkout (npm 11 ci, then npm run build, then wrangler deploy --dry-run): passes.",
+      "wrangler.jsonc: OAUTH_KV pinned to the existing, empty, unbound namespace asfdk-governance-OAUTH (31fd8d52\u2026), so the first Workers Builds deploy needs no KV-create permission."
     ],
     "work_in_progress": [],
     "blockers": [
       "The Worker cannot start on main or on this branch unless RRT_BEHAVIORAL_TOKEN_KEY is set: @neurolift-technologies/rrt-advocate@0.1.1 calls randomBytes at module scope, which the Workers runtime forbids. Documented as a required secret; the lasting fix belongs in rrt-advocate.",
       "npm ci fails on main with ERESOLVE (agents@0.20.1 wants @cloudflare/codemode>=0.5, @cloudflare/think@0.10 pins ^0.4). npm ci --force installs the lockfile as-is; --legacy-peer-deps omits peers that the Worker bundle needs.",
       ".github-private still carries ORG-DEV-OTOI-1.0.2/1.0.3 in the .claude/ template it propagates nightly; it needs the same bump or the old numbers return.",
-      "Deploy waits for PR #40 to merge; Workers Builds then deploys main automatically. If the first build fails creating OAUTH_KV (the build token was reused from nlt-openapi and its permissions could not be read), create the namespace and put its id in wrangler.jsonc."
+      "Deploy waits for PR #40 to merge; Workers Builds then deploys main automatically."
     ],
     "decisions_made": [
       "Access for SaaS (OIDC) as the upstream identity provider, following Cloudflare's documented pattern for workers-oauth-provider, instead of validating the self-hosted app's Cf-Access-Jwt-Assertion on /authorize.",
       "OAuth resource derived from the request origin (one provider per origin), so workers.dev, previews, custom domains and wrangler dev need no extra config.",
       "Only identity claims (sub, email, name) are kept in grant props; the Access access token is discarded.",
       "Refresh-token lifetime 7 days to match the Access application's 168h session.",
-      "OAUTH_KV binding without an id so wrangler provisions a dedicated namespace on deploy, instead of sharing the SESSION/GOVERNANCE namespace.",
-      "Used Access destination path overrides (public allow-list) instead of moving the destination to /agents, so unknown paths stay behind Access."
+      "Used Access destination path overrides (public allow-list) instead of moving the destination to /agents, so unknown paths stay behind Access.",
+      "OAUTH_KV uses the dedicated namespace asfdk-governance-OAUTH, not the SESSION/GOVERNANCE one."
     ],
     "decisions_pending": [
       "Joshua: merge PR #40 (Workers Builds deploys main automatically).",
