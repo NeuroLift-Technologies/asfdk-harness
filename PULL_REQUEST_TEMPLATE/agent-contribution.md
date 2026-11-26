@@ -2,7 +2,7 @@
 
 **Agent:** [Name / platform]
 **Session:** [Branch / session ID]
-**Governed by:** ORG-DEV-OTOI-1.0.3
+**Governed by:** ORG-DEV-OTOI-1.0.4
 **Working repo:** [Repository name]
 
 ---

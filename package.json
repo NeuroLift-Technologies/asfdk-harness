@@ -74,6 +74,7 @@
   ],
   "author": "NeuroLift Technologies <info@neuroliftsolutions.com>",
   "license": "Apache-2.0",
+  "packageManager": "npm@11.21.3",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/NeuroLift-Technologies/asfdk-harness.git"
@@ -85,6 +86,7 @@
   "dependencies": {
     "@cloudflare/shell": "^0.4.0",
     "@cloudflare/think": "^0.10.0",
+    "@cloudflare/workers-oauth-provider": "^1.4.0",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@neurolift-technologies/asfdk": "^0.2.4",
     "agents": "^0.20.1",

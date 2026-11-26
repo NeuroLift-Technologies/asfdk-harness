@@ -2,8 +2,11 @@
   "$schema": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/config-schema.json",
   "name": "asfdk-governance-agent",
   "compatibility_date": "2026-06-01",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
   "main": "src/server.ts",
+  // Keep variables set in the dashboard (ACCESS_CLIENT_ID, ACCESS_*_URL) on deploy;
+  // without this, wrangler deletes every plain-text var not listed under "vars".
+  "keep_vars": true,
   "ai": {
     "binding": "AI"
   },
@@ -15,6 +18,12 @@
     {
       "binding": "GOVERNANCE",
       "id": "37151fbc32b944e59da444aa6117edfe"
+    },
+    {
+      // MCP OAuth clients, grants and tokens (@cloudflare/workers-oauth-provider).
+      // Namespace "asfdk-governance-OAUTH", dedicated to OAuth.
+      "binding": "OAUTH_KV",
+      "id": "31fd8d52237849279b988e6aa2037652"
     }
   ],
   "observability": {

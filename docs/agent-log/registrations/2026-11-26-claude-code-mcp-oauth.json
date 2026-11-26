@@ -1,0 +1,24 @@
+{
+  "agent_registration": {
+    "agent_name": "Claude Code",
+    "platform": "claude-code-remote",
+    "version": "cloud session",
+    "session_id": "session_01UNjnjkTjXhqaVVdLSgTQrD",
+    "entry_date": "2026-11-26",
+    "entry_point": "Joshua: add OAuth to the MCP server with cloudflare/workers-oauth-provider; Cloudflare Access (Zero Trust) already set up",
+    "acknowledged_otoi": true,
+    "otoi_version": "ORG-DEV-OTOI-1.0.4",
+    "working_repo": "NeuroLift-Technologies/asfdk-harness",
+    "working_branch": "ccr-45fa6cf9-cxr7a1",
+    "capabilities_self_reported": [
+      "Cloudflare Workers / workers-oauth-provider 1.x integration with an upstream OIDC identity provider",
+      "Read-only inspection of the account's Zero Trust Access applications through the Cloudflare API",
+      "Local end-to-end verification with wrangler dev and a stand-in OIDC provider"
+    ],
+    "known_limitations": [
+      "Did not change Zero Trust configuration, create Cloudflare resources, set secrets, or deploy; those are Joshua's actions",
+      "Could not sign in through the real Cloudflare Access tenant; Access behaviour was verified against a local stand-in"
+    ],
+    "preferred_handoff_format": "structured summary with file paths, commands run, and verification evidence"
+  }
+}

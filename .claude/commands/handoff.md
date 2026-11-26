@@ -2,7 +2,7 @@
 description: Write a complete NLT session handoff record per OTOI §5
 ---
 
-Write a complete session handoff record per ORG-DEV-OTOI-1.0.2 Section 5.
+Write a complete session handoff record per ORG-DEV-OTOI-1.0.4 Section 5.
 
 ## Steps
 
@@ -10,7 +10,7 @@ Write a complete session handoff record per ORG-DEV-OTOI-1.0.2 Section 5.
    - `session_id`: current branch (`git rev-parse --abbrev-ref HEAD`)
    - `agent_name`: Claude Code
    - `date`: today, ISO 8601
-   - `otoi_version`: `ORG-DEV-OTOI-1.0.2`
+   - `otoi_version`: `ORG-DEV-OTOI-1.0.4`
    - `repo`: `<org>/<repo>` from git remote
    - `branch`: current branch
 
@@ -39,7 +39,7 @@ Write a complete session handoff record per ORG-DEV-OTOI-1.0.2 Section 5.
 
 6. Commit with:
    ```
-   [Claude] chore(governance): add session handoff record (ORG-DEV-OTOI-1.0.2)
+   [Claude] chore(governance): add session handoff record (ORG-DEV-OTOI-1.0.4)
    ```
 
 7. Report back: the path of the written file and a one-sentence summary.
@@ -47,7 +47,7 @@ Write a complete session handoff record per ORG-DEV-OTOI-1.0.2 Section 5.
 ## Validation
 
 Before committing, verify:
-- `otoi_version` is exactly `ORG-DEV-OTOI-1.0.2`
+- `otoi_version` is exactly `ORG-DEV-OTOI-1.0.4`
 - `work_completed` is honest and concrete
 - `tests_passing` reflects reality (do not assert true if tests were not run)
 - `files_modified` matches the actual diff

@@ -1,7 +1,7 @@
 # `.claude/` — Canonical Claude Code Governance Template
 
 **Repository:** `NeuroLift-Technologies/.github-private`
-**Governed by:** ORG-DEV-OTOI-1.0.2 | Solidarity Framework | HAIEF
+**Governed by:** ORG-DEV-OTOI-1.0.4 | Solidarity Framework | HAIEF
 **Authority:** Joshua W. Dorsey, Sr.
 
 ---
@@ -65,7 +65,7 @@ The one exception: each repo may keep a local `.claude/settings.local.json` for 
 
 ## Why This Layer Exists
 
-Before `.claude/`, agent compliance with ORG-DEV-OTOI-1.0.2 depended on agents voluntarily reading `CLAUDE.md`. With `.claude/`:
+Before `.claude/`, agent compliance with ORG-DEV-OTOI-1.0.4 depended on agents voluntarily reading `CLAUDE.md`. With `.claude/`:
 
 - The `SessionStart` hook **prints** the reading order at session start — agents see it whether or not they navigate to `CLAUDE.md` first.
 - Slash commands lower the friction of doing the governance-correct thing (`/handoff` beats remembering the JSON schema).
@@ -75,4 +75,4 @@ It does not replace `CLAUDE.md`, `AGENTS.md`, or `NLT-DEV-OTOI.md` — it operat
 
 ---
 
-*NeuroLift Technologies — Internal Governance | ORG-DEV-OTOI-1.0.2*
+*NeuroLift Technologies — Internal Governance | ORG-DEV-OTOI-1.0.4*

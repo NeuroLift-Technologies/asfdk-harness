@@ -1,7 +1,7 @@
 ---
 name: nlt-intent-log
 description: 'Write an NLT intent log entry before taking a significant action (OTOI Section 7). Use when about to make a broad-scope change, an irreversible action, an architectural modification, or any action that warrants transparency before execution. Captures action, rationale, risks, alternatives, and whether escalation is needed.'
-nlt-otoi-version: ORG-DEV-OTOI-1.0.3
+nlt-otoi-version: ORG-DEV-OTOI-1.0.4
 nlt-solidarity-framework: true
 nlt-haief: true
 nlt-authority: Joshua W. Dorsey, Sr.
@@ -10,10 +10,10 @@ nlt-authority: Joshua W. Dorsey, Sr.
 # NLT Intent Log (OTOI Section 7)
 
 This skill guides agents through creating an **intent log entry** as required by
-ORG-DEV-OTOI-1.0.3 Section 7. Intent logging is a transparency mechanism — log your
+ORG-DEV-OTOI-1.0.4 Section 7. Intent logging is a transparency mechanism — log your
 intent before acting, then record the outcome afterward.
 
-This skill operates under NeuroLift Technologies' ORG-DEV-OTOI-1.0.3 governance contract
+This skill operates under NeuroLift Technologies' ORG-DEV-OTOI-1.0.4 governance contract
 and Solidarity Framework principles.
 
 ## When to Use This Skill

@@ -2,7 +2,7 @@
 
 > **You are inside the source layer of a governed NLT repository.**
 > Root governance applies here. Read in order before touching any file:
-> 1. `../NLT-DEV-OTOI.md` — org-level agent contract (ORG-DEV-OTOI-1.0.3)
+> 1. `../NLT-DEV-OTOI.md` — org-level agent contract (ORG-DEV-OTOI-1.0.4)
 > 2. `../CLAUDE.md` — repo context, commands, key paths
 > 3. `../docs/active-threads.md` — current open work
 >
@@ -35,7 +35,7 @@ Three integration surfaces are built here:
 | `a2a.ts` | Converts governance context into A2A Agent Card for peer-agent discovery |
 | `cli.ts` | `asfdk-harness` binary — standalone one-shot runner |
 | `mcp-server.ts` | `asfdk-harness-mcp` binary — MCP server for external clients |
-| `server.ts` | Cloudflare Workers HTTP handler — bearer-auth entry point for `AsfdkGovernanceAgent` |
+| `server.ts` | Cloudflare Workers HTTP handler — OAuth provider for `/mcp` (Cloudflare Access sign-in), bearer-auth gate for `AsfdkGovernanceAgent` routes |
 
 ### Subdirectories
 
@@ -43,6 +43,7 @@ Three integration surfaces are built here:
 |---|---|
 | `governance/` | **Live safety pipeline** — crisis detection (RRT Advocate), OTOI compliance, Sleepwalker session continuity, pipeline orchestration |
 | `authority/` | Contract verification — checks `.toi`/`.otoi` presence, validity, signatures; can trigger soft-halt |
+| `oauth/` | MCP OAuth sign-in for the Worker — consent page, Cloudflare Access OIDC code exchange and ID-token verification (see `docs/mcp-oauth-cloudflare-access.md`) |
 
 ---
 

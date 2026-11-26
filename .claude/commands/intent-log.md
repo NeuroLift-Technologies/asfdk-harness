@@ -3,7 +3,7 @@ description: Log intent BEFORE a significant or irreversible action per OTOI §7
 argument-hint: "<brief topic, e.g. 'refactor auth module'>"
 ---
 
-Write an intent log entry per ORG-DEV-OTOI-1.0.2 Section 7 **BEFORE** taking the action.
+Write an intent log entry per ORG-DEV-OTOI-1.0.4 Section 7 **BEFORE** taking the action.
 
 **Topic:** $ARGUMENTS
 
@@ -26,7 +26,7 @@ When in doubt, log it. Intent logging costs little and protects everyone.
    - **Date** (ISO 8601 with time, UTC)
    - **Agent**: Claude Code
    - **Session**: current branch
-   - **OTOI Version**: ORG-DEV-OTOI-1.0.2
+   - **OTOI Version**: ORG-DEV-OTOI-1.0.4
    - **Working repo**: `<org>/<repo>`
    - **Action** — exactly what you intend to do (files, functions, services involved)
    - **Rationale** — why this is the right action
@@ -44,7 +44,7 @@ When in doubt, log it. Intent logging costs little and protects everyone.
 
 5. Commit the intent log:
    ```
-   [Claude] docs(intent): log <topic> intent (ORG-DEV-OTOI-1.0.2)
+   [Claude] docs(intent): log <topic> intent (ORG-DEV-OTOI-1.0.4)
    ```
 
 6. Proceed with the action.
@@ -53,5 +53,5 @@ When in doubt, log it. Intent logging costs little and protects everyone.
 
 8. Commit the outcome update:
    ```
-   [Claude] docs(intent): record outcome of <topic> (ORG-DEV-OTOI-1.0.2)
+   [Claude] docs(intent): record outcome of <topic> (ORG-DEV-OTOI-1.0.4)
    ```
