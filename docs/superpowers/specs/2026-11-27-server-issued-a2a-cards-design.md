@@ -27,6 +27,8 @@ The local flow also never did what it was understood to do. Verified on 2026-11-
 1. The MCP server never exposes another AI's card: not the harness's, not the governance agent's. `asfdk_a2a_agent_card` returns the caller's own card.
 2. Cards are **server-issued**. The server sets the identity; the agent cannot override it. (Option B of the conversation.)
 3. The A2A hub moves into the Worker and is reachable **only through the MCP server**. No public `/a2a/*` routes. Unlike the local setup, the hub is not a separate MCP server: the same signed-in MCP request that identifies the caller also issues its card and reaches the hub, which is what lets the hub check identity instead of trusting it. This approves THREAD-016 Workstream B in this shape and answers three pending questions from earlier handoffs: hub location (Copilot, 2026-07-31), hub auth (Copilot, 2026-07-31) and agent identity model (Kilo, 2026-11-21).
+4. The agent sets the card options itself: the tool's inputs mirror `A2AAgentCardOptions`.
+5. The card is a **governed artifact issued once**. After issuance, the agent it was issued to can change the prepopulated fields. It **cannot change its `agentId`**, the governance block or the issuance record.
 
 ## 3. Goals, non-goals, anti-goals
 
@@ -111,8 +113,20 @@ These changes stay in `src/a2a.ts` and `src/harness.ts`; `ASFDK_TOOL_SKILLS` its
 Not exposed, because the server owns them: `protocolVersion` and `preferredTransport` (what the harness actually supports), and `includeSensitiveGovernanceTools` (no longer relevant once the harness skill list is dropped).
 
 **Identity fields (server-set, cannot be overridden):**
-- `id` = `{client}-{principalRef}`, or `{client}-{principalRef}-{agentId}` when the agent passes `agentId`. This is how the agent uses the `agentId` option without being able to take another identity. It lets one caller issue cards for its own sub-agents or sessions as separate identities, for example `claudecode-3fa1c2-reviewer` and `claudecode-3fa1c2-explore`.
-- `issuance` block: `{ issuer: "asfdk-harness", surface: "worker" | "local", issuedAt, identity: { client, authMethod, principalRef }, verified: ["id", "client", "authMethod", "principalRef"], declared: [fields the agent supplied] }`.
+- `id` = `{client}-{principalRef}`, or `{client}-{principalRef}-{agentId}` when the agent passes `agentId`. This is how the agent uses the `agentId` option without being able to take another identity. It lets one caller issue cards for its own sub-agents or sessions as separate identities, for example `claudecode-3fa1c2-reviewer` and `claudecode-3fa1c2-explore`. Once issued, the `id` never changes (decision 5).
+- `issuance` block: `{ issuer: "asfdk-harness", surface: "worker" | "local", issuedAt, identity: { client, authMethod, principalRef }, verified: ["id", "client", "authMethod", "principalRef"], declared: [fields the agent has set], revision, updatedAt }`.
+
+**Lifecycle: issue once, then the agent edits** (decision 5)
+
+1. **Issue.** The first call for a given caller and `agentId` issues the card: every field is prepopulated (the agent fields from its inputs or the defaults below, the governance block, the issuance record), and the server stores it. `revision` = 1.
+2. **Edit.** Later calls from the same caller and `agentId` return the stored card. Any agent fields passed in replace the current values, `revision` goes up by one, `updatedAt` is set, and `declared` lists every field the agent has set so far.
+3. **Locked.**
+   - The `id`, the governance block and the issuance record are never inputs, so they cannot be changed.
+   - Only the caller the card was issued to (same `client` and `principalRef`) can read it through this tool or edit it.
+   - Passing a different `agentId` never renames a card. It selects, or issues, a different card for one of the caller's sub-agents.
+4. **Register.** The hub lists the card's current revision (§6.3).
+
+The governance block is regenerated from the current TOI/OTOI on every read, so a charter change reaches existing cards without the agent doing anything.
 
 **Agent fields:** `name` (default from client: `Claude Code`, `Cowork`, `Claude.ai`, else the slug), `description` (default `"<name> connected to the ASFDK harness."`), `skills` (default empty; the harness's own tools are no longer listed), `url` (default empty; agents without an endpoint receive messages through the hub inbox).
 
@@ -122,17 +136,17 @@ Not exposed, because the server owns them: `protocolVersion` and `preferredTrans
 
 **Unchanged A2A fields:** `kind`, `protocolVersion` 0.3.0, `preferredTransport`, input and output modes, `discovery`, and `metadata.generatedAt` and redacted `diagnostics`.
 
-The same caller with the same inputs always gets the same `id`. `harness.a2aAgentCard()` remains for the Pi extension; only the MCP tool changes.
+The same caller with the same `agentId` always gets the same card. `harness.a2aAgentCard()` remains for the Pi extension; only the MCP tool changes.
 
 ### 6.3 The hub in the Worker
 
-**Storage:** one SQLite-backed Durable Object class, `A2AHub`, with a single named instance holding the registry and the mailboxes. *(Builder's call; Kilo's handoff proposed separate `A2ARegistry` and `A2AMailbox` classes, but one class keeps reads consistent and is enough at this scale.)* `A2AHub` must not be reachable through `routeAgentRequest` or any other route. Only the MCP tool handlers call it.
+**Storage:** one SQLite-backed Durable Object class, `A2AHub`, with a single named instance holding the issued cards, the registry and the mailboxes. Issued cards live here even before an agent registers, because the card tool needs them from its first call (§6.2). *(Builder's call; Kilo's handoff proposed separate `A2ARegistry` and `A2AMailbox` classes, but one class keeps reads consistent and is enough at this scale.)* `A2AHub` must not be reachable through `routeAgentRequest` or any other route. Only the MCP tool handlers call it.
 
 **MCP tools on `/mcp`**, prefixed `asfdk_hub_`. The local hub server's names (`register_agent`, `get_inbox`, …) are not reused: their inputs differ (no card object, no `from` or `callerId`), and agents following the old instructions should get a clearly different tool rather than a familiar name that behaves differently.
 
 | Tool | Behaviour |
 |---|---|
-| `asfdk_hub_register` | Takes the same inputs as the card tool, issues the card with the same code and stores it. It does **not** accept a card object. Re-registering updates the caller's own entry. |
+| `asfdk_hub_register` | Takes `agentId` (which of the caller's cards) and lists that issued card in the hub, issuing it with defaults first if it doesn't exist. It does **not** accept a card object. Card edits go through `asfdk_a2a_agent_card`; the hub always shows the current revision. |
 | `asfdk_hub_deregister` | Removes the caller's own registration only. |
 | `asfdk_hub_list_agents` | Lists registered cards (id, name, description, client, last seen). |
 | `asfdk_hub_get_agent` | Returns one registered card by id. |
@@ -142,7 +156,10 @@ The same caller with the same inputs always gets the same `id`. `harness.a2aAgen
 
 **`asfdk_discovery_hub` on the Worker** returns `configured: true`, `transport: "mcp"` and the tool names above, instead of URLs. On the local server it is unchanged.
 
-**Data:** `agents (id, card, client, principal_ref, registered_at, last_seen)` and `messages (id, from_id, to_id, type, payload, reply_to, created_at, delivered_at)`.
+**Data:**
+- `cards (id, client, principal_ref, agent_fields, revision, issued_at, updated_at, registered_at, last_seen)`. `registered_at` is empty until the agent registers.
+- `card_revisions (card_id, revision, changed_fields, updated_at)`: an audit trail of which fields changed and when, not their old values.
+- `messages (id, from_id, to_id, type, payload, reply_to, created_at, delivered_at)`.
 
 **Limits:** payload ≤ 32 KB; description ≤ 1,000 characters; ≤ 32 skills. *(Builder may tune these.)*
 
@@ -152,13 +169,14 @@ The same caller with the same inputs always gets the same `id`. `harness.a2aAgen
 
 ### 6.4 Local MCP server
 
-- The card tool behaves the same, with identity from `clientInfo` (stdio) or headers (HTTP).
+- The card tool behaves the same, with identity from `clientInfo` (stdio) or headers (HTTP). With no Worker storage locally, issued cards are kept in memory for the life of the local server process. *(Builder's call; a file under `~/.asfdk/` would also work.)*
 - Hub tools are registered only when a hub backend is available (the Worker binding). Locally, `asfdk_discovery_hub` keeps pointing at the local hub through `ASFDK_A2A_HUB_URL`.
 
 ## 7. Tests
 
 - **Identity:** resolving the caller per surface, slug normalisation, id derivation is deterministic, `agentId` suffix validation.
 - **Card:** two clients get different ids; the same client gets the same id; `declared` lists exactly the supplied fields; fixtures with sentinel values prove that email, name, `toiAuthor`, TOI privacy/agency, paths and tokens never appear.
+- **Lifecycle:** an edit changes only agent fields and bumps `revision`; no input can change `id`, governance or issuance; a different caller cannot read or edit the card; a different `agentId` issues a separate card instead of renaming; a charter change shows up on the next read.
 - **Hub:** `register` ignores any attempt to set `id`; `deregister`, `inbox` and `send_message` cannot act on or as another identity; unregistered targets are rejected; limits are enforced.
 - **Existing tests:** `test/mcp-server.test.ts` assertions that the card id is `asfdk-harness` change to the new behaviour.
 - **Gates:** `npm run check`, `npm run cf:check`, `npm run test:unit`, and an end-to-end run against `wrangler dev` before the deploy PR, as THREAD-017 did.
@@ -171,8 +189,8 @@ The same caller with the same inputs always gets the same `id`. `harness.a2aAgen
 
 ## 9. Delivery
 
-1. **PR 1:** caller identity and the issued card (local and Worker), tests, records.
-2. **PR 2:** `A2AHub` Durable Object, hub tools, `asfdk_discovery_hub` change, `wrangler.jsonc` migration. Joshua deploys.
+1. **PR 1:** caller identity, the issued card and its lifecycle (local and Worker), the `A2AHub` Durable Object with the `cards` tables, the `wrangler.jsonc` migration, tests, records. Joshua deploys.
+2. **PR 2:** the hub on the same Durable Object: registry and message tools, and the `asfdk_discovery_hub` change. Joshua deploys.
 3. **Later PR:** move the local OpenCode/Kilo plugins onto the Worker hub through MCP, so cloud and local agents share one hub, and give the Kilo plugin its own default id (today both plugins default to `opencode-asfdk-deploy`).
 
 ## 10. Open questions for Joshua
@@ -187,4 +205,8 @@ The same caller with the same inputs always gets the same `id`. `harness.a2aAgen
 - Unsalted SHA-256 prefix of the Access `sub` as `principalRef` (the `sub` is a random ID, not personal data, and is never shown).
 - `authority` (your name as final decision-maker) stays in the card because it is already public in the org governance contract; `toiAuthor` is dropped.
 - Hub tool names prefixed `asfdk_hub_` rather than reusing the local hub server's names, because their inputs and identity rules differ.
+- One tool both issues and edits a card (first call issues, later calls with fields edit), rather than a separate update tool.
+- The revision audit trail records which fields changed and when, not the old values.
+- The governance block is regenerated on every read rather than frozen at issuance, so it always reflects the current charter.
+- Locally, issued cards live in memory for the life of the server process.
 - Pi extension and local hub unchanged.
