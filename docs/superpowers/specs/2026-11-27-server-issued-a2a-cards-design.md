@@ -12,7 +12,9 @@
 
 ## 1. Why
 
-Local coding agents (OpenCode, Kilo, Codex CLI, Claude CLI) ran next to a local ASFDK MCP server and a local A2A discovery hub. Each one called `asfdk_a2a_agent_card`, found the hub with `asfdk_discovery_hub`, and registered with the hub's `register_agent`.
+Local coding agents (OpenCode, Kilo, Codex CLI, Claude CLI) were connected to **two separate MCP servers**: the ASFDK harness MCP server (`asfdk_*` tools) and the A2A hub, a separate MCP server (`asfdk-a2a-hub`, `src/discovery-hub.ts` on `127.0.0.1:3001`, which also serves REST). Each agent called `asfdk_a2a_agent_card` on the harness server, found the hub with `asfdk_discovery_hub`, and registered with `register_agent` on the hub server.
+
+Because the hub was a separate server, it had no way to know who was calling. It trusted whatever identity the agent wrote: the card's `id`, a message's `from`, an inbox `callerId` (the Pi hub skill tells Pi to "keep your agent ID as `pi`").
 
 Generative AIs (claude.ai, Cowork, Claude Code in the cloud) cannot install the harness. They reach it only through the MCP connector on the Cloudflare Worker, where there is no hub, so they cannot take part in A2A at all.
 
@@ -24,7 +26,7 @@ The local flow also never did what it was understood to do. Verified on 2026-11-
 
 1. The MCP server never exposes another AI's card: not the harness's, not the governance agent's. `asfdk_a2a_agent_card` returns the caller's own card.
 2. Cards are **server-issued**. The server sets the identity; the agent cannot override it. (Option B of the conversation.)
-3. The A2A hub moves into the Worker and is reachable **only through the MCP server**. No public `/a2a/*` routes. This approves THREAD-016 Workstream B in this shape and answers three pending questions from earlier handoffs: hub location (Copilot, 2026-07-31), hub auth (Copilot, 2026-07-31) and agent identity model (Kilo, 2026-11-21).
+3. The A2A hub moves into the Worker and is reachable **only through the MCP server**. No public `/a2a/*` routes. Unlike the local setup, the hub is not a separate MCP server: the same signed-in MCP request that identifies the caller also issues its card and reaches the hub, which is what lets the hub check identity instead of trusting it. This approves THREAD-016 Workstream B in this shape and answers three pending questions from earlier handoffs: hub location (Copilot, 2026-07-31), hub auth (Copilot, 2026-07-31) and agent identity model (Kilo, 2026-11-21).
 
 ## 3. Goals, non-goals, anti-goals
 
@@ -104,7 +106,7 @@ The same caller with the same inputs always gets the same `id`. `harness.a2aAgen
 
 **Storage:** one SQLite-backed Durable Object class, `A2AHub`, with a single named instance holding the registry and the mailboxes. *(Builder's call; Kilo's handoff proposed separate `A2ARegistry` and `A2AMailbox` classes, but one class keeps reads consistent and is enough at this scale.)* `A2AHub` must not be reachable through `routeAgentRequest` or any other route. Only the MCP tool handlers call it.
 
-**MCP tools on `/mcp`** (prefixed `asfdk_hub_` so they don't collide with the local hub's tool names):
+**MCP tools on `/mcp`**, prefixed `asfdk_hub_`. The local hub server's names (`register_agent`, `get_inbox`, …) are not reused: their inputs differ (no card object, no `from` or `callerId`), and agents following the old instructions should get a clearly different tool rather than a familiar name that behaves differently.
 
 | Tool | Behaviour |
 |---|---|
@@ -162,5 +164,5 @@ The same caller with the same inputs always gets the same `id`. `harness.a2aAgen
 - Same client and same person = same identity by default; `label` separates sessions.
 - Unsalted SHA-256 prefix of the Access `sub` as `principalRef` (the `sub` is a random ID, not personal data, and is never shown).
 - `authority` (your name as final decision-maker) stays in the card because it is already public in the org governance contract; `toiAuthor` is dropped.
-- Hub tool names prefixed `asfdk_hub_`.
+- Hub tool names prefixed `asfdk_hub_` rather than reusing the local hub server's names, because their inputs and identity rules differ.
 - Pi extension and local hub unchanged.
