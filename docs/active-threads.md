@@ -2,7 +2,7 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-11-26T13:45:00Z
+**Last updated:** 2026-11-26T22:50:00Z
 
 ---
 
@@ -12,7 +12,7 @@
 | Field | Value |
 |---|---|
 | **Thread ID** | THREAD-018 |
-| **Status** | 🟡 In PR #40 — needs the matching upstream bump in `.github-private` |
+| **Status** | 🟡 Merged (PR #40); `.otoi` checksum synced in this PR. Waiting on the matching bump in `.github-private` |
 | **Started** | 2026-11-26 |
 | **Owner** | Claude Code (requested by Joshua W. Dorsey, Sr.) |
 | **Branch** | `ccr-45fa6cf9-cxr7a1` |
@@ -20,21 +20,21 @@
 | **Scope** | Version strings only, in 41 files: `NLT-DEV-OTOI.md` body, `CLAUDE.md`, `AGENTS.md`, `src/*.md`, `nltotoi.json`, `.claude/**`, `SOPs/*`, `templates/*`, `ISSUE_TEMPLATE/*`, `PULL_REQUEST_TEMPLATE/*`, `REVIEW.md`, `INSTALL.md`, `agents/asfdk-governance/agent.ts` fallback. Unchanged: the contract's dated version-history rows, `docs/escalations/*`, `docs/agent-log/*`, `.otoi`. |
 | **Blockers** | `.claude/` (and probably the SOPs and templates) is propagated nightly from `.github-private`, which still has 1.0.2/1.0.3. The same bump is needed there, or `governance-auto-propagate.yml` will bring the old numbers back. This session cannot reach `.github-private`. |
 | **Related PR** | [#40](https://github.com/NeuroLift-Technologies/asfdk-harness/pull/40) |
-| **Notes** | `nltotoi.json` now points `org_developer_otoi` at this repo's `NLT-DEV-OTOI.md` with its real SHA-256, as 1.0.4 already did for `.otoi`. `.otoi`'s own pinned SHA-256 (`e365bb…`) matches no version of the file; it was left alone because `.otoi` is the user's declared terms. `CLAUDE.md`'s public-mirror link pointed at a `governance/NLT-DEV-OTOI.md` that does not exist in `.github`; it now points at `.github`'s `governance.yaml`. |
+| **Notes** | `nltotoi.json` now points `org_developer_otoi` at this repo's `NLT-DEV-OTOI.md` with its real SHA-256, as 1.0.4 already did for `.otoi`. `.otoi`'s pinned SHA-256 for `NLT-DEV-OTOI.md` (`e365bb…`, matching no version of the file) was updated to the committed file's hash with Joshua's approval on 2026-11-26, so `.otoi` and `nltotoi.json` agree (Codex review item 2 on PR #40). `CLAUDE.md`'s public-mirror link pointed at a `governance/NLT-DEV-OTOI.md` that does not exist in `.github`; it now points at `.github`'s `governance.yaml`. |
 
 ### THREAD-017 — OAuth for the Worker MCP endpoint (Cloudflare Access sign-in)
 | Field | Value |
 |---|---|
 | **Thread ID** | THREAD-017 |
-| **Status** | 🟡 Merged (PR #40, 2026-11-26). The first Workers Build failed at clone (stray `.claude/worktrees/pr5-fixes` gitlink); the fix is in PR #41, and merging it deploys the Worker. |
+| **Status** | 🟢 Deployed and verified (2026-11-26) |
 | **Started** | 2026-11-26 |
 | **Owner** | Claude Code (requested by Joshua W. Dorsey, Sr.) |
 | **Branch** | `ccr-45fa6cf9-cxr7a1` |
 | **Task** | Add OAuth to the Worker `/mcp` endpoint with `@cloudflare/workers-oauth-provider`, signing people in through Cloudflare Access. |
 | **Scope** | `src/server.ts`, `src/oauth/*`, `test/oauth-access.test.ts`, `wrangler.jsonc`, tsconfigs, `package.json`/lock, `README.md`, `src/CLAUDE.md`, `.dev.vars.example`, `docs/mcp-oauth-cloudflare-access.md`, `docs/agent-log/*` |
-| **Blockers** | Deploy waits for PR #40 to merge (Joshua chose not to deploy from the branch). Joshua connected the repo to the Worker through Workers Builds (production branch `main`; `npm ci`, then `npm run build`, then `npm run cf:deploy`), so the merge deploys automatically. `package.json` pins npm 11 because the build image's npm 10 rejects the lockfile (ERESOLVE). Done 2026-11-26: Joshua created the Access for SaaS OIDC app `asfdk-governance-agent` and set the `ACCESS_*` variables and secrets plus `RRT_BEHAVIORAL_TOKEN_KEY` on the Worker. Claude added public path overrides for the OAuth/MCP paths on the self-hosted Access app, with Joshua's approval; `/agents/*` and all other paths stay behind Access. |
-| **Related PR** | [#40](https://github.com/NeuroLift-Technologies/asfdk-harness/pull/40) (merged), [#41](https://github.com/NeuroLift-Technologies/asfdk-harness/pull/41) (build fix) |
-| **Notes** | Consent page, then Access (PKCE, browser-bound single-use state), then ID-token verification (RS256/JWKS, iss, aud, exp). DCR + CIMD; 1h access tokens; 7-day grants matching the Access session. Legacy `ASFDK_API_TOKEN` is still accepted on `/mcp`; `/agents/*` is unchanged. Verified: 22 unit tests, 23/23 end-to-end checks against `wrangler dev` with a stand-in OIDC provider, deploy dry-run. Answers escalation 2026-06-25 decision (1) for `/mcp`. `wrangler.jsonc` sets `keep_vars: true` because the `ACCESS_*` values are dashboard plain-text vars that a deploy would otherwise delete. Until the deploy, the old Worker answers the public paths with its static-token gate (401 without the token). Handoff: `docs/agent-log/handoffs/2026-11-26-claude-code-mcp-oauth.json`. |
+| **Blockers** | None for the OAuth rollout. Follow-ups for Joshua: (1) the runtime OTOI charter the Worker loads (`GOVERNANCE` KV key `otoi`, or the `ASFDK_OTOI_CONTENT` secret) still declares `ORG-DEV-OTOI-1.0.2`; upload the repo's `.otoi` to refresh it. (2) When to retire `ASFDK_API_TOKEN` on `/mcp`. |
+| **Related PR** | [#40](https://github.com/NeuroLift-Technologies/asfdk-harness/pull/40), [#41](https://github.com/NeuroLift-Technologies/asfdk-harness/pull/41) (Workers Builds clone fix), and this PR (records) |
+| **Notes** | Consent page, then Access (PKCE, browser-bound single-use state), then ID-token verification (RS256/JWKS, iss, aud, exp). DCR + CIMD; 1h access tokens; 7-day grants matching the Access session. Legacy `ASFDK_API_TOKEN` is still accepted on `/mcp`; `/agents/*` is unchanged. Verified: 22 unit tests, 23/23 end-to-end checks against `wrangler dev` with a stand-in OIDC provider, deploy dry-run. Answers escalation 2026-06-25 decision (1) for `/mcp`. `wrangler.jsonc` sets `keep_vars: true` because the `ACCESS_*` values are dashboard plain-text vars that a deploy would otherwise delete. Until the deploy, the old Worker answers the public paths with its static-token gate (401 without the token). **Live (2026-11-26):** Workers Builds deployed `ed86b79`. `/mcp` answers `401` with the RFC 9728 challenge, and both discovery documents are served. Joshua connected the Claude organization connector: consent, then Cloudflare Access sign-in, then the ID token verified at `/callback`, then `/token`, then `/mcp` tool calls (`asfdk_status` healthy, `unified` mode). The first connector attempt failed with `Invalid client_id` because Claude sent a client ID the Worker never issued; removing the connector and adding it again fixed it. Handoff: `docs/agent-log/handoffs/2026-11-26-claude-code-mcp-oauth.json`. |
 
 ### THREAD-016 — MCP Server Parity and A2A Hub Integration (NLT-HND-2026-KILO-MCP-A2A-001)
 | Field | Value |

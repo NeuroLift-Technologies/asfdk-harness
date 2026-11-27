@@ -56,7 +56,7 @@
     "document_id": "ORG-DEV-OTOI-1.0.4",
     "scope": "Organization-Wide (NeuroLift Technologies)",
     "maintainer": "Joshua W. Dorsey, Sr.",
-    "sha256": "e365bb0e6b0bd0331a2e41c45874726ddd003eb24e9691674b04e2ea5a3e239e",
+    "sha256": "adec4e9ee08ae0ac3ee19abda01e5f705bef3cff2cb6c53894e65cf6afe2547f",
     "required_reading_order": [
       "NLT-DEV-OTOI.md",
       "CLAUDE.md",
