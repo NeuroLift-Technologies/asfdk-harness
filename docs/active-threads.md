@@ -2,11 +2,25 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-11-26T22:50:00Z
+**Last updated:** 2026-11-27T13:30:00Z
 
 ---
 
 ## Active Threads
+
+### THREAD-019 — Server-issued A2A agent cards and an MCP-only A2A hub in the Worker
+| Field | Value |
+|---|---|
+| **Thread ID** | THREAD-019 |
+| **Status** | 🟡 Design draft — waiting on Joshua's answers to Q1 (retention) and Q2 (message governance), then design approval. Nothing built. |
+| **Started** | 2026-11-27 |
+| **Owner** | Claude Code (requested by Joshua W. Dorsey, Sr.) |
+| **Branch** | `ccr-09d60405-fszgs0` |
+| **Task** | `asfdk_a2a_agent_card` issues each connected agent its own governance-bound card (identity from the MCP connection, details from the agent, governance posture from TOI/OTOI), and agents register it in an A2A hub inside the Worker that is reachable only through the MCP server. |
+| **Scope** | Design: `docs/superpowers/specs/2026-11-27-server-issued-a2a-cards-design.md`. Planned build: `src/a2a.ts`, `src/mcp-server.ts`, `src/server.ts`, `src/tools.ts` (`ASFDK_TOOL_SKILLS` entry, approved with the design), new hub Durable Object, `wrangler.jsonc` migration, tests. |
+| **Blockers** | Q1/Q2 in the design, then Joshua's approval of the design. Deploys stay Joshua's action. |
+| **Related PR** | This branch's PR (design only) |
+| **Notes** | Joshua decided on 2026-11-27: (1) the MCP server never exposes another AI's card; (2) cards are server-issued; (3) the A2A hub moves into the Worker, reachable only through the MCP server — this approves THREAD-016 Workstream B in that shape. Verified 2026-11-27 that the current tool returns the same `asfdk-harness` card to every caller (local and Worker); locally, agents rewrote it before registering. Workers logs show callers identify themselves per request with `x-anthropic-client` (ClaudeCode, Cowork, ClaudeAI). Side findings: a clean `npm install`/`npm ci` fails on an `agents`/`@cloudflare/codemode` peer conflict (installed with `--legacy-peer-deps` to test); both task-watch plugins default to the same agent id `opencode-asfdk-deploy`. |
 
 ### THREAD-018 — Sync ORG-DEV-OTOI references to 1.0.4
 | Field | Value |
