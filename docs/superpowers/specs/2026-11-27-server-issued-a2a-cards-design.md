@@ -18,7 +18,7 @@ Because the hub was a separate server, it had no way to know who was calling. It
 
 Generative AIs (claude.ai, Cowork, Claude Code in the cloud) cannot install the harness. They reach it only through the MCP connector on the Cloudflare Worker, where there is no hub, so they cannot take part in A2A at all.
 
-The local flow also never did what it was understood to do. Verified on 2026-11-27: `asfdk_a2a_agent_card` returns the same `asfdk-harness` card to every caller (tested as `opencode`, `kilo`, `codex` and `claude-code`). Each agent must have rewritten that card's id, name and description itself before registering, and the local hub stores any card it is given. Nothing stopped two agents from using the same id, or one agent from claiming another's.
+The local flow also never did what it was understood to do. Verified on 2026-11-27: `asfdk_a2a_agent_card` returns the same `asfdk-harness` card to every caller (tested as `opencode`, `kilo`, `codex` and `claude-code`). The card builder was written to support per-agent cards through `A2AAgentCardOptions`, but the harness pins those options to its own identity (§4), so no caller's identity ever reached it. Each agent must have rewritten that card's id, name and description itself before registering, and the local hub stores any card it is given. Nothing stopped two agents from using the same id, or one agent from claiming another's.
 
 **Goal:** the harness issues each connected agent its own governance-bound identity card, and agents register that card in an A2A hub that lives in the Worker and is reachable only through the MCP server.
 
@@ -56,6 +56,7 @@ The local flow also never did what it was understood to do. Verified on 2026-11-
 - **Observed callers** (Workers logs, 2026-11-20 to 27): every request carries `x-anthropic-client` = `ClaudeCode`, `Cowork` or `ClaudeAI`, and `user-agent` = `Claude-User`.
 - **Static-token callers** (`ASFDK_API_TOKEN`) all share `sub = "asfdk-api-token"`.
 - **The local HTTP server** (`src/mcp-http-server.ts`) shares one server instance across clients, so its `initialize` info belongs to whichever client connected last.
+- **The card builder already supports per-agent cards** (noted by Gemini). `createA2AAgentCard(context, options)` in `src/a2a.ts` takes `A2AAgentCardOptions` overrides: `agentId`, `agentName`, `description`, `url`, `version`, protocol and transport fields, modes, `streaming`, `pushNotifications`. These exist so the harness can generate a card for a specific sub-agent. But `harness.a2aAgentCard()` (`src/harness.ts:231-238`) pins `agentId: "asfdk-harness"` and `agentName: "ASFDK Harness"`, and it is the only caller, so neither the Pi tool nor the MCP tool has ever passed a caller's identity through. The options do **not** cover skills (always the harness's tool list), the governance block (always copies TOI `privacy`, `agency` and `toiAuthor`), `interopProtocols` or any issuance record.
 - **Escalate-before-change:** the `asfdk.a2a_agent_card` entry in `ASFDK_TOOL_SKILLS` (`src/tools.ts`) changes. Approving this design approves that change. No other escalate-before-change file is touched (`governance/*`, `authority/verify.ts`, `policy.ts`, `.toi`, `.otoi`).
 - **Deploy:** a new Durable Object class needs a new migration tag in `wrangler.jsonc`. Deploying stays Joshua's action.
 
@@ -85,6 +86,14 @@ A `resolveCaller(extra)` function returns a `CallerIdentity` for every tool call
 - `server.ts` passes the OAuth props to the transport as `authInfo` so tools can read them. *(The exact shape of that hand-off is the builder's call.)*
 
 ### 6.2 The issued card: `asfdk_a2a_agent_card`
+
+**Build on the existing builder, don't replace it.** Issuing a card means calling `createA2AAgentCard(context, options)` with the caller's issued `agentId` and the agent's `agentName`, `description` and `url` passed through `A2AAgentCardOptions` (§4). A new harness method (for example `issueAgentCard(identity, declared)`) builds those options; `harness.a2aAgentCard()` stays pinned to `asfdk-harness` for the Pi extension. `A2AAgentCardOptions` gains only what it lacks:
+- `skills?: A2ASkill[]`, which replaces the harness tool list when given;
+- a governance mode that emits posture only (below) instead of copying TOI `privacy`, `agency` and `toiAuthor`;
+- a switch to omit `interopProtocols`;
+- an `issuance` record (below).
+
+These changes stay in `src/a2a.ts` and `src/harness.ts`; `ASFDK_TOOL_SKILLS` itself is not restructured, only the `asfdk.a2a_agent_card` description changes.
 
 **Inputs** (all optional, all self-declared): `name`, `description`, `skills` (A2A skill objects), `url`, `label`.
 
