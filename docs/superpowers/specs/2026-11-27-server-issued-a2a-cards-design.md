@@ -95,10 +95,23 @@ A `resolveCaller(extra)` function returns a `CallerIdentity` for every tool call
 
 These changes stay in `src/a2a.ts` and `src/harness.ts`; `ASFDK_TOOL_SKILLS` itself is not restructured, only the `asfdk.a2a_agent_card` description changes.
 
-**Inputs** (all optional, all self-declared): `name`, `description`, `skills` (A2A skill objects), `url`, `label`.
+**Inputs: the agent invokes the options directly.** The tool's input schema (today an empty `z.object({})`) mirrors `A2AAgentCardOptions`, with the same field names, so whatever the builder supports the agent can ask for. All inputs are optional and self-declared.
+
+| Tool input | Passed to the builder as | Rule |
+|---|---|---|
+| `agentId` | requested suffix of the issued id (below) | `[a-z0-9-]{1,24}`; never used as the whole id |
+| `agentName` | `agentName` | ≤ 100 characters |
+| `description` | `description` | ≤ 1,000 characters |
+| `url` | `url` | `https://` only (or `http://localhost` on the local server) |
+| `version` | `version` | the agent's own version string |
+| `defaultInputModes`, `defaultOutputModes` | same | MIME types |
+| `streaming`, `pushNotifications` | same | booleans |
+| `skills` | `skills` (new option) | ≤ 32 A2A skill objects |
+
+Not exposed, because the server owns them: `protocolVersion` and `preferredTransport` (what the harness actually supports), and `includeSensitiveGovernanceTools` (no longer relevant once the harness skill list is dropped).
 
 **Identity fields (server-set, cannot be overridden):**
-- `id` = `{client}-{principalRef}`, or `{client}-{principalRef}-{label}` when a `label` is given. `label` is `[a-z0-9-]{1,24}` and lets one person run several agents of the same client as separate identities (for example two Claude Code sessions).
+- `id` = `{client}-{principalRef}`, or `{client}-{principalRef}-{agentId}` when the agent passes `agentId`. This is how the agent uses the `agentId` option without being able to take another identity. It lets one caller issue cards for its own sub-agents or sessions as separate identities, for example `claudecode-3fa1c2-reviewer` and `claudecode-3fa1c2-explore`.
 - `issuance` block: `{ issuer: "asfdk-harness", surface: "worker" | "local", issuedAt, identity: { client, authMethod, principalRef }, verified: ["id", "client", "authMethod", "principalRef"], declared: [fields the agent supplied] }`.
 
 **Agent fields:** `name` (default from client: `Claude Code`, `Cowork`, `Claude.ai`, else the slug), `description` (default `"<name> connected to the ASFDK harness."`), `skills` (default empty; the harness's own tools are no longer listed), `url` (default empty; agents without an endpoint receive messages through the hub inbox).
@@ -144,7 +157,7 @@ The same caller with the same inputs always gets the same `id`. `harness.a2aAgen
 
 ## 7. Tests
 
-- **Identity:** resolving the caller per surface, slug normalisation, id derivation is deterministic, `label` validation.
+- **Identity:** resolving the caller per surface, slug normalisation, id derivation is deterministic, `agentId` suffix validation.
 - **Card:** two clients get different ids; the same client gets the same id; `declared` lists exactly the supplied fields; fixtures with sentinel values prove that email, name, `toiAuthor`, TOI privacy/agency, paths and tokens never appear.
 - **Hub:** `register` ignores any attempt to set `id`; `deregister`, `inbox` and `send_message` cannot act on or as another identity; unregistered targets are rejected; limits are enforced.
 - **Existing tests:** `test/mcp-server.test.ts` assertions that the card id is `asfdk-harness` change to the new behaviour.
@@ -170,7 +183,7 @@ The same caller with the same inputs always gets the same `id`. `harness.a2aAgen
 ## 11. Calls made by the author (check these)
 
 - One `A2AHub` Durable Object rather than two classes.
-- Same client and same person = same identity by default; `label` separates sessions.
+- Same client and same person = same identity by default; the `agentId` option adds a suffix to separate sub-agents or sessions.
 - Unsalted SHA-256 prefix of the Access `sub` as `principalRef` (the `sub` is a random ID, not personal data, and is never shown).
 - `authority` (your name as final decision-maker) stays in the card because it is already public in the org governance contract; `toiAuthor` is dropped.
 - Hub tool names prefixed `asfdk_hub_` rather than reusing the local hub server's names, because their inputs and identity rules differ.
