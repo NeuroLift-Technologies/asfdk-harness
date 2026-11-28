@@ -406,3 +406,18 @@ test("issued card: otoi.registered reflects the OTOI charter's agents", async ()
   assert.equal(unlisted.capabilities.extensions[0]?.params?.agentRuntimeGoverned, false, "no overclaim of runtime governance");
   assert.ok(!("toiAuthor" in unlisted.governance));
 });
+
+test("local HTTP: the agentId comes from the request's user agent, not the last clientInfo", async () => {
+  const server = createMcpServer(harness);
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  await server.connect(serverTransport);
+  const original = serverTransport.onmessage;
+  serverTransport.onmessage = (message, extra) =>
+    original?.(message, { ...extra, requestInfo: { headers: { "user-agent": "opencode/2.0.10" } } } as Parameters<NonNullable<typeof original>>[1]);
+  const client = new Client({ name: "Some Other Client", version: "1.0.0" });
+  await client.connect(clientTransport);
+  const card = parse(await client.callTool({ name: "asfdk_a2a_agent_card", arguments: {} }));
+  assert.equal(card.id, "local-opencode");
+  assert.equal(card.name, "Opencode");
+  await client.close();
+});

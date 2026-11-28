@@ -12,7 +12,7 @@ import {
   type OAuthHandlerEnv,
 } from "./oauth/access-handler.js";
 import { secretsMatch } from "./oauth/access-oidc.js";
-import type { CardBackend } from "./a2a-cards.js";
+import type { HubBackend } from "./hub/types.js";
 import { A2A_HUB_INSTANCE, type A2AHub } from "./hub/durable-object.js";
 
 export { AsfdkGovernanceAgent } from "../agents/asfdk-governance/agent.js";
@@ -66,11 +66,22 @@ function a2aHub(env: WorkerEnv): DurableObjectStub<A2AHub> {
   return (env.A2A_HUB as DurableObjectNamespace<A2AHub>).getByName(A2A_HUB_INSTANCE);
 }
 
-/** Issued cards live in the A2AHub Durable Object on the Worker. */
-function hubCardBackend(env: WorkerEnv): CardBackend {
+/**
+ * Issued cards and the hub live in the A2AHub Durable Object on the Worker.
+ * The adapter lists each method so only these RPC calls are reachable from
+ * the MCP tools.
+ */
+function hubBackend(env: WorkerEnv): HubBackend {
   const hub = a2aHub(env);
   return {
     issueOrEditCard: (caller, agentName, changes) => hub.issueOrEditCard(caller, agentName, changes),
+    register: (caller, agentName) => hub.register(caller, agentName),
+    deregister: (caller, agentName) => hub.deregister(caller, agentName),
+    listAgents: (caller, agentName) => hub.listAgents(caller, agentName),
+    getAgent: (caller, agentName, target) => hub.getAgent(caller, agentName, target),
+    sendMessage: (caller, agentName, input) => hub.sendMessage(caller, agentName, input),
+    inbox: (caller, agentName, limit) => hub.inbox(caller, agentName, limit),
+    status: (caller, agentName) => hub.status(caller, agentName),
   };
 }
 
@@ -78,10 +89,8 @@ function hubCardBackend(env: WorkerEnv): CardBackend {
 // the SDK throws "Stateless transport cannot be reused across requests" otherwise.
 // Only the harness (expensive ASFDK init) is memoized and shared.
 async function handleMcpRequest(request: Request, env: WorkerEnv, props: McpAuthProps | undefined): Promise<Response> {
-  const server = createMcpServer(await getMcpHarness(env), {
-    surface: "worker",
-    cards: hubCardBackend(env),
-  });
+  const hub = hubBackend(env);
+  const server = createMcpServer(await getMcpHarness(env), { surface: "worker", cards: hub, hub });
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
   });
