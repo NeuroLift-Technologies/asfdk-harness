@@ -1,0 +1,19 @@
+{
+  "handoff_record": {
+    "session_id": "codex/live-worker-otoi-skill",
+    "agent_name": "Codex",
+    "date": "2026-11-28",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "codex/live-worker-otoi-skill",
+    "work_completed": ["Added a skill for preparing, applying, verifying, and rolling back approved Worker charter updates."],
+    "work_in_progress": [],
+    "blockers": [],
+    "decisions_made": ["Use existing Cloudflare operator permissions for production writes."],
+    "decisions_pending": ["Identify and approve the exact candidate before any production write."],
+    "escalations": [],
+    "next_agent_notes": "Distinguish verified KV contents from the cached charter observed by the live Worker.",
+    "files_modified": ["skills/asfdk-worker-otoi/SKILL.md", "skills/asfdk-harness/SKILL.md", "docs/active-threads.md"],
+    "tests_run": ["npm test (116 passing)", "ASFDK SDK parse of the tracked charter", "Local Wrangler KV put and byte-for-byte readback"],
+    "tests_passing": true
+  }
+}

@@ -8,6 +8,14 @@
 
 ## Active Threads
 
+### Live Worker OTOI update skill
+**Status:** Open for PR review
+**Owner:** Codex
+**Started:** 2026-11-28
+**Last updated:** 2026-11-28
+**Summary:** Add a harness skill for approved updates to the live MCP Worker's OTOI charter.
+**Next action:** Review the skill. A production update requires an approved candidate.
+
 ### THREAD-018 — Sync ORG-DEV-OTOI references to 1.0.4
 | Field | Value |
 |---|---|

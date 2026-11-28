@@ -23,6 +23,10 @@ Use this skill when working with the ASFDK Solidarity Layer enabled. This harnes
 - `asfdk_assess_text` — assess free text through active ASFDK components.
 - `asfdk_update_preferences` — validate/update explicit user preferences through the TOI/OTOI path.
 
+## Live Worker charter
+
+Use the [live Worker OTOI skill](../asfdk-worker-otoi/SKILL.md) to review an update, apply the approved charter to production, and verify runtime loading.
+
 ## Default posture
 
 Start in observe/advisory mode unless the user explicitly asks for stronger enforcement. The harness blocks only high-risk local tool actions by default. Do not modify MCP transport, MCP tools, or MCP resources from this protocol lane; MCP is owned by THREAD-002.
