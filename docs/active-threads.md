@@ -22,6 +22,14 @@
 | **Related PR** | This branch's PR (design only) |
 | **Notes** | Joshua decided on 2026-11-27: (1) the MCP server never exposes another AI's card; (2) cards are server-issued; (3) the A2A hub moves into the Worker, reachable only through the MCP server — this approves THREAD-016 Workstream B in that shape. Verified 2026-11-27 that the current tool returns the same `asfdk-harness` card to every caller (local and Worker); locally, agents rewrote it before registering. Workers logs show callers identify themselves per request with `x-anthropic-client` (ClaudeCode, Cowork, ClaudeAI). Side findings: a clean `npm install`/`npm ci` fails on an `agents`/`@cloudflare/codemode` peer conflict (installed with `--legacy-peer-deps` to test); both task-watch plugins default to the same agent id `opencode-asfdk-deploy`. |
 
+### Agent PR template validation
+**Status:** Open for PR review
+**Owner:** Codex
+**Started:** 2026-11-28
+**Last updated:** 2026-11-28
+**Summary:** Require the agent PR template and validate the completed description locally before submission.
+**Next action:** Review the local preflight and validator tests.
+
 ### THREAD-019 — ASFDK plugin skills on the Governance Agent MCP server
 **Status:** Open for PR review and production approval
 **Owner:** Codex
