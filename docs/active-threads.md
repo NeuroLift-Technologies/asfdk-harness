@@ -8,6 +8,14 @@
 
 ## Active Threads
 
+### Agent PR template validation
+**Status:** Open for PR review
+**Owner:** Codex
+**Started:** 2026-11-28
+**Last updated:** 2026-11-28
+**Summary:** Require the agent PR template, validate draft descriptions locally, and run the same check in GitHub Actions.
+**Next action:** Review the workflow and make the `pr-template` check required in the main branch ruleset once it reports.
+
 ### THREAD-018 — Sync ORG-DEV-OTOI references to 1.0.4
 | Field | Value |
 |---|---|

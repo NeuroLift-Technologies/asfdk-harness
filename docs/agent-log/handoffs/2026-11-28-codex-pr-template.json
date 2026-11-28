@@ -1,0 +1,22 @@
+{
+  "handoff_record": {
+    "session_id": "codex/validate-agent-pr-template",
+    "agent_name": "Codex",
+    "date": "2026-11-28",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "codex/validate-agent-pr-template",
+    "work_completed": [
+      "Documented the required preflight for agent PR descriptions.",
+      "Added a shared validator, local tests, and a pull request workflow."
+    ],
+    "work_in_progress": ["Confirm the GitHub check and make it required in the main branch ruleset."],
+    "blockers": [],
+    "decisions_made": ["Keep the current contribution template as the source for required headings."],
+    "decisions_pending": [],
+    "escalations": [],
+    "next_agent_notes": "Run npm test and validate the actual draft body with npm run check:pr-template -- <pr-body.md>.",
+    "files_modified": ["AGENTS.md", "package.json", "scripts/check-pr-template.mjs", "scripts/validate-pr-body.mjs", "test/pr-template.test.ts", ".github/workflows/pr-template.yml", "docs/active-threads.md"],
+    "tests_run": ["npm test"],
+    "tests_passing": true
+  }
+}
