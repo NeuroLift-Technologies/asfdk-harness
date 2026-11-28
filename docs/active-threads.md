@@ -22,6 +22,14 @@
 | **Related PR** | [#43](https://github.com/NeuroLift-Technologies/asfdk-harness/pull/43) (design), [#47](https://github.com/NeuroLift-Technologies/asfdk-harness/pull/47) (build) |
 | **Notes** | Joshua decided on 2026-11-27: the MCP server never exposes another AI's card; cards are server-issued; the hub moves into the Worker, reachable only through MCP (approves THREAD-016 Workstream B in that shape). On 2026-11-28 (NLT-HND-2026-002) he approved the design by executive override: OAuth identity (amends ADR-001 §3.1 for external cloud connections), a 24-hour mailbox baseline (overrides O8 for the hub), and the Composite Synthesis Gate at the hub (affirms §3.3). The gate fails closed: no cross-agent message is delivered until Joshua writes releases to the `GOVERNANCE` KV key `a2a-releases`. Verified: `npm run check`, `npm run cf:check`, `npm run test:unit` (148 tests, 147 pass; the one failure also fails on main), 27/27 end-to-end checks against `wrangler dev` with a stand-in OIDC provider, `wrangler deploy --dry-run`. Side findings carried from 2026-11-27: `npm ci` fails on an `agents`/`@cloudflare/codemode` peer conflict; both task-watch plugins default to `opencode-asfdk-deploy`; Codex CLI's `/mcp` connection is rejected. Handoff: `docs/agent-log/handoffs/2026-11-28-claude-code-a2a-hub-build.json`. |
 
+### Agent PR template validation
+**Status:** Open for PR review
+**Owner:** Codex
+**Started:** 2026-11-28
+**Last updated:** 2026-11-28
+**Summary:** Require the agent PR template and validate the completed description locally before submission.
+**Next action:** Review the local preflight and validator tests.
+
 ### THREAD-019 — ASFDK plugin skills on the Governance Agent MCP server
 **Status:** Open for PR review and production approval
 **Owner:** Codex
