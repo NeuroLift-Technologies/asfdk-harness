@@ -108,6 +108,30 @@ The Cloudflare Worker also serves `/mcp`. After deploy, the MCP URL is the Worke
 
 `/mcp` is protected by **OAuth 2.1** (`@cloudflare/workers-oauth-provider`), and people sign in through **Cloudflare Access**. MCP clients find the sign-in flow on their own: give them the URL with no `Authorization` header. Setup, the Zero Trust steps and required secrets are in [docs/mcp-oauth-cloudflare-access.md](docs/mcp-oauth-cloudflare-access.md). The older `ASFDK_API_TOKEN` bearer token is still accepted on `/mcp` while existing clients move over.
 
+The Worker can expose the ASFDK plugin skills through the read-only
+`asfdk_skills` tool. Call it without arguments for the catalog, then pass a
+catalog `path` to read a skill or reference.
+
+To enable it, provision `mcp-skills` in the Worker's `GOVERNANCE` KV namespace
+as a JSON object mapping these paths (relative to the plugin's `skills/`
+directory) to their Markdown text:
+
+- `asfdk-governance/SKILL.md`
+- `nlt-document-governance/SKILL.md`
+- `nlt-document-governance/nlt-document-governance-templates.md`
+- `nlt-learn/SKILL.md`
+- `nlt-learn/nlt-learn-references.md`
+- `personal-toi/SKILL.md`
+- `solidarity-framework/SKILL.md`
+- `solidarity-framework/solidarity-framework-reference.md`
+
+Review the Markdown and confirm that the existing OAuth and legacy bearer-token
+audiences can see it before provisioning. Keep the bundle out of version control.
+The personal TOI catalog entry points to the private plugin's signed
+`skills/personal-toi/approved-personal.toi`. That reference is for client-side
+lookup. It does not load the signed document into the Worker or verify its
+signature. An absent, incomplete, or invalid bundle leaves the tool unavailable.
+
 #### Verify the endpoint
 
 Test the deployed MCP endpoint with a real handshake. Put the token in an env var and keep the command on **one line** — splitting it with a `\` can wrap a space into the URL and produce `curl: (3) URL rejected: Malformed input to a URL function` (a client-side URL-parse error, not a server fault):

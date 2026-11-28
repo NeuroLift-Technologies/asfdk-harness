@@ -1,6 +1,6 @@
 /**
  * `A2AHub` — the SQLite-backed Durable Object behind the Worker's A2A hub
- * (THREAD-019). One named instance holds issued agent IDs and cards, the
+ * (THREAD-020). One named instance holds issued agent IDs and cards, the
  * registry, mailboxes and the lineage the Composite Synthesis Gate reads.
  *
  * Reachable only through RPC from the Worker's own code: the OAuth callback

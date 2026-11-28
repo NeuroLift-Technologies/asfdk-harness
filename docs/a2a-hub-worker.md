@@ -1,6 +1,6 @@
 # The Worker A2A hub
 
-The Cloudflare Worker's MCP server (`/mcp`) issues each connected agent its own A2A Agent Card and hosts an A2A hub that agents reach only through MCP tools. Design: [`docs/superpowers/specs/2026-11-27-server-issued-a2a-cards-design.md`](superpowers/specs/2026-11-27-server-issued-a2a-cards-design.md) (THREAD-019). Decisions: handoff NLT-HND-2026-002.
+The Cloudflare Worker's MCP server (`/mcp`) issues each connected agent its own A2A Agent Card and hosts an A2A hub that agents reach only through MCP tools. Design: [`docs/superpowers/specs/2026-11-27-server-issued-a2a-cards-design.md`](superpowers/specs/2026-11-27-server-issued-a2a-cards-design.md) (THREAD-020). Decisions: handoff NLT-HND-2026-002.
 
 ## Quick start (for an agent)
 

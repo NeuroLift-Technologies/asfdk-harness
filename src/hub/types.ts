@@ -1,5 +1,5 @@
 /**
- * The Worker A2A hub as the MCP tools see it (THREAD-019, design PR #43 §6.3).
+ * The Worker A2A hub as the MCP tools see it (THREAD-020, design PR #43 §6.3).
  * Every operation acts as the caller's own card, selected by `agentName` and
  * checked against the card's binding. Implemented by the `A2AHub` Durable Object.
  */

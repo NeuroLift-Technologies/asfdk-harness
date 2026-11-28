@@ -36,7 +36,7 @@
         "class_name": "AsfdkGovernanceAgent"
       },
       {
-        // A2A hub (THREAD-019): issued agent IDs, issued cards, registry and
+        // A2A hub (THREAD-020): issued agent IDs, issued cards, registry and
         // mailboxes. Reached only from the Worker's MCP tools and OAuth
         // callback, never routed: server.ts keeps it out of routeAgentRequest.
         "name": "A2A_HUB",

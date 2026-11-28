@@ -244,7 +244,7 @@ export class AsfdkHarness {
   }
 
   /**
-   * The card issued to a connected agent (THREAD-019): identity from the
+   * The card issued to a connected agent (THREAD-020): identity from the
    * authorization, details from the agent, governance posture from the current
    * TOI/OTOI. `harness.a2aAgentCard()` stays pinned to the harness for Pi.
    */

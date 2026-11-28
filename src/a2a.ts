@@ -178,7 +178,7 @@ export function createA2AAgentCard(
 
 /**
  * Server-set issuance record of a card the harness issued to a connected agent
- * (THREAD-019). `verified` fields come from the encrypted grant; `observed`
+ * (THREAD-020). `verified` fields come from the encrypted grant; `observed`
  * fields come from request headers the client sends.
  */
 export interface A2ACardIssuance {

@@ -36,7 +36,7 @@ Three integration surfaces are built here:
 | `cli.ts` | `asfdk-harness` binary — standalone one-shot runner |
 | `mcp-server.ts` | `asfdk-harness-mcp` binary — MCP server for external clients |
 | `server.ts` | Cloudflare Workers HTTP handler — OAuth provider for `/mcp` (Cloudflare Access sign-in), bearer-auth gate for `AsfdkGovernanceAgent` routes |
-| `a2a-identity.ts` | Agent IDs issued at OAuth acceptance, observed-client normalization, caller resolution (THREAD-019) |
+| `a2a-identity.ts` | Agent IDs issued at OAuth acceptance, observed-client normalization, caller resolution (THREAD-020) |
 | `a2a-cards.ts` | Issued-card lifecycle: issue once, agent edits declared fields, observed-client binding |
 
 ### Subdirectories

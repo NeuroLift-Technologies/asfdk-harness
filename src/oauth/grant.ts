@@ -1,6 +1,6 @@
 /**
  * The MCP grant for an accepted connection: the encrypted props every request
- * carries, and the agent ID issued at acceptance (THREAD-019, design PR #43 §6.1).
+ * carries, and the agent ID issued at acceptance (THREAD-020, design PR #43 §6.1).
  *
  * Kept free of the OAuth provider library so it loads under Node for tests.
  */
@@ -16,7 +16,7 @@ export interface McpAuthProps {
   name?: string;
   authMethod: "cloudflare-access" | "static-token";
   /**
-   * A2A agent ID issued when the person accepted this connection (THREAD-019),
+   * A2A agent ID issued when the person accepted this connection (THREAD-020),
    * for example `claude-7f3a9c`. Absent on grants accepted before agent IDs
    * were issued, and for the static token.
    */

@@ -1,5 +1,5 @@
 /**
- * Storage for the Worker A2A hub (THREAD-019, design PR #43 §6.3): issued
+ * Storage for the Worker A2A hub (THREAD-020, design PR #43 §6.3): issued
  * agent IDs, issued cards with their revision trail, the registry, mailboxes,
  * observed lineage for the Composite Synthesis Gate, and counters.
  *

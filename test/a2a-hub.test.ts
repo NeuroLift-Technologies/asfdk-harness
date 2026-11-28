@@ -1,5 +1,5 @@
 /**
- * Worker A2A hub (THREAD-019, design PR #43 §7 "Hub"), with the handoff
+ * Worker A2A hub (THREAD-020, design PR #43 §7 "Hub"), with the handoff
  * NLT-HND-2026-002 decisions: Composite Synthesis Gate at the hub (ADR-001 §3.3)
  * and the 24-hour retention baseline.
  */
@@ -276,7 +276,7 @@ function storeBackend(store: HubStore, policy: () => ReleasePolicy): HubBackend 
 }
 
 async function client(hub: HubBackend | undefined, agentId: string, headers: Record<string, string>): Promise<Client> {
-  const server = createMcpServer(harness, { surface: "worker", cards: hub, hub });
+  const server = createMcpServer(harness, undefined, { surface: "worker", cards: hub, hub });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   const authInfo: AuthInfo = {
     token: "[redacted]",

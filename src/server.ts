@@ -61,7 +61,7 @@ async function getMcpHarness(env: WorkerEnv): Promise<AsfdkHarness> {
   return mcpHarnessPromise;
 }
 
-/** The single A2A hub instance (THREAD-019). RPC only; never routed. */
+/** The single A2A hub instance (THREAD-020). RPC only; never routed. */
 function a2aHub(env: WorkerEnv): DurableObjectStub<A2AHub> {
   return (env.A2A_HUB as DurableObjectNamespace<A2AHub>).getByName(A2A_HUB_INSTANCE);
 }
@@ -89,8 +89,15 @@ function hubBackend(env: WorkerEnv): HubBackend {
 // the SDK throws "Stateless transport cannot be reused across requests" otherwise.
 // Only the harness (expensive ASFDK init) is memoized and shared.
 async function handleMcpRequest(request: Request, env: WorkerEnv, props: McpAuthProps | undefined): Promise<Response> {
+  const [harness, skillBundle] = await Promise.all([
+    getMcpHarness(env),
+    env.GOVERNANCE.get("mcp-skills", "json").catch(() => {
+      console.warn("Unable to load the ASFDK MCP skill bundle");
+      return null;
+    }),
+  ]);
   const hub = hubBackend(env);
-  const server = createMcpServer(await getMcpHarness(env), { surface: "worker", cards: hub, hub });
+  const server = createMcpServer(harness, skillBundle, { surface: "worker", cards: hub, hub });
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
   });

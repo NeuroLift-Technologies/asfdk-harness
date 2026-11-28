@@ -1,5 +1,5 @@
 /**
- * Agent identity for server-issued A2A cards (THREAD-019, design PR #43).
+ * Agent identity for server-issued A2A cards (THREAD-020, design PR #43).
  *
  * - The `agentId` is issued when a person accepts an MCP connection on the
  *   consent page (one per authorized connection) and rides in the encrypted

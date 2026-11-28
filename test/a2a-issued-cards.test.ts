@@ -1,5 +1,5 @@
 /**
- * Server-issued A2A cards (THREAD-019, design PR #43 §7 "Issuing at acceptance",
+ * Server-issued A2A cards (THREAD-020, design PR #43 §7 "Issuing at acceptance",
  * "Card" and "Lifecycle").
  */
 import "./setup.ts";
@@ -233,7 +233,7 @@ async function workerClient(
   headers: Record<string, string>,
   cards: CardBackend,
 ): Promise<Client> {
-  const server = createMcpServer(harness, { surface: "worker", cards });
+  const server = createMcpServer(harness, undefined, { surface: "worker", cards });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   // Stand in for server.ts: the OAuth grant props ride in authInfo.extra.props.
   // InMemoryTransport carries authInfo but not HTTP headers, so the observed

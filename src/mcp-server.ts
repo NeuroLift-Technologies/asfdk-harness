@@ -27,6 +27,7 @@ import {
   buildGovernanceRawData,
   formatGovernanceSummary,
 } from "./tools.js";
+import { registerMcpSkills } from "./mcp-skills.js";
 import { getThirdPartyProtocolProfiles } from "./protocols.js";
 import {
   agentNameSchema,
@@ -182,7 +183,7 @@ function refusal(code: string, message: string) {
 /**
  * Create and configure the MCP server with ASFDK tools.
  */
-function createMcpServer(harness: AsfdkHarness, options: McpServerOptions = {}): McpServer {
+function createMcpServer(harness: AsfdkHarness, skillBundle?: unknown, options: McpServerOptions = {}): McpServer {
   const exposeSensitiveGovernanceTools = canExposeSensitiveGovernanceTools(harness.mode);
   const surface: CardSurface = options.surface ?? "local";
   const cards: CardBackend = options.cards ?? new MemoryCardStore();
@@ -199,6 +200,8 @@ function createMcpServer(harness: AsfdkHarness, options: McpServerOptions = {}):
       },
     }
   );
+
+  registerMcpSkills(server, skillBundle);
 
   /** Who is calling this tool, resolved by the server (design PR #43 §6.1). Never an input. */
   const resolveCaller = (extra: ToolRequestExtra): CallerResolution => {
@@ -627,7 +630,7 @@ Returns an array of protocol profiles with id, name, layer, status, discovery, a
 
   // -------------------------------------------------------------------------
   // Tool: asfdk_a2a_agent_card
-  // Server-issued cards (THREAD-019): never another AI's card, never the harness's.
+  // Server-issued cards (THREAD-020): never another AI's card, never the harness's.
   // -------------------------------------------------------------------------
   server.registerTool(
     "asfdk_a2a_agent_card",
@@ -1066,7 +1069,7 @@ tools (register_agent, list_agents, get_agent) for that.`,
   );
 
   // ---------------------------------------------------------------------------
-  // A2A hub tools (Worker only; THREAD-019, design PR #43 §6.3)
+  // A2A hub tools (Worker only; THREAD-020, design PR #43 §6.3)
   // Every tool acts as the caller's own card, selected by agentName.
   // ---------------------------------------------------------------------------
   if (options.hub) {

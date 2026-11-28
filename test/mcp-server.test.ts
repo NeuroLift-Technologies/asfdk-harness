@@ -118,7 +118,7 @@ test("MCP server: initialize → tools/list → tools/call for new tools", async
   assert.ok(Array.isArray(interopData));
   assert.ok(interopData.length > 0);
   
-  // Call asfdk_a2a_agent_card: the caller's own issued card, not the harness's (THREAD-019).
+  // Call asfdk_a2a_agent_card: the caller's own issued card, not the harness's (THREAD-020).
   const cardResult = await client.callTool({ name: "asfdk_a2a_agent_card", arguments: {} });
   assert.ok(cardResult.content.length > 0);
   const cardData = JSON.parse(cardResult.content[0].text);
@@ -182,4 +182,69 @@ test("MCP server: asfdk_discovery_hub returns configured: true when ASFDK_A2A_HU
   await server.close();
   
   delete process.env.ASFDK_A2A_HUB_URL;
+});
+test("MCP serves the five configured skills and omits the signed personal TOI", async () => {
+  const paths = [
+    "asfdk-governance/SKILL.md",
+    "nlt-document-governance/SKILL.md",
+    "nlt-document-governance/nlt-document-governance-templates.md",
+    "nlt-learn/SKILL.md",
+    "nlt-learn/nlt-learn-references.md",
+    "personal-toi/SKILL.md",
+    "solidarity-framework/SKILL.md",
+    "solidarity-framework/solidarity-framework-reference.md",
+  ];
+  const privatePath = "personal-toi/approved-personal.toi";
+  const server = createMcpServer(harness, {
+    ...Object.fromEntries(paths.map((path) => [path, `Markdown fixture for ${path}`])),
+    [privatePath]: "Private fixture",
+  });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const client = new Client({ name: "test-client", version: "1.0.0" });
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+  try {
+    const { tools } = await client.listTools();
+    assert.ok(tools.some(({ name }) => name === "asfdk_skills"));
+    const catalog = await client.callTool({ name: "asfdk_skills", arguments: {} });
+    assert.deepEqual(
+      (catalog.structuredContent?.skills as Array<{ paths: string[] }>).flatMap((skill) => skill.paths),
+      paths,
+    );
+    const skills = catalog.structuredContent?.skills as Array<{ name: string; signedToiReference?: unknown }>;
+    assert.deepEqual(skills.find(({ name }) => name === "personal-toi")?.signedToiReference, {
+      plugin: "ASFDK",
+      path: "skills/personal-toi/approved-personal.toi",
+      access: "Read in the private ASFDK plugin.",
+    });
+    for (const path of paths) {
+      const result = await client.callTool({ name: "asfdk_skills", arguments: { path } });
+      assert.deepEqual(result.content, [{ type: "text", text: `Markdown fixture for ${path}` }]);
+    }
+    const privateResult = await client.callTool({
+      name: "asfdk_skills",
+      arguments: { path: privatePath },
+    });
+    assert.equal(privateResult.isError, true);
+    assert.ok(!JSON.stringify(privateResult.content).includes("Private fixture"));
+  } finally {
+    await client.close();
+    await server.close();
+  }
+});
+
+test("MCP leaves the skills tool unavailable without a complete bundle", async () => {
+  const server = createMcpServer(harness, { "asfdk-governance/SKILL.md": "Incomplete" });
+  const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+  const client = new Client({ name: "test-client", version: "1.0.0" });
+  await server.connect(serverTransport);
+  await client.connect(clientTransport);
+  try {
+    const { tools } = await client.listTools();
+    assert.ok(!tools.some(({ name }) => name === "asfdk_skills"));
+    assert.ok(tools.some(({ name }) => name === "asfdk_status"));
+  } finally {
+    await client.close();
+    await server.close();
+  }
 });

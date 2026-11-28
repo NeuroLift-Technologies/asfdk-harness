@@ -1,5 +1,5 @@
 /**
- * Issued A2A card lifecycle (THREAD-019, design PR #43 §6.2).
+ * Issued A2A card lifecycle (THREAD-020, design PR #43 §6.2).
  *
  * Issue once, then the agent edits: the first request for an `agentName` under
  * an authorization issues that card; later requests with the same name return
