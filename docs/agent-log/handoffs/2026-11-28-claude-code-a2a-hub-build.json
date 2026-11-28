@@ -75,6 +75,6 @@
       "wrangler deploy --dry-run (bundles; A2A_HUB and AsfdkGovernanceAgent bindings listed)"
     ],
     "tests_passing": true,
-    "pr_url": "TBD (draft PR from claude/vigilant-bardeen-gbsbss)"
+    "pr_url": "https://github.com/NeuroLift-Technologies/asfdk-harness/pull/47"
   }
 }
