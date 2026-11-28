@@ -1,0 +1,43 @@
+{
+  "handoff_record": {
+    "session_id": "codex-asfdk-mcp-skills",
+    "agent_name": "Codex",
+    "date": "2026-11-28",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "codex/asfdk-mcp-skills",
+    "work_completed": [
+      "Inspected the five ASFDK plugin skills and their supporting files.",
+      "Implemented and tested authenticated MCP catalog and Markdown reads with a separately provisioned KV bundle.",
+      "Added a catalog pointer to the signed TOI in the private ASFDK plugin."
+    ],
+    "work_in_progress": [
+      "Production deployment and connected-client verification."
+    ],
+    "blockers": [
+      "Production rollout and distribution to the endpoint's authenticated audience require human approval."
+    ],
+    "decisions_made": [
+      "Use the existing authenticated MCP tool surface and GOVERNANCE KV binding.",
+      "Allow only the five skill files and three Markdown references. Keep the signed personal TOI in the private plugin."
+    ],
+    "decisions_pending": [
+      "Approve the rollout and the audiences permitted to read the Markdown.",
+      "Confirm whether the live Worker also needs account-scoped TOI loading."
+    ],
+    "escalations": [],
+    "next_agent_notes": "The README lists the exact KV bundle keys. Verify tools/list and a catalog read from the connected client after the authorized rollout.",
+    "files_modified": [
+      "README.md",
+      "docs/active-threads.md",
+      "src/mcp-server.ts",
+      "src/mcp-skills.ts",
+      "src/server.ts",
+      "test/mcp-server.test.ts"
+    ],
+    "tests_run": [
+      "npm test (118 passing)",
+      "npm run build"
+    ],
+    "tests_passing": true
+  }
+}

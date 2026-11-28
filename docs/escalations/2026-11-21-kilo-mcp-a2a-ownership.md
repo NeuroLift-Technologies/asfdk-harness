@@ -54,8 +54,8 @@ Workstream A has been implemented in PR #39 (`feature/mcp-a2a-parity`) with the 
 2. **Workstream B (Worker-native A2A Hub):** ⏳ PENDING — Separate approval required for Worker-native A2A Hub with Durable Objects
 3. **Local discovery hub preservation:** ✅ CONFIRMED — `src/discovery-hub.ts` preserved as-is for backward compatibility
 
-**2026-11-27 — Joshua W. Dorsey, Sr. decided (recorded by Claude Code, THREAD-019):**
-- **Workstream B:** ✅ APPROVED IN THIS SHAPE — the A2A hub moves into the Cloudflare Worker and is reachable **only through the MCP server** (no public `/a2a/*` routes). Agent identity comes from the MCP connection; cards are server-issued. Design and build tracked in THREAD-019 (`docs/superpowers/specs/2026-11-27-server-issued-a2a-cards-design.md`); the design itself still needs Joshua's approval before implementation.
+**2026-11-27 — Joshua W. Dorsey, Sr. decided (recorded by Claude Code, THREAD-020):**
+- **Workstream B:** ✅ APPROVED IN THIS SHAPE — the A2A hub moves into the Cloudflare Worker and is reachable **only through the MCP server** (no public `/a2a/*` routes). Agent identity comes from the MCP connection; cards are server-issued. Design and build tracked in THREAD-020 (`docs/superpowers/specs/2026-11-27-server-issued-a2a-cards-design.md`); the design itself still needs Joshua's approval before implementation.
 
 ### Recommendation
 

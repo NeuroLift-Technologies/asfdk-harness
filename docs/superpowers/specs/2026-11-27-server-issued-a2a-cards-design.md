@@ -208,7 +208,7 @@ The governance block is regenerated from the current TOI/OTOI on every read, so 
 
 ## 8. Records
 
-- New thread THREAD-019 in `docs/active-threads.md`.
+- New thread THREAD-020 in `docs/active-threads.md`.
 - A decision entry appended to `docs/escalations/2026-11-21-kilo-mcp-a2a-ownership.md` recording Workstream B's approval and shape.
 - A registration and handoff in `docs/agent-log/`.
 

@@ -8,10 +8,10 @@
 
 ## Active Threads
 
-### THREAD-019 — Server-issued A2A agent cards and an MCP-only A2A hub in the Worker
+### THREAD-020 — Server-issued A2A agent cards and an MCP-only A2A hub in the Worker
 | Field | Value |
 |---|---|
-| **Thread ID** | THREAD-019 |
+| **Thread ID** | THREAD-020 (was THREAD-019; renumbered on 2026-11-28 because main's THREAD-019 is Codex's MCP skills thread, merged first in PR #44) |
 | **Status** | 🟡 Design draft — waiting on Joshua's answers to Q1 (retention) and Q2 (message governance), then design approval. Nothing built. |
 | **Started** | 2026-11-27 |
 | **Owner** | Claude Code (requested by Joshua W. Dorsey, Sr.) |
@@ -21,6 +21,15 @@
 | **Blockers** | Q1/Q2 in the design, then Joshua's approval of the design. Deploys stay Joshua's action. |
 | **Related PR** | This branch's PR (design only) |
 | **Notes** | Joshua decided on 2026-11-27: (1) the MCP server never exposes another AI's card; (2) cards are server-issued; (3) the A2A hub moves into the Worker, reachable only through the MCP server — this approves THREAD-016 Workstream B in that shape. Verified 2026-11-27 that the current tool returns the same `asfdk-harness` card to every caller (local and Worker); locally, agents rewrote it before registering. Workers logs show callers identify themselves per request with `x-anthropic-client` (ClaudeCode, Cowork, ClaudeAI). Side findings: a clean `npm install`/`npm ci` fails on an `agents`/`@cloudflare/codemode` peer conflict (installed with `--legacy-peer-deps` to test); both task-watch plugins default to the same agent id `opencode-asfdk-deploy`. |
+
+### THREAD-019 — ASFDK plugin skills on the Governance Agent MCP server
+**Status:** Open for PR review and production approval
+**Owner:** Codex
+**Started:** 2026-11-28
+**Last updated:** 2026-11-28
+**Summary:** Add optional authenticated MCP discovery and read access for the five ASFDK plugin skills and their Markdown references. Provision the Markdown privately through Governance KV.
+**Blockers:** Human approval for the production rollout and its authenticated audience.
+**Next action:** Review the PR, then provision the approved bundle and verify tool discovery in the connected client.
 
 ### THREAD-018 — Sync ORG-DEV-OTOI references to 1.0.4
 | Field | Value |
