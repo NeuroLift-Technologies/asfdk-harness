@@ -16,6 +16,15 @@
 **Summary:** Require the agent PR template and validate the completed description locally before submission.
 **Next action:** Review the local preflight and validator tests.
 
+### THREAD-019 — ASFDK plugin skills on the Governance Agent MCP server
+**Status:** Open for PR review and production approval
+**Owner:** Codex
+**Started:** 2026-11-28
+**Last updated:** 2026-11-28
+**Summary:** Add optional authenticated MCP discovery and read access for the five ASFDK plugin skills and their Markdown references. Provision the Markdown privately through Governance KV.
+**Blockers:** Human approval for the production rollout and its authenticated audience.
+**Next action:** Review the PR, then provision the approved bundle and verify tool discovery in the connected client.
+
 ### THREAD-018 — Sync ORG-DEV-OTOI references to 1.0.4
 | Field | Value |
 |---|---|

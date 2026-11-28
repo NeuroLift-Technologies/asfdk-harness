@@ -62,7 +62,14 @@ async function getMcpHarness(env: WorkerEnv): Promise<AsfdkHarness> {
 // the SDK throws "Stateless transport cannot be reused across requests" otherwise.
 // Only the harness (expensive ASFDK init) is memoized and shared.
 async function handleMcpRequest(request: Request, env: WorkerEnv): Promise<Response> {
-  const server = createMcpServer(await getMcpHarness(env));
+  const [harness, skillBundle] = await Promise.all([
+    getMcpHarness(env),
+    env.GOVERNANCE.get("mcp-skills", "json").catch(() => {
+      console.warn("Unable to load the ASFDK MCP skill bundle");
+      return null;
+    }),
+  ]);
+  const server = createMcpServer(harness, skillBundle);
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
   });
