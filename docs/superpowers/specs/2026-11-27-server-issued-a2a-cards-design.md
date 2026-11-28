@@ -50,7 +50,8 @@ The local flow also never did what it was understood to do. Verified on 2026-11-
 - Fixing Codex CLI's rejected connection (§4). Separate follow-up.
 
 **Anti-goals (failure even if it works)**
-- An agent registers under, edits, reads the inbox of, or sends as another agent's card.
+- An agent on one authorization registers under, edits, reads the inbox of, or sends as a card issued under another authorization.
+- The design claims more isolation than it has. Agents sharing one authorization are one trust principal (§6.2); the per-agent check inside an authorization relies on headers the caller sets.
 - A card or the hub exposes the user's email, name, private TOI preferences, IP address, tokens or file paths.
 - The hub is reachable without the MCP server's sign-in.
 
@@ -60,7 +61,7 @@ The local flow also never did what it was understood to do. Verified on 2026-11-
 - **Agents per authorization** (Workers logs, last 7 days, successful `/mcp` requests):
   - Claude: Claude Code (`x-anthropic-client: ClaudeCode`), Claude Cowork (`Cowork`), Claude AI (`ClaudeAI`), plus connector setup requests with no client header. All send `user-agent: Claude-User`.
   - ChatGPT: ChatGPT (`user-agent: openai-mcp/1.0.0`) and Codex (`openai-mcp/1.0.0 (Codex)`). OpenAI does not send the `mcp-method` header.
-  - So one authorization covers several agents. Each request still says which agent it is, which the server records for the binding in §6.2.
+  - So one authorization covers several agents. Each request still says which agent it is, which the server records for the consistency check in §6.2.
 - **Codex CLI is being rejected.** `codex-mcp-client/0.0.0` made 20 `/mcp` requests from 2026-11-26 23:13 to 2026-11-27 17:03 UTC, all `401`, starting about half an hour after OAuth went live.
 - **Where the authorization is completed:** `handleCallback` in `src/oauth/access-handler.ts:144-157` builds `McpAuthProps` (`sub`, `email`, `name`, `authMethod`) and calls `completeAuthorization`. Those props are encrypted into the grant and delivered with every authenticated request. Grants accepted before this change have no `agentId`.
 - **The Worker MCP is stateless.** `src/server.ts` builds a fresh `McpServer` and transport per request, so the client's `initialize` info is not available during `tools/call`.
@@ -88,7 +89,8 @@ When the user accepts a connection, `handleCallback` issues the `agentId` before
 
 - **Format:** `{platform}-{suffix}`, for example `claude-7f3a` or `chatgpt-91c2`.
   - `platform` comes from the client: the host of its Client ID Metadata Document URL (`claude.ai` → `claude`, `chatgpt.com` → `chatgpt`), or a slug of the registered client name for clients registered the other way.
-  - `suffix` is random hex, long enough to be unique among the account's authorizations (the builder picks the length; 4 to 6 characters).
+  - `suffix` is random hex (the builder picks the length; 4 to 6 characters).
+  - **Unique across the whole hub, not just one account.** Every account's cards live in the same `A2AHub` (§6.3), so `handleCallback` reserves the new `agentId` atomically in `A2AHub` before completing the authorization, and draws a new suffix if it is already taken. `agentId` is then the server-owned namespace for everything stored under that authorization (cards, registrations, mailboxes), so two accounts that authorize the same platform and use the same `agentName` can never collide.
 - **Stored** in the grant props as `agentId`, next to the existing `sub`, `email`, `name` and `authMethod`, so every request on that connection carries it. Also stored in the grant's plain metadata for audit.
 - **Shown on the consent page:** "Connect Claude to ASFDK Harness MCP. This connection will be issued agent ID `claude-7f3a`." *(Builder's call on the exact wording.)*
 - **Existing connections** (the Claude and ChatGPT authorizations above) were accepted before this change and have no `agentId`. They get one by reconnecting once after deploy. Until then the card tool tells the agent to reconnect.
@@ -145,7 +147,8 @@ id: claude-7f3a   name: Claude AI
 3. **Locked.**
    - The `agentId`, the governance block and the issuance record are never inputs, so they cannot be changed.
    - The `agentName` is how the card is selected, so it is never renamed. A different `agentName` selects, or issues, a different card. This is also how an agent gets cards for its own sub-agents (for example `"Claude Code reviewer"`).
-   - **Binding:** a card can be read or edited through this tool only by a request on the same authorization whose observed client matches the one recorded at issuance. This stops Claude Cowork from passing `agentName: "Claude Code"` and taking over Claude Code's card.
+   - **Ownership is the authorization.** A card can be read or edited only through the authorization (`agentId`) it was issued under. That is the only thing OAuth authenticates, so **all agents sharing one authorization form one trust principal**. For example, Claude Code, Claude Cowork and Claude AI under the Claude authorization are all the same user's Claude connection.
+   - **Consistency check, not authentication.** Within one authorization, the server compares the observed client (`x-anthropic-client` or `user-agent`) with the one recorded when the card was issued. Those headers are set by the caller and not authenticated, so this check catches a mismatched or mistaken declaration and supports the identity-honesty obligation (decision on enforcement pending, §10), but it **cannot stop a caller that deliberately sends another agent's header and name**. Isolation between agents under one authorization would need a separately authenticated per-agent credential, which is out of scope here.
 4. **Register.** The hub lists the card's current revision (§6.3).
 
 The governance block is regenerated from the current TOI/OTOI on every read, so a charter change reaches existing cards without the agent doing anything.
@@ -162,7 +165,7 @@ The governance block is regenerated from the current TOI/OTOI on every read, so 
 
 **Storage:** one SQLite-backed Durable Object class, `A2AHub`, with a single named instance holding the issued cards, the registry and the mailboxes. Issued cards live here even before an agent registers, because the card tool needs them from its first call (§6.2). *(Builder's call; Kilo's handoff proposed separate `A2ARegistry` and `A2AMailbox` classes, but one class keeps reads consistent and is enough at this scale.)* `A2AHub` must not be reachable through `routeAgentRequest` or any other route. Only the MCP tool handlers call it.
 
-**MCP tools on `/mcp`**, prefixed `asfdk_hub_`. The local hub server's names (`register_agent`, `get_inbox`, …) are not reused: their inputs differ (no card object, no `from` or `callerId`), and agents following the old instructions should get a clearly different tool rather than a familiar name that behaves differently. Every hub tool acts as the caller's card, selected by its `agentName` and checked by the binding in §6.2.
+**MCP tools on `/mcp`**, prefixed `asfdk_hub_`. The local hub server's names (`register_agent`, `get_inbox`, …) are not reused: their inputs differ (no card object, no `from` or `callerId`), and agents following the old instructions should get a clearly different tool rather than a familiar name that behaves differently. Every hub tool acts as the caller's card, selected by its `agentName` under the caller's authorization, with the ownership rule and consistency check in §6.2.
 
 | Tool | Behaviour |
 |---|---|
@@ -177,6 +180,7 @@ The governance block is regenerated from the current TOI/OTOI on every read, so 
 **`asfdk_discovery_hub` on the Worker** returns `configured: true`, `transport: "mcp"` and the tool names above, instead of URLs. On the local server it is unchanged.
 
 **Data:**
+- `agent_ids (agent_id PRIMARY KEY, platform, reserved_at)`: the hub-wide reservation that keeps every issued `agentId` unique (§6.1).
 - `cards (agent_id, agent_name, observed_client, auth_method, agent_fields, revision, issued_at, updated_at, registered_at, last_seen)`, keyed by `(agent_id, agent_name)`. `registered_at` is empty until the agent registers.
 - `card_revisions (agent_id, agent_name, revision, changed_fields, updated_at)`: an audit trail of which fields changed and when, not their old values.
 - `messages (id, from_agent_id, from_agent_name, to_agent_id, to_agent_name, type, payload, reply_to, created_at, delivered_at)`.
@@ -195,9 +199,9 @@ The governance block is regenerated from the current TOI/OTOI on every read, so 
 
 ## 7. Tests
 
-- **Issuing at acceptance:** completing an authorization stores an `agentId` in the grant props and metadata; the format matches `{platform}-{suffix}`; two authorizations never get the same id; the consent page shows it; a grant without an `agentId` gets the reconnect message; a static-token caller gets the no-card error.
+- **Issuing at acceptance:** completing an authorization stores an `agentId` in the grant props and metadata; the format matches `{platform}-{suffix}`; two authorizations never get the same id, including two accounts on the same platform and a forced suffix collision that must retry; the consent page shows it; a grant without an `agentId` gets the reconnect message; a static-token caller gets the no-card error.
 - **Card:** `id` always equals the authorization's `agentId`; the same `agentName` returns the same card; omitted `agentName` is filled from the observed client; `declared` lists exactly the fields the agent set; fixtures with sentinel values prove that email, name, `sub`, `toiAuthor`, TOI privacy/agency, paths and tokens never appear.
-- **Lifecycle:** an edit changes only agent fields and bumps `revision`; no input can change `agentId`, governance or issuance; a different `agentName` issues a separate card instead of renaming; another authorization cannot read or edit the card; under the same authorization, a request whose observed client differs from the one recorded is refused; a charter change shows up on the next read.
+- **Lifecycle:** an edit changes only agent fields and bumps `revision`; no input can change `agentId`, governance or issuance; a different `agentName` issues a separate card instead of renaming; another authorization cannot read or edit the card; under the same authorization, a request whose observed client differs from the one recorded is flagged (or refused, depending on the enforcement decision in §10); a charter change shows up on the next read.
 - **Hub:** `register` accepts no card object; `deregister`, `inbox` and `send_message` cannot act on or as another card; unregistered targets are rejected; limits are enforced.
 - **Existing tests:** `test/mcp-server.test.ts` assertions that the card id is `asfdk-harness` change to the new behaviour, and `test/oauth-access.test.ts` covers the new props.
 - **Gates:** `npm run check`, `npm run cf:check`, `npm run test:unit`, and an end-to-end run against `wrangler dev` with the stand-in OIDC provider before the deploy PR, as THREAD-017 did.
@@ -222,7 +226,8 @@ The governance block is regenerated from the current TOI/OTOI on every read, so 
 ## 11. Calls made by the author (check these)
 
 - `agentId` format `{platform}-{random hex}`, with the platform taken from the client's metadata URL host or registered name.
-- The observed-client binding (§6.2), so an agent under the same authorization cannot take another's card by passing its name.
+- The authorization is the trust principal; the observed-client check inside an authorization is a consistency check on caller-set headers, not authentication (§6.2, from Codex review on PR #43).
+- `agentId` uniqueness is enforced hub-wide by an atomic reservation in `A2AHub` at acceptance, with retry on collision (§6.1, from Codex review on PR #43).
 - Default `agentName` values filled in from the observed client when the agent doesn't pass one.
 - Existing connections reconnect once instead of being migrated.
 - Static-token callers get no card.
