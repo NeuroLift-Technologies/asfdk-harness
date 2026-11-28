@@ -27,6 +27,7 @@ import {
   buildGovernanceRawData,
   formatGovernanceSummary,
 } from "./tools.js";
+import { registerMcpSkills } from "./mcp-skills.js";
 import { getThirdPartyProtocolProfiles } from "./protocols.js";
 
 const MCP_SERVER_NAME = "asfdk-harness";
@@ -118,7 +119,7 @@ function toolError(error: unknown, hint?: string): { isError: true; content: [{ 
 /**
  * Create and configure the MCP server with ASFDK tools.
  */
-function createMcpServer(harness: AsfdkHarness): McpServer {
+function createMcpServer(harness: AsfdkHarness, skillBundle?: unknown): McpServer {
   const exposeSensitiveGovernanceTools = canExposeSensitiveGovernanceTools(harness.mode);
 
   const server = new McpServer(
@@ -133,6 +134,8 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
       },
     }
   );
+
+  registerMcpSkills(server, skillBundle);
 
   // -------------------------------------------------------------------------
   // Tool: asfdk_status
