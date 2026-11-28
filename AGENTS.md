@@ -25,8 +25,7 @@ All agent-authored work must go through a feature branch and Pull Request. Never
 
 1. Read `PULL_REQUEST_TEMPLATE/agent-contribution.md` and use it for every agent PR, including drafts. Fill in the metadata and all sections. Leave unverified checklist items unchecked and explain why.
 2. Run `npm test` for the branch and record the results in the template. Generate Worker types first with `npm run cf:typegen` if they are missing.
-3. Run `npm run check:pr-template -- <pr-body.md>` on the completed body before opening or editing the PR. Submit the validated body and verify the published PR retains the template.
-4. Check the GitHub `pr-template` job after opening or editing the PR. Correct any validation failures before requesting review.
+3. Run `npm run test:pr-template -- <pr-body.md>` on the completed body before opening or editing the PR. Submit the validated body and verify the published PR retains the template.
 
 ## Guardrails
 
