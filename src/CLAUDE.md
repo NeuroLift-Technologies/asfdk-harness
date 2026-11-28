@@ -36,6 +36,8 @@ Three integration surfaces are built here:
 | `cli.ts` | `asfdk-harness` binary — standalone one-shot runner |
 | `mcp-server.ts` | `asfdk-harness-mcp` binary — MCP server for external clients |
 | `server.ts` | Cloudflare Workers HTTP handler — OAuth provider for `/mcp` (Cloudflare Access sign-in), bearer-auth gate for `AsfdkGovernanceAgent` routes |
+| `a2a-identity.ts` | Agent IDs issued at OAuth acceptance, observed-client normalization, caller resolution (THREAD-019) |
+| `a2a-cards.ts` | Issued-card lifecycle: issue once, agent edits declared fields, observed-client binding |
 
 ### Subdirectories
 
@@ -43,7 +45,8 @@ Three integration surfaces are built here:
 |---|---|
 | `governance/` | **Live safety pipeline** — crisis detection (RRT Advocate), OTOI compliance, Sleepwalker session continuity, pipeline orchestration |
 | `authority/` | Contract verification — checks `.toi`/`.otoi` presence, validity, signatures; can trigger soft-halt |
-| `oauth/` | MCP OAuth sign-in for the Worker — consent page, Cloudflare Access OIDC code exchange and ID-token verification (see `docs/mcp-oauth-cloudflare-access.md`) |
+| `oauth/` | MCP OAuth sign-in for the Worker — consent page, Cloudflare Access OIDC code exchange and ID-token verification (see `docs/mcp-oauth-cloudflare-access.md`); `grant.ts` issues the agent ID into the grant |
+| `hub/` | Worker A2A hub — `A2AHub` Durable Object, SQL store, Composite Synthesis Gate, 24-hour retention (see `docs/a2a-hub-worker.md`) |
 
 ---
 

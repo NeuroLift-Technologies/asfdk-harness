@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Status | Draft, waiting for Joshua's approval |
+| Status | **Approved 2026-11-28** by Joshua W. Dorsey, Sr. (handoff NLT-HND-2026-002, §12); built on branch `claude/vigilant-bardeen-gbsbss` |
 | Date | 2026-11-27 |
 | Author | Claude Code (session `session_01UNjnjnzprwgjSgL2dJWxbP`) |
 | Decision owner | Joshua W. Dorsey, Sr. |
@@ -234,3 +234,34 @@ The governance block is regenerated from the current TOI/OTOI on every read, so 
 - The revision audit trail records which fields changed and when, not the old values.
 - The governance block is regenerated on every read rather than frozen at issuance, so it always reflects the current charter.
 - Pi extension and local hub unchanged.
+
+## 12. Owner decisions of 2026-11-28 and how they were built
+
+Joshua reviewed this proposal through Gemini 1.5 Pro and decided, as Managing Member, by executive override (handoff **NLT-HND-2026-002**, recorded 2026-11-28 09:53 EST):
+
+| | Decision | ADR-001 effect | Built as |
+|---|---|---|---|
+| D1 | **Identity binding.** OAuth-driven identity approved: `agentId` from the OAuth connection; agents self-declare `agentName` and `skills` through the MCP tool. The local signed-charter requirement is waived for external cloud connections. | Amends §3.1 (charter authentication) for external cloud connections | §6.1 and §6.2 as written |
+| D2 | **Hub retention (answers Q1).** PASSIVE mailbox baseline: hub registrations and inboxes may hold messages up to 24 hours, then auto-drop. Overrides the NONE immediate session-purge rule for the Worker A2A routing layer. | Amends O8 for the hub only | Messages and lineage expire 24 h after creation; registrations after 24 h without hub activity; payloads deleted on delivery; lazy purge on every call plus a Durable Object alarm |
+| D3 | **Message governance (answers Q2).** The hub enforces the Composite Synthesis Gate on every message before it reaches another agent's inbox. Unlabeled inputs entering the hub are stamped `source: unknown_taint`, `no_derived_egress: true`. | Affirms §3.3 | `src/hub/csg.ts`, evaluated inside `A2AHub` before any write |
+
+### 12.1 Calls the builder made while implementing (check these)
+
+- **Release list (the `USER_DECIDES` path).** ADR §3.3 allows `no_derived_egress` content to leave only where it is explicitly releasable to the destination. OTOI has no release grammar yet (ADR §3.3 and O3, open), so the hub reads the human's releases from the `GOVERNANCE` KV key `a2a-releases`, which no tool or agent can write. With no releases, nothing is releasable and every cross-agent message is denied (fail closed). Format: `{ "version": 1, "releases": [ { "from": { "agentId", "agentName"? }, "to": { "agentId", "agentName"? } } ] }`; `agentId` may be `"*"`. Moving this into OTOI when its grammar exists is a follow-up.
+- **Source sets.** A message's sources are its sender plus every origin whose content the hub delivered to the sender in the last 24 hours (trusted read observation). Conservative over-taint: after reading anything from X, a card's messages need X's release to each destination for 24 hours. ADR §3.3 says granularity and over-taint need owner review.
+- **Private delivery.** Content returning to the card it came from needs no release; every other destination does, including another card under the same `agentId`.
+- **Evaluation order.** Caller identity and binding, a registered recipient (no fallback) and `replyTo` validity first; then the gate; then payload size and inbox limits. Denials return only `DENY_COMPOSITE_EGRESS` and a fixed message; no source labels or identities.
+- **Direct governance notification** is unsupported on the Worker (no host UI). The hub reports `notification.supported: false` and writes a one-line operator record to the Workers logs; it is not described as a notification.
+- **Consent page** shows the platform part only (`claude-…`): the ID is issued after Access sign-in, and reserving IDs before sign-in would let unauthenticated visitors fill the table.
+- **Agent ID uniqueness** is global, not per account: IDs are reserved in the `A2AHub` `agent_ids` table, because the hub is shared.
+- **Issuance record** says `verified: ["agentId"]` (from the encrypted grant) and `observed: ["observedClient"]` (from request headers the client sends) instead of the draft's `verified: ["agentId", "observedClient"]`, so the card does not overclaim. The observed client is normalized without versions (`ClaudeCode` → `claude-code`, `openai-mcp/… (Codex)` → `codex`) so client upgrades do not break the binding.
+- **Governance extension** on issued cards states `identity: "server-issued"`, `governedHubMessaging: true`, `agentRuntimeGoverned: false`, per ADR §3.1 ("a Card shall not advertise governance compliance that the agent's dispatch path does not enforce").
+- **Visibility.** Listing and reading registrations requires the caller's own card to be registered ("discoverable only inside the protected Hub"); `asfdk_hub_status` needs only an identity.
+- **Cards and agent IDs persist**; D2's 24-hour rule covers registrations and mailboxes. Cards hold only agent-declared, non-sensitive fields and the issuance record.
+- **`routeAgentRequest`** routes to every Durable Object binding by name, so `server.ts` hands it an env without `A2A_HUB`, and `A2AHub.fetch()` always answers 404.
+
+### 12.2 Still open
+
+- An ADR-001 revision recording D1 to D3 (canonical home `NeuroLift-Technologies/solidarity-framework`; this repo cannot write there). ADR OI-14 asks implementation PRs to cite the applicable ADR revision.
+- ADR §3.1 per-agent key pairs and public keys on cards are not built; D1 approves OAuth identity in their place for external cloud connections.
+- Where the release list should live long-term (OTOI grammar), and whether same-`agentId` delivery should be released by default.

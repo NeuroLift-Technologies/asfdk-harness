@@ -2,7 +2,7 @@
 
 > This file tracks active work threads. Agents must read this at session start and update it during and at the end of each session.
 
-**Last updated:** 2026-11-27T13:30:00Z
+**Last updated:** 2026-11-28T16:00:00Z
 
 ---
 
@@ -12,15 +12,15 @@
 | Field | Value |
 |---|---|
 | **Thread ID** | THREAD-019 |
-| **Status** | 🟡 Design draft — waiting on Joshua's answers to Q1 (retention) and Q2 (message governance), then design approval. Nothing built. |
+| **Status** | 🟡 Built (PR 1 + PR 2), draft PR open. Waiting on Joshua's review, merge and deploy, then a one-time reconnect of the Claude and ChatGPT connectors and the first `a2a-releases` entries. |
 | **Started** | 2026-11-27 |
-| **Owner** | Claude Code (requested by Joshua W. Dorsey, Sr.) |
-| **Branch** | `ccr-09d60405-fszgs0` |
+| **Owner** | Claude Code (requested by Joshua W. Dorsey, Sr.; handoff NLT-HND-2026-002 from Gemini 1.5 Pro) |
+| **Branch** | `claude/vigilant-bardeen-gbsbss` (contains the design branch `ccr-09d60405-fszgs0`, PR #43) |
 | **Task** | `asfdk_a2a_agent_card` issues each connected agent its own governance-bound card (identity from the MCP connection, details from the agent, governance posture from TOI/OTOI), and agents register it in an A2A hub inside the Worker that is reachable only through the MCP server. |
-| **Scope** | Design: `docs/superpowers/specs/2026-11-27-server-issued-a2a-cards-design.md`. Planned build: `src/a2a.ts`, `src/mcp-server.ts`, `src/server.ts`, `src/tools.ts` (`ASFDK_TOOL_SKILLS` entry, approved with the design), new hub Durable Object, `wrangler.jsonc` migration, tests. |
-| **Blockers** | Q1/Q2 in the design, then Joshua's approval of the design. Deploys stay Joshua's action. |
-| **Related PR** | This branch's PR (design only) |
-| **Notes** | Joshua decided on 2026-11-27: (1) the MCP server never exposes another AI's card; (2) cards are server-issued; (3) the A2A hub moves into the Worker, reachable only through the MCP server — this approves THREAD-016 Workstream B in that shape. Verified 2026-11-27 that the current tool returns the same `asfdk-harness` card to every caller (local and Worker); locally, agents rewrote it before registering. Workers logs show callers identify themselves per request with `x-anthropic-client` (ClaudeCode, Cowork, ClaudeAI). Side findings: a clean `npm install`/`npm ci` fails on an `agents`/`@cloudflare/codemode` peer conflict (installed with `--legacy-peer-deps` to test); both task-watch plugins default to the same agent id `opencode-asfdk-deploy`. |
+| **Scope** | Design: `docs/superpowers/specs/2026-11-27-server-issued-a2a-cards-design.md` (§12 records the 2026-11-28 decisions). Built: `src/a2a-identity.ts`, `src/a2a-cards.ts`, `src/a2a.ts`, `src/harness.ts`, `src/tools.ts` (`ASFDK_TOOL_SKILLS` description, approved with the design), `src/mcp-server.ts`, `src/server.ts`, `src/oauth/{access-handler,grant,consent-page}.ts`, `src/hub/*` (A2AHub Durable Object, store, CSG), `wrangler.jsonc` (binding `A2A_HUB`, migration `v2`), tsconfigs, tests. |
+| **Blockers** | None for review. Deploying and reconnecting connectors are Joshua's actions. The ADR-001 revision recording the 2026-11-28 decisions belongs in `solidarity-framework`, which this session cannot write. |
+| **Related PR** | [#43](https://github.com/NeuroLift-Technologies/asfdk-harness/pull/43) (design), and this branch's draft PR |
+| **Notes** | Joshua decided on 2026-11-27: the MCP server never exposes another AI's card; cards are server-issued; the hub moves into the Worker, reachable only through MCP (approves THREAD-016 Workstream B in that shape). On 2026-11-28 (NLT-HND-2026-002) he approved the design by executive override: OAuth identity (amends ADR-001 §3.1 for external cloud connections), a 24-hour mailbox baseline (overrides O8 for the hub), and the Composite Synthesis Gate at the hub (affirms §3.3). The gate fails closed: no cross-agent message is delivered until Joshua writes releases to the `GOVERNANCE` KV key `a2a-releases`. Verified: `npm run check`, `npm run cf:check`, `npm run test:unit` (148 tests, 147 pass; the one failure also fails on main), 27/27 end-to-end checks against `wrangler dev` with a stand-in OIDC provider, `wrangler deploy --dry-run`. Side findings carried from 2026-11-27: `npm ci` fails on an `agents`/`@cloudflare/codemode` peer conflict; both task-watch plugins default to `opencode-asfdk-deploy`; Codex CLI's `/mcp` connection is rejected. Handoff: `docs/agent-log/handoffs/2026-11-28-claude-code-a2a-hub-build.json`. |
 
 ### THREAD-018 — Sync ORG-DEV-OTOI references to 1.0.4
 | Field | Value |
