@@ -46,3 +46,14 @@ test("PR template rejects unchanged placeholders and sections filled only by com
   assert.ok(validatePrBody(body).includes("Fill in template placeholder: [Name / platform]"));
   assert.ok(validatePrBody(body).includes("Empty section: ### Tests"));
 });
+
+test("PR template counts content under a child heading", () => {
+  const body = completedBody.replace("- [x] Tests pass", "#### Unit tests\n- [x] Tests pass");
+  assert.deepEqual(validatePrBody(body), []);
+  assert.ok(validatePrBody(body.replace("- [x] Tests pass", "")).includes("Empty section: ### Tests"));
+});
+
+test("PR template ends a section at an indented heading of the same rank", () => {
+  const body = completedBody.replace("- [x] Tests pass", "").replace("### Escalations", " ### Escalations");
+  assert.ok(validatePrBody(body).includes("Empty section: ### Tests"));
+});

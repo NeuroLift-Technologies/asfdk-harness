@@ -16,6 +16,7 @@ export function validatePrBody(body) {
   if (typeof body !== "string" || !body.trim()) return ["PR description is empty."];
 
   const lines = body.replace(/<!--[\s\S]*?-->/g, "").split(/\r?\n/);
+  const headingRank = (line) => /^\s*(#{1,6})\s/.exec(line)?.[1].length ?? Infinity;
   const errors = [];
   let previous = -1;
 
@@ -26,9 +27,10 @@ export function validatePrBody(body) {
     } else if (index <= previous) {
       errors.push(`Heading out of order: ${heading}`);
     } else {
-      const next = lines.findIndex((line, number) => number > index && /^#{1,6}\s/.test(line));
+      const rank = headingRank(heading);
+      const next = lines.findIndex((line, number) => number > index && headingRank(line) <= rank);
       const section = lines.slice(index + 1, next === -1 ? undefined : next);
-      if (!section.some((line) => line.trim() && line.trim() !== "---")) {
+      if (!section.some((line) => line.trim() && line.trim() !== "---" && headingRank(line) === Infinity)) {
         errors.push(`Empty section: ${heading}`);
       }
       previous = index;
