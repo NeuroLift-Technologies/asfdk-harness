@@ -1,5 +1,25 @@
 # asfdk-harness
 
+---
+
+## Original Vision
+
+This repository is part of the **NeuroLift Technologies** ecosystem. The original vision is recorded in the NeuroLift Project Hub (Notion) and is reproduced here so that every repository states and shows the intent it was built from.
+
+> **Mission:** Transforming neurodivergent support through privacy-first AI technology.
+>
+> **Core Vision:** To create a world where neurodivergent professionals are not just accommodated, but empowered, with ADHD viewed not as a limitation but as a unique cognitive advantage waiting to be unleashed.
+
+**Guiding commitments:**
+
+- **Privacy-first architecture:** 100% local processing, zero data exposure, military-grade encryption, complete user control.
+- **TOI-OTOI Framework:** humans define their Terms of Interaction; orchestrated agents honor them.
+- **Avatar to Aide to Advocate:** AI that develops genuine understanding through lived experience before it assists.
+- **Nothing About Us Without Us:** neurodivergent community-driven development.
+
+**Source:** [NeuroLift Technologies Project Hub (Notion)](https://app.notion.com/p/273555e42dea816daedbe67a639d308d), with the Complete AI-Fusion Framework Vision analysis (TOI/OTOI Communication Sprint, 2025-09-18).
+
+
 ASFDK Harness is the Solidarity Framework runtime / control plane for governing agent sessions, A2A delegation, MCP/tool surfaces, TOI/OTOI resolution, preflight checks, receipts, and escalation across NeuroLift agent runtimes.
 
 It adds Solidarity Framework hooks around agent runtime sessions so prompts and tool calls can pass through ASFDK-adjacent governance checks before execution.
