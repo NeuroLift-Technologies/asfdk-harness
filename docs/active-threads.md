@@ -8,6 +8,14 @@
 
 ## Active Threads
 
+### Agent PR template validation
+**Status:** Open for PR review
+**Owner:** Codex
+**Started:** 2026-11-28
+**Last updated:** 2026-11-28
+**Summary:** Require the agent PR template and validate the completed description locally before submission.
+**Next action:** Review the local preflight and validator tests.
+
 ### THREAD-019 — ASFDK plugin skills on the Governance Agent MCP server
 **Status:** Open for PR review and production approval
 **Owner:** Codex
