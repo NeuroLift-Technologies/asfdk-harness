@@ -235,14 +235,16 @@ export interface IssuedA2AAgentCardOptions {
   skills?: A2ASkill[];
   /** Redacts paths in diagnostics before they reach the card. */
   redactDiagnostic?: (diagnostic: string) => string;
+  /** True only where the governed Worker hub (with the Composite Synthesis Gate) serves this card. */
+  governedHubMessaging?: boolean;
 }
 
 /**
  * The card the harness issues to a connected agent. Built on
  * {@link createA2AAgentCard} with the agent's options, then narrowed: posture-only
  * governance, the agent's own skills, no interop list, no `cwd`, and the issuance
- * record. The governance block is regenerated from the current TOI/OTOI on
- * every call, so a charter change reaches existing cards.
+ * record. The governance block is built from the given protocol context on
+ * every call and never stored with the card.
  */
 export function createIssuedA2AAgentCard(
   context: GovernanceProtocolContext,
@@ -276,12 +278,13 @@ export function createIssuedA2AAgentCard(
       extensions: [
         {
           uri: NLT_GOVERNANCE_EXTENSION_URI,
-          description:
-            "Governance posture of the connection this card was issued to. The ASFDK hub governs the messages it routes; it does not govern the agent's own runtime.",
+          description: options.governedHubMessaging
+            ? "Governance posture of the connection this card was issued to. The ASFDK hub governs the messages it routes; it does not govern the agent's own runtime."
+            : "Governance posture of the connection this card was issued to. No governed ASFDK hub serves this card; the harness does not govern the agent's own runtime.",
           required: false,
           params: {
             identity: "server-issued",
-            governedHubMessaging: true,
+            governedHubMessaging: options.governedHubMessaging ?? false,
             agentRuntimeGoverned: false,
           },
         },

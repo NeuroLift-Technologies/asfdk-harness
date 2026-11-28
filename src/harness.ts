@@ -248,12 +248,19 @@ export class AsfdkHarness {
    * authorization, details from the agent, governance posture from the current
    * TOI/OTOI. `harness.a2aAgentCard()` stays pinned to the harness for Pi.
    */
-  async issueAgentCard(stored: StoredCard, cwd?: string): Promise<IssuedA2AAgentCard> {
-    return createIssuedA2AAgentCard(await this.protocolContext(cwd), {
+  async issueAgentCard(
+    stored: StoredCard,
+    options: { cwd?: string; governedHubMessaging?: boolean } = {},
+  ): Promise<IssuedA2AAgentCard> {
+    // Re-read the charter on every issuance (force), so an edited .toi/.otoi
+    // reaches existing cards on their next read. Inline content (the Worker's
+    // KV/secret charter) is whatever this harness was constructed with.
+    return createIssuedA2AAgentCard(await this.protocolContext(options.cwd, true), {
       agentId: stored.agentId,
       agentName: stored.agentName,
       ...stored.fields,
       redactDiagnostic: (diagnostic) => this.redactPathInString(diagnostic),
+      governedHubMessaging: options.governedHubMessaging ?? false,
       issuance: {
         issuer: "asfdk-harness",
         surface: stored.surface,

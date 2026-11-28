@@ -360,26 +360,55 @@ test("card tool: old grants are told to reconnect; the static token gets no card
   await token.close();
 });
 
-test("card tool: a charter change reaches an existing card on its next read", async () => {
-  const local = new AsfdkHarness({ toiContent });
+test("card tool: an edited charter file reaches an existing card on its next read", async () => {
+  const { mkdtempSync, readFileSync, writeFileSync, rmSync } = await import("node:fs");
+  const { join } = await import("node:path");
+  const { tmpdir } = await import("node:os");
+  const dir = mkdtempSync(join(tmpdir(), "asfdk-charter-"));
+  const otoiPath = join(dir, ".otoi");
+  const charter = JSON.parse(readFileSync(".otoi", "utf8"));
+  writeFileSync(otoiPath, JSON.stringify(charter));
+  const local = new AsfdkHarness({ otoiPath });
   await local.start();
   const server = createMcpServer(local);
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await server.connect(serverTransport);
   const client = new Client({ name: "Kilo", version: "1.0.0" });
   await client.connect(clientTransport);
-  const before = parse(await client.callTool({ name: "asfdk_a2a_agent_card", arguments: {} }));
-  assert.equal(before.id, "local-kilo");
-  const guardrails = before.governance.guardrails as string[];
-  // Simulate a charter reload with an extra guardrail.
-  const context = await local.protocolContext();
-  (context.devOtoi as { guardrails?: string[] } | undefined) &&
-    ((context.devOtoi as { guardrails: string[] }).guardrails = [...guardrails, "New guardrail"]);
-  const after = parse(await client.callTool({ name: "asfdk_a2a_agent_card", arguments: {} }));
-  if (context.devOtoi) assert.ok(after.governance.guardrails.includes("New guardrail"));
-  assert.equal(after.issuance.revision, 1, "governance changes do not count as agent edits");
-  await client.close();
-  await local.shutdown();
+  try {
+    const before = parse(await client.callTool({ name: "asfdk_a2a_agent_card", arguments: {} }));
+    assert.equal(before.id, "local-kilo");
+    assert.ok(Array.isArray(before.governance.guardrails) && before.governance.guardrails.length > 0, "charter guardrails present");
+    assert.ok(!before.governance.guardrails.includes("Charter-reload sentinel guardrail"));
+
+    charter["x-nlt-dev-otoi"].guardrails = [...charter["x-nlt-dev-otoi"].guardrails, "Charter-reload sentinel guardrail"];
+    writeFileSync(otoiPath, JSON.stringify(charter));
+
+    const after = parse(await client.callTool({ name: "asfdk_a2a_agent_card", arguments: {} }));
+    assert.ok(after.governance.guardrails.includes("Charter-reload sentinel guardrail"), "the edit reaches the card");
+    assert.equal(after.id, before.id);
+    assert.equal(after.issuance.revision, 1, "governance changes do not count as agent edits");
+  } finally {
+    await client.close();
+    await local.shutdown();
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("governedHubMessaging: false on local cards, true where the governed hub serves the card", async () => {
+  const localServer = createMcpServer(harness);
+  const [ct, st] = InMemoryTransport.createLinkedPair();
+  await localServer.connect(st);
+  const localClient = new Client({ name: "OpenCode", version: "1.0.0" });
+  await localClient.connect(ct);
+  const localCard = parse(await localClient.callTool({ name: "asfdk_a2a_agent_card", arguments: {} }));
+  assert.equal(localCard.capabilities.extensions[0].params.governedHubMessaging, false);
+  await localClient.close();
+
+  const worker = await workerClient(claudeProps, { "x-anthropic-client": "ClaudeCode" }, new MemoryCardStore());
+  const workerCard = parse(await worker.callTool({ name: "asfdk_a2a_agent_card", arguments: {} }));
+  assert.equal(workerCard.capabilities.extensions[0].params.governedHubMessaging, false, "no hub backend → no claim");
+  await worker.close();
 });
 
 test("issued card: otoi.registered reflects the OTOI charter's agents", async () => {

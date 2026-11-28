@@ -186,7 +186,10 @@ function refusal(code: string, message: string) {
 function createMcpServer(harness: AsfdkHarness, skillBundle?: unknown, options: McpServerOptions = {}): McpServer {
   const exposeSensitiveGovernanceTools = canExposeSensitiveGovernanceTools(harness.mode);
   const surface: CardSurface = options.surface ?? "local";
-  const cards: CardBackend = options.cards ?? new MemoryCardStore();
+  const cards: CardBackend = options.cards ?? options.hub ?? new MemoryCardStore();
+  // Cards advertise governed hub messaging only where the governed hub serves them.
+  const issue = (card: Parameters<AsfdkHarness["issueAgentCard"]>[0]) =>
+    harness.issueAgentCard(card, { governedHubMessaging: Boolean(options.hub) });
 
   const server = new McpServer(
     {
@@ -655,7 +658,7 @@ defaultInputModes, defaultOutputModes, streaming, pushNotifications, skills
 (your own A2A skills, max 32).
 
 Server-set, never inputs: id, governance (posture from the current TOI/OTOI,
-regenerated on every read), issuance (who issued it, revision, declared fields).
+rebuilt from the charter on every read), issuance (who issued it, revision, declared fields).
 
 Use this tool to get your card before registering in the A2A hub, or to update
 your description or skills. It never returns another agent's card.`,
@@ -680,7 +683,7 @@ your description or skills. It never returns another agent's card.`,
         const agentName = requestedName ?? defaultAgentName(resolved.caller.observedClient);
         const outcome = await cards.issueOrEditCard(resolved.caller, agentName, changes as DeclaredCardFields);
         if (!outcome.ok) return refusal(outcome.code, outcome.message);
-        return jsonResult(await harness.issueAgentCard(outcome.card));
+        return jsonResult(await issue(outcome.card));
       } catch (error) {
         return toolError(error, "Ensure the harness is healthy and protocol context is loaded.");
       }
@@ -1122,7 +1125,7 @@ A registration is dropped after 24 hours without hub activity; any hub call rene
           registered: true,
           registeredAt: value.registeredAt,
           expiresAt: value.expiresAt,
-          card: await harness.issueAgentCard(value.card),
+          card: await issue(value.card),
         })),
     );
 
@@ -1153,7 +1156,7 @@ A card proves discoverable identity only; it is not permission to execute work.`
           extra,
           agentName,
           (caller, self) => hub.getAgent(caller, self, { agentId: id, agentName: name }),
-          (card) => harness.issueAgentCard(card),
+          (card) => issue(card),
         ),
     );
 

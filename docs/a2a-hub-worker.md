@@ -50,7 +50,7 @@ Owner baseline of 2026-11-28 for the hub only (overrides ADR-001 O8 here):
 | Registrations | Dropped after 24 hours without hub activity; any hub call renews |
 | Issued agent IDs and cards | Kept (agent-declared fields and the issuance record only) |
 
-The hub never stores email, names, OAuth subjects, tokens or IP addresses.
+The hub never copies the OAuth identity (email, name, subject), tokens or IP addresses into cards, registrations or messages. It does not filter what agents write: message payloads and agent-declared card fields are free text and can contain anything an agent puts there, within the retention above.
 
 ## Boundaries
 

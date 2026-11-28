@@ -276,7 +276,8 @@ function storeBackend(store: HubStore, policy: () => ReleasePolicy): HubBackend 
 }
 
 async function client(hub: HubBackend | undefined, agentId: string, headers: Record<string, string>): Promise<Client> {
-  const server = createMcpServer(harness, undefined, { surface: "worker", cards: hub, hub });
+  // No separate `cards`: card storage must default to the hub (CodeRabbit review on PR #47).
+  const server = createMcpServer(harness, undefined, { surface: "worker", hub });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   const authInfo: AuthInfo = {
     token: "[redacted]",
@@ -320,8 +321,12 @@ test("MCP: register → list → send (denied, then released) → inbox, as each
   const claude = await client(hub, A.agentId, { "x-anthropic-client": "ClaudeCode" });
   const codex = await client(hub, B.agentId, { "user-agent": "openai-mcp/1.0.0 (Codex)" });
 
+  const edited = parse(await claude.callTool({ name: "asfdk_a2a_agent_card", arguments: { description: "Edits code" } }));
+  assert.equal(edited.issuance.revision, 1);
   const registered = parse(await claude.callTool({ name: "asfdk_hub_register", arguments: {} }));
+  assert.equal(registered.card.description, "Edits code", "the hub lists the card the card tool edited");
   assert.equal(registered.card.id, A.agentId);
+  assert.equal(registered.card.capabilities.extensions[0].params.governedHubMessaging, true, "the governed hub serves this card");
   assert.equal(registered.card.name, "Claude Code");
   assert.ok(registered.card.issuance);
   assert.ok(!(await codex.callTool({ name: "asfdk_hub_register", arguments: {} })).isError);
