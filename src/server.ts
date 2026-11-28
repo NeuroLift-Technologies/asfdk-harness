@@ -12,8 +12,11 @@ import {
   type OAuthHandlerEnv,
 } from "./oauth/access-handler.js";
 import { secretsMatch } from "./oauth/access-oidc.js";
+import type { CardBackend } from "./a2a-cards.js";
+import { A2A_HUB_INSTANCE, type A2AHub } from "./hub/durable-object.js";
 
 export { AsfdkGovernanceAgent } from "../agents/asfdk-governance/agent.js";
+export { A2AHub } from "./hub/durable-object.js";
 
 const MCP_PATH = "/mcp";
 const TOKEN_PATH = "/token";
@@ -58,11 +61,27 @@ async function getMcpHarness(env: WorkerEnv): Promise<AsfdkHarness> {
   return mcpHarnessPromise;
 }
 
+/** The single A2A hub instance (THREAD-019). RPC only; never routed. */
+function a2aHub(env: WorkerEnv): DurableObjectStub<A2AHub> {
+  return (env.A2A_HUB as DurableObjectNamespace<A2AHub>).getByName(A2A_HUB_INSTANCE);
+}
+
+/** Issued cards live in the A2AHub Durable Object on the Worker. */
+function hubCardBackend(env: WorkerEnv): CardBackend {
+  const hub = a2aHub(env);
+  return {
+    issueOrEditCard: (caller, agentName, changes) => hub.issueOrEditCard(caller, agentName, changes),
+  };
+}
+
 // Stateless Streamable HTTP requires a fresh server + transport per request;
 // the SDK throws "Stateless transport cannot be reused across requests" otherwise.
 // Only the harness (expensive ASFDK init) is memoized and shared.
-async function handleMcpRequest(request: Request, env: WorkerEnv): Promise<Response> {
-  const server = createMcpServer(await getMcpHarness(env));
+async function handleMcpRequest(request: Request, env: WorkerEnv, props: McpAuthProps | undefined): Promise<Response> {
+  const server = createMcpServer(await getMcpHarness(env), {
+    surface: "worker",
+    cards: hubCardBackend(env),
+  });
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: undefined,
   });
@@ -71,7 +90,11 @@ async function handleMcpRequest(request: Request, env: WorkerEnv): Promise<Respo
   // still being produced after this returns. Closing would abort the stream and
   // truncate the body. The per-request server/transport are GC'd once the
   // response completes.
-  return transport.handleRequest(request);
+  // The grant props reach tool handlers as `extra.authInfo.extra.props`; that is
+  // where the caller's agentId comes from. The bearer token itself is not passed on.
+  return transport.handleRequest(request, {
+    authInfo: { token: "[redacted]", clientId: "", scopes: [], extra: { props } },
+  });
 }
 
 /**
@@ -79,10 +102,26 @@ async function handleMcpRequest(request: Request, env: WorkerEnv): Promise<Respo
  * token). The caller's identity is in `ctx.props` as {@link McpAuthProps}.
  */
 const mcpApiHandler = {
-  fetch(request: Request, env: WorkerEnv) {
-    return handleMcpRequest(request, env);
+  fetch(request: Request, env: WorkerEnv, ctx: ExecutionContext & { props?: unknown }) {
+    return handleMcpRequest(request, env, ctx.props as McpAuthProps | undefined);
   },
 };
+
+/**
+ * `routeAgentRequest` routes to every Durable Object binding in the env it is
+ * given, by kebab-cased binding name. Hand it an env without the A2A hub so
+ * the hub stays reachable only through the MCP tools (design PR #43 §6.3).
+ */
+const agentRoutingEnvs = new WeakMap<object, WorkerEnv>();
+function agentRoutingEnv(env: WorkerEnv): WorkerEnv {
+  let routed = agentRoutingEnvs.get(env);
+  if (!routed) {
+    const { A2A_HUB: _hub, ...rest } = env;
+    routed = rest as WorkerEnv;
+    agentRoutingEnvs.set(env, routed);
+  }
+  return routed;
+}
 
 /** Everything outside /mcp: the OAuth sign-in pages, then the agent routes. */
 const defaultHandler = {
@@ -90,13 +129,17 @@ const defaultHandler = {
     const { pathname } = new URL(request.url);
     const oauthEnv = env as unknown as OAuthHandlerEnv;
     if (pathname === AUTHORIZE_PATH) return handleAuthorize(request, oauthEnv);
-    if (pathname === CALLBACK_PATH) return handleCallback(request, oauthEnv);
+    if (pathname === CALLBACK_PATH) {
+      return handleCallback(request, oauthEnv, {
+        issueAgentId: (platform) => a2aHub(env).reserveAgentId(platform),
+      });
+    }
 
     // The Think agent routes keep the shared-secret gate they had before OAuth.
     if (!(await staticTokenMatches(readBearerToken(request), env))) {
       return new Response("Unauthorized", { status: 401 });
     }
-    return (await routeAgentRequest(request, env)) ?? new Response("Not found", { status: 404 });
+    return (await routeAgentRequest(request, agentRoutingEnv(env))) ?? new Response("Not found", { status: 404 });
   },
 } satisfies ExportedHandler<WorkerEnv>;
 

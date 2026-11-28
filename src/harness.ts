@@ -17,7 +17,13 @@ import {
   type GovernanceProtocolSnapshot,
   type PromptMode,
 } from "./protocols.js";
-import { createA2AAgentCard, type A2AAgentCard } from "./a2a.js";
+import {
+  createA2AAgentCard,
+  createIssuedA2AAgentCard,
+  type A2AAgentCard,
+  type IssuedA2AAgentCard,
+} from "./a2a.js";
+import type { StoredCard } from "./a2a-cards.js";
 import { loadAsfdk } from "./asfdk-runtime.js";
 
 // Re-export the shared provenance surface so tools.ts / mcp-server.ts / tests
@@ -234,6 +240,32 @@ export class AsfdkHarness {
       agentName: "ASFDK Harness",
       url: this.a2aUrl,
       includeSensitiveGovernanceTools: canExposeSensitiveGovernanceTools(this.mode),
+    });
+  }
+
+  /**
+   * The card issued to a connected agent (THREAD-019): identity from the
+   * authorization, details from the agent, governance posture from the current
+   * TOI/OTOI. `harness.a2aAgentCard()` stays pinned to the harness for Pi.
+   */
+  async issueAgentCard(stored: StoredCard, cwd?: string): Promise<IssuedA2AAgentCard> {
+    return createIssuedA2AAgentCard(await this.protocolContext(cwd), {
+      agentId: stored.agentId,
+      agentName: stored.agentName,
+      ...stored.fields,
+      redactDiagnostic: (diagnostic) => this.redactPathInString(diagnostic),
+      issuance: {
+        issuer: "asfdk-harness",
+        surface: stored.surface,
+        issuedAt: stored.issuedAt,
+        authorization: { agentId: stored.agentId, platform: stored.platform, authMethod: stored.authMethod },
+        observedClient: stored.observedClient,
+        verified: ["agentId"],
+        observed: ["observedClient"],
+        declared: [...stored.declared],
+        revision: stored.revision,
+        updatedAt: stored.updatedAt,
+      },
     });
   }
 

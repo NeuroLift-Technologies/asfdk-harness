@@ -28,6 +28,21 @@ import {
   formatGovernanceSummary,
 } from "./tools.js";
 import { getThirdPartyProtocolProfiles } from "./protocols.js";
+import {
+  agentNameSchema,
+  declaredCardFieldsShape,
+  MemoryCardStore,
+  type CardBackend,
+  type DeclaredCardFields,
+} from "./a2a-cards.js";
+import {
+  defaultAgentName,
+  resolveLocalCaller,
+  resolveWorkerCaller,
+  type CallerGrantProps,
+  type CallerResolution,
+  type CardSurface,
+} from "./a2a-identity.js";
 
 const MCP_SERVER_NAME = "asfdk-harness";
 const MCP_SERVER_VERSION = "0.2.0";
@@ -52,7 +67,7 @@ Available tools:
 - asfdk_status             - Inspect active ASFDK foundation mode and component health.
 - asfdk_protocol_status    - Inspect local TOI/OTOI protocol loading and resolution.
 - asfdk_interop_protocols  - Inspect third-party interoperability protocol targets.
-- asfdk_a2a_agent_card     - Generate a TOI/OTOI-governed A2A Agent Card.
+- asfdk_a2a_agent_card     - Issue or edit your own server-bound A2A Agent Card.
 - asfdk_assess_text        - Assess free text through active ASFDK components.
 - asfdk_update_preferences - Validate/update explicit user preferences through the TOI/OTOI path.
 - asfdk_health_check       - Run a full ASFDK foundation health check.
@@ -115,11 +130,41 @@ function toolError(error: unknown, hint?: string): { isError: true; content: [{ 
 // Server factory
 // ---------------------------------------------------------------------------
 
+export interface McpServerOptions {
+  /**
+   * Where this server runs. `worker`: identity comes from the OAuth grant
+   * props in `extra.authInfo`. `local` (default): `local-{client}` identity.
+   */
+  surface?: CardSurface;
+  /** Issued-card storage. Defaults to process memory (local server). */
+  cards?: CardBackend;
+}
+
+/** Minimal shape of the MCP SDK's per-request `extra` this file reads. */
+interface ToolRequestExtra {
+  authInfo?: { extra?: Record<string, unknown> };
+  requestInfo?: { headers?: unknown };
+}
+
+function jsonResult(value: unknown) {
+  return {
+    content: [{ type: "text" as const, text: JSON.stringify(value, null, 2) }],
+    structuredContent: value as Record<string, unknown>,
+  };
+}
+
+function refusal(code: string, message: string) {
+  const value = { error: code, message };
+  return { isError: true as const, ...jsonResult(value) };
+}
+
 /**
  * Create and configure the MCP server with ASFDK tools.
  */
-function createMcpServer(harness: AsfdkHarness): McpServer {
+function createMcpServer(harness: AsfdkHarness, options: McpServerOptions = {}): McpServer {
   const exposeSensitiveGovernanceTools = canExposeSensitiveGovernanceTools(harness.mode);
+  const surface: CardSurface = options.surface ?? "local";
+  const cards: CardBackend = options.cards ?? new MemoryCardStore();
 
   const server = new McpServer(
     {
@@ -133,6 +178,12 @@ function createMcpServer(harness: AsfdkHarness): McpServer {
       },
     }
   );
+
+  /** Who is calling this tool, resolved by the server (design PR #43 §6.1). Never an input. */
+  const resolveCaller = (extra: ToolRequestExtra): CallerResolution =>
+    surface === "worker"
+      ? resolveWorkerCaller(extra.authInfo?.extra?.props as CallerGrantProps | undefined, extra.requestInfo?.headers)
+      : resolveLocalCaller(server.server.getClientVersion()?.name, extra.requestInfo?.headers);
 
   // -------------------------------------------------------------------------
   // Tool: asfdk_status
@@ -552,45 +603,59 @@ Returns an array of protocol profiles with id, name, layer, status, discovery, a
 
   // -------------------------------------------------------------------------
   // Tool: asfdk_a2a_agent_card
+  // Server-issued cards (THREAD-019): never another AI's card, never the harness's.
   // -------------------------------------------------------------------------
   server.registerTool(
     "asfdk_a2a_agent_card",
     {
       title: "ASFDK A2A Agent Card",
-      description: `Generate a TOI/OTOI-governed A2A Agent Card for the current harness state.
+      description: `Issue your own governance-bound A2A Agent Card, or edit the fields you declared on it.
 
-The Agent Card advertises this harness's capabilities to A2A peers. It includes:
-  - Governance extensions (TOI/OTOI authority, guardrails, privacy, agency)
-  - Skills derived from the active ASFDK tool set (filtered by mode)
-  - Interoperability protocols (excluding separate-owner MCP)
-  - Service endpoint URL (requires ASFDK_A2A_URL or a2aUrl option)
+The server issues the card; you cannot set or change its identity:
+  - id:   your agent ID, issued when the person accepted this MCP connection
+          (local server: local-<client>). Never an input.
+  - name: your agentName. Pass it on every call, for example "Claude Code".
+          Agents sharing one connection tell themselves apart by name. A
+          different agentName selects, or issues, a different card; names are
+          never renamed. If omitted, the server names you after your client.
 
-Disclosure of sensitive governance tools in the card is restricted to authorized modes
-(DEVELOPMENT or ASFDK_GOVERNANCE_TOOLS=approved).
+The first call with an agentName issues that card (revision 1). Later calls with
+the same agentName return it; any fields you pass replace the current values and
+bump the revision. Only the client the card was issued to can read or edit it.
 
-Use this tool when:
-  - Registering this harness with an A2A discovery hub
-  - Inspecting how this harness presents itself to A2A peers
-  - Debugging A2A capability advertisement
+Fields you may set: description, url (https:// only), version,
+defaultInputModes, defaultOutputModes, streaming, pushNotifications, skills
+(your own A2A skills, max 32).
 
-Returns a full A2A Agent Card object per the A2A protocol specification.`,
-      inputSchema: z.object({}),
+Server-set, never inputs: id, governance (posture from the current TOI/OTOI,
+regenerated on every read), issuance (who issued it, revision, declared fields).
+
+Use this tool to get your card before registering in the A2A hub, or to update
+your description or skills. It never returns another agent's card.`,
+      inputSchema: z
+        .object({
+          agentName: agentNameSchema.optional().describe('Your agent name, for example "Claude Code". Selects your card.'),
+          ...declaredCardFieldsShape,
+        })
+        .strict(),
       annotations: {
-        readOnlyHint: true,
+        readOnlyHint: false,
         destructiveHint: false,
         idempotentHint: true,
         openWorldHint: false,
       },
     },
-    async () => {
+    async (args, extra) => {
       try {
-        const card = await harness.a2aAgentCardSanitized();
-        return {
-          content: [{ type: "text", text: JSON.stringify(card, null, 2) }],
-          structuredContent: card as unknown as Record<string, unknown>,
-        };
+        const resolved = resolveCaller(extra as ToolRequestExtra);
+        if (!resolved.ok) return refusal(resolved.reason === "reconnect" ? "RECONNECT_REQUIRED" : "NO_AUTHORIZATION", resolved.message);
+        const { agentName: requestedName, ...changes } = args;
+        const agentName = requestedName ?? defaultAgentName(resolved.caller.observedClient);
+        const outcome = await cards.issueOrEditCard(resolved.caller, agentName, changes as DeclaredCardFields);
+        if (!outcome.ok) return refusal(outcome.code, outcome.message);
+        return jsonResult(await harness.issueAgentCard(outcome.card));
       } catch (error) {
-        return toolError(error, "Ensure the harness is healthy and protocol context is loaded. Set ASFDK_A2A_URL if the card needs a service endpoint.");
+        return toolError(error, "Ensure the harness is healthy and protocol context is loaded.");
       }
     }
   );

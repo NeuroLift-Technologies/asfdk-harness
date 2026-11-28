@@ -15,5 +15,5 @@
     "rootDir": "src"
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["src/server.ts", "src/governance/**/*.ts", "src/oauth/**/*.ts"]
+  "exclude": ["src/server.ts", "src/governance/**/*.ts", "src/oauth/**/*.ts", "src/hub/durable-object.ts"]
 }

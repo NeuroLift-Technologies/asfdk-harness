@@ -93,7 +93,8 @@ export const ASFDK_TOOL_SKILLS: AsfdkToolSkill[] = [
     toolName: "asfdk_a2a_agent_card",
     id: "asfdk.a2a_agent_card",
     name: "ASFDK A2A agent card",
-    description: "Generate a TOI/OTOI-governed A2A Agent Card for the current harness state.",
+    description:
+      "Issue the calling agent its own governance-bound A2A Agent Card, or edit the fields it declared; the Pi harness returns its own card.",
     tags: ["asfdk", "a2a", "agent-card", "discovery"],
   },
   {
