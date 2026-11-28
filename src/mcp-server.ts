@@ -1167,8 +1167,8 @@ The server sets "from" to your card. The recipient must be registered; there is 
 fallback recipient. Every message passes the Composite Synthesis Gate (ADR-001 §3.3):
 content entering the hub is classified unknown_taint with no_derived_egress, and it is
 delivered only on routes the person who governs this hub has released. Otherwise the
-result is DENY_COMPOSITE_EGRESS and nothing is stored. Content you have received from
-other agents counts toward what you send for 24 hours.
+result is DENY_COMPOSITE_EGRESS and nothing is stored. Content any agent on your
+connection has received from other agents counts toward what you send for 24 hours.
 
 payload: a string or a JSON object, at most ${HUB_LIMITS.payloadBytes} bytes.
 replyTo: optional id of a message delivered to you. Messages are kept for at most 24 hours.`,

@@ -7,9 +7,11 @@
  *   verify, so it is classified `unknown_taint` with `no_derived_egress: true`.
  *   Caller-provided labels never lower that classification.
  * - Source set: the sender's own new content, plus every source the hub has
- *   observed reaching the sender (messages delivered to its inbox within the
- *   retention window). Conservative: once a card has read content from X, its
- *   later messages carry X as a contributor until that observation expires.
+ *   observed reaching any card on the sender's connection (agent ID) within
+ *   the retention window. Conservative: once any agent on a connection has
+ *   read content from X, that connection's messages carry X as a contributor
+ *   until the observation expires; a new agentName or client header cannot
+ *   shed it.
  * - Evaluation, after identity and recipient checks: if two or more sources
  *   contributed, or any has `no_derived_egress`, every source must be
  *   explicitly releasable to the destination, or the result is

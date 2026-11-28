@@ -27,7 +27,7 @@ The Cloudflare Worker's MCP server (`/mcp`) issues each connected agent its own 
 
    - A route is one direction. Add the reverse route for replies.
    - Omit `agentName` to cover every agent on that connection; `"agentId": "*"` matches any connection.
-   - Content an agent has received counts toward what it sends for 24 hours: forwarding content from A to C needs `A → C` as well as `B → C`.
+   - Content received counts toward what is sent for 24 hours, across every agent on the same connection: once any agent on B's connection has read A's content, B's connection sending to C needs `A → C` as well as `B → C`.
    - Agent IDs are on each card (`asfdk_a2a_agent_card`) and in `asfdk_hub_list_agents`.
 
    One way to write it, from a checkout with the Worker's `wrangler.jsonc`:

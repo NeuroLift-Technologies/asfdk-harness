@@ -373,3 +373,52 @@ test("MCP: register → list → send (denied, then released) → inbox, as each
   await claude.close();
   await codex.close();
 });
+
+test("hub: lineage follows the connection — a new agentName cannot launder received content (Codex P1)", { skip }, () => {
+  const { store } = hubWith();
+  const byId = (from: CardKey | "*", to: CardKey | "*") =>
+    parseReleasePolicy(
+      JSON.stringify({
+        version: 1,
+        releases: [[from, to]].map(([f, t]) => ({
+          from: f === "*" ? { agentId: "*" } : { agentId: (f as CardKey).agentId },
+          to: t === "*" ? { agentId: "*" } : { agentId: (t as CardKey).agentId },
+        })),
+      }),
+    );
+  const D: CardKey = { agentId: "gemini-dddddd", agentName: "Gemini" };
+  const callerD = callerFor(D, "gemini");
+  assert.ok(store.register(callerD, D.agentName).ok);
+
+  // A → B released; B reads A's content.
+  assert.ok(store.sendMessage(callerA, A.agentName, { to: B, type: "message", payload: "from A" }, byId(A, B)).ok);
+  assert.ok(store.inbox(callerB, B.agentName).ok);
+
+  // B's client registers a fresh name under the same agent ID and tries B → D.
+  const alias: CardKey = { agentId: B.agentId, agentName: "Codex Alias" };
+  assert.ok(store.register(callerB, alias.agentName).ok);
+  const laundered = store.sendMessage(callerB, alias.agentName, { to: D, type: "message", payload: "A's content" }, byId(B, D));
+  assert.ok(!laundered.ok && laundered.code === "DENY_COMPOSITE_EGRESS", "A's content is still in the connection's source set");
+
+  // A changed observed-client header on the same connection does not reset it either.
+  const spoofed = callerFor({ agentId: B.agentId, agentName: "Other" }, "spoofed-client");
+  assert.ok(store.register(spoofed, "Other").ok);
+  const viaHeader = store.sendMessage(spoofed, "Other", { to: D, type: "message", payload: "A's content" }, byId(B, D));
+  assert.ok(!viaHeader.ok && viaHeader.code === "DENY_COMPOSITE_EGRESS");
+
+  // With A → D released as well, it goes through.
+  const both = parseReleasePolicy(
+    JSON.stringify({ version: 1, releases: [{ from: { agentId: B.agentId }, to: { agentId: D.agentId } }, { from: { agentId: A.agentId }, to: { agentId: D.agentId } }] }),
+  );
+  assert.ok(store.sendMessage(callerB, alias.agentName, { to: D, type: "message", payload: "ok" }, both).ok);
+});
+
+test("hub: asfdk_hub_status renews the caller's registration (Codex P2)", { skip }, () => {
+  const { store, clock } = hubWith();
+  clock.advance(HUB_RETENTION_MS - 1000);
+  assert.ok(store.status(callerB, B.agentName, EMPTY_RELEASE_POLICY).ok, "B only polls status");
+  clock.advance(2000);
+  const listed = store.listAgents(callerB, B.agentName);
+  assert.ok(listed.ok, "B is still registered");
+  assert.ok(listed.value.some((a) => a.id === B.agentId));
+});

@@ -93,14 +93,15 @@ const SCHEMA = [
      delivered_at INTEGER
    )`,
   `CREATE INDEX IF NOT EXISTS messages_inbox ON messages (to_agent_id, to_agent_name, delivered_at, created_at)`,
-  // Trusted read observation for the CSG: which origins' content each card has received.
+  // Trusted read observation for the CSG: which origins' content each connection has received.
+  // Held per agent ID (the authorization), not per card: an agentName is caller-chosen and the
+  // observed client is a header, so either could otherwise be changed to shed lineage.
   `CREATE TABLE IF NOT EXISTS lineage (
      holder_agent_id TEXT NOT NULL,
-     holder_agent_name TEXT NOT NULL,
      origin_agent_id TEXT NOT NULL,
      origin_agent_name TEXT NOT NULL,
      expires_at INTEGER NOT NULL,
-     PRIMARY KEY (holder_agent_id, holder_agent_name, origin_agent_id, origin_agent_name)
+     PRIMARY KEY (holder_agent_id, origin_agent_id, origin_agent_name)
    )`,
   // Counts only; no identities.
   `CREATE TABLE IF NOT EXISTS stats (
@@ -387,15 +388,14 @@ export class HubStore {
         provenance: classifyHubIngress(),
       });
       this.sql.exec("UPDATE messages SET delivered_at = ?, payload = NULL WHERE id = ?", now, row.id);
-      // Trusted read observation: the holder now carries these origins.
+      // Trusted read observation: the holder's whole connection now carries these origins.
       for (const origin of JSON.parse(row.sources) as CardKey[]) {
         this.sql.exec(
-          `INSERT INTO lineage (holder_agent_id, holder_agent_name, origin_agent_id, origin_agent_name, expires_at)
-           VALUES (?, ?, ?, ?, ?)
-           ON CONFLICT (holder_agent_id, holder_agent_name, origin_agent_id, origin_agent_name)
+          `INSERT INTO lineage (holder_agent_id, origin_agent_id, origin_agent_name, expires_at)
+           VALUES (?, ?, ?, ?)
+           ON CONFLICT (holder_agent_id, origin_agent_id, origin_agent_name)
            DO UPDATE SET expires_at = MAX(expires_at, excluded.expires_at)`,
           holder.agentId,
-          holder.agentName,
           origin.agentId,
           origin.agentName,
           now + HUB_RETENTION_MS,
@@ -412,6 +412,8 @@ export class HubStore {
     if (existing && existing.observed_client !== caller.observedClient) {
       return { ok: false, code: "BINDING_MISMATCH", message: BINDING_MISMATCH_MESSAGE };
     }
+    // A status call is hub activity: it renews the caller's own registration.
+    if (existing) this.touch({ agentId: caller.agentId, agentName });
     const count = (query: string) => this.sql.exec<{ count: number }>(query).toArray()[0]!.count;
     return {
       ok: true,
@@ -498,13 +500,17 @@ export class HubStore {
     return bound;
   }
 
-  /** The sender's new content plus every origin observed reaching it. */
+  /**
+   * The sender's new content plus every origin observed reaching any card on
+   * the sender's connection (agent ID). Conservative: agents sharing one
+   * authorization share lineage, so neither a new agentName nor a changed
+   * client header can shed content already received.
+   */
   private sourceSet(sender: CardKey): SourceContribution[] {
     const observed = this.sql
       .exec<{ origin_agent_id: string; origin_agent_name: string }>(
-        "SELECT origin_agent_id, origin_agent_name FROM lineage WHERE holder_agent_id = ? AND holder_agent_name = ?",
+        "SELECT origin_agent_id, origin_agent_name FROM lineage WHERE holder_agent_id = ?",
         sender.agentId,
-        sender.agentName,
       )
       .toArray()
       .map((row) => ({ agentId: row.origin_agent_id, agentName: row.origin_agent_name }));
