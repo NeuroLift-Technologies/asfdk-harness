@@ -26,20 +26,19 @@ import {
   verifyAccessIdToken,
 } from "./access-oidc.js";
 import { renderConsentPage, renderErrorPage } from "./consent-page.js";
+import {
+  buildGrant,
+  platformForAuthRequest,
+  unreservedAgentId,
+  type CallbackOptions,
+} from "./grant.js";
+
+export { buildGrant, platformForAuthRequest, type AgentIdIssuer, type CallbackOptions, type McpAuthProps } from "./grant.js";
 
 export const AUTHORIZE_PATH = "/authorize";
 export const CALLBACK_PATH = "/callback";
 
 const SERVER_NAME = "ASFDK Harness";
-
-/** What every authenticated MCP request carries in `ctx.props`. */
-export interface McpAuthProps {
-  /** Access user ID, or a fixed ID for the legacy static token. */
-  sub: string;
-  email?: string;
-  name?: string;
-  authMethod: "cloudflare-access" | "static-token";
-}
 
 /** Environment the handlers need: the provider's helpers plus the ACCESS_* settings. */
 export type OAuthHandlerEnv = { OAUTH_PROVIDER: OAuthHelpers };
@@ -60,7 +59,8 @@ export async function handleAuthorize(request: Request, env: OAuthHandlerEnv): P
       const details = await oauth.describeConsent(authRequest);
       const consent = await oauth.beginConsent(authRequest);
       consent.headers.set("Content-Type", "text/html; charset=utf-8");
-      return new Response(renderConsentPage(details, consent.handle, SERVER_NAME), {
+      const agentIdPlatform = await platformForAuthRequest(oauth, authRequest.clientId, details.clientName);
+      return new Response(renderConsentPage(details, consent.handle, SERVER_NAME, { agentIdPlatform }), {
         headers: consent.headers,
       });
     }
@@ -99,7 +99,11 @@ export async function handleAuthorize(request: Request, env: OAuthHandlerEnv): P
   }
 }
 
-export async function handleCallback(request: Request, env: OAuthHandlerEnv): Promise<Response> {
+export async function handleCallback(
+  request: Request,
+  env: OAuthHandlerEnv,
+  options: CallbackOptions = {},
+): Promise<Response> {
   if (request.method !== "GET") {
     return new Response("Method not allowed", { status: 405, headers: { Allow: "GET" } });
   }
@@ -141,17 +145,17 @@ export async function handleCallback(request: Request, env: OAuthHandlerEnv): Pr
     });
     const identity = await verifyAccessIdToken(access.config, idToken);
 
-    const props: McpAuthProps = {
-      sub: identity.sub,
-      email: identity.email,
-      name: identity.name,
-      authMethod: "cloudflare-access",
-    };
+    // The connection is accepted and the person is verified: issue its agent ID
+    // (design PR #43 §6.1). One per authorization; agents on this connection
+    // tell themselves apart by agentName.
+    const platform = await platformForAuthRequest(oauth, original.clientId);
+    const agentId = await (options.issueAgentId ?? unreservedAgentId)(platform);
+    const { props, metadata } = buildGrant(identity, { agentId, platform });
     const { redirectTo } = await oauth.completeAuthorization({
       request: original,
       // Grant user IDs may not contain ':'.
       userId: encodeURIComponent(identity.sub),
-      metadata: { label: identity.email ?? identity.sub },
+      metadata,
       scope: original.scope,
       props,
     });

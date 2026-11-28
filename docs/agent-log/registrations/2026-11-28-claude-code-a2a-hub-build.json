@@ -1,0 +1,25 @@
+{
+  "agent_registration": {
+    "agent_name": "Claude Code",
+    "platform": "claude-code-remote",
+    "version": "cloud session",
+    "session_id": "session_01UNjnjiYBNikLJEm2vLza6v",
+    "entry_date": "2026-11-28",
+    "entry_point": "Handoff NLT-HND-2026-002 (Gemini 1.5 Pro → Claude Code): implement the Worker A2A Hub (design PR #43) as PR 1 and PR 2, with Joshua's executive decisions: OAuth-driven identity (amends ADR-001 §3.1), a 24-hour PASSIVE mailbox (amends O8), and the Composite Synthesis Gate enforced at the hub (affirms ADR-001 §3.3).",
+    "acknowledged_otoi": true,
+    "otoi_version": "ORG-DEV-OTOI-1.0.4",
+    "working_repo": "NeuroLift-Technologies/asfdk-harness",
+    "working_branch": "claude/vigilant-bardeen-gbsbss",
+    "capabilities_self_reported": [
+      "TypeScript for Cloudflare Workers, SQLite-backed Durable Objects and MCP servers",
+      "Unit tests with node:test and in-memory MCP clients; local end-to-end runs with wrangler dev",
+      "Reading ADR-001 (NeuroLift-Technologies/solidarity-framework, docs/ADR-001.md) read-only"
+    ],
+    "known_limitations": [
+      "Does not deploy, change Cloudflare resources or secrets, or reconnect connectors; those are Joshua's actions",
+      "Can push only to claude/vigilant-bardeen-gbsbss in this session",
+      "Cannot write to NeuroLift-Technologies/solidarity-framework; the ADR-001 amendments are recorded here and need a separate ADR revision"
+    ],
+    "preferred_handoff_format": "structured summary with file paths, commands run, and verification evidence"
+  }
+}

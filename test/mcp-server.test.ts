@@ -118,14 +118,19 @@ test("MCP server: initialize → tools/list → tools/call for new tools", async
   assert.ok(Array.isArray(interopData));
   assert.ok(interopData.length > 0);
   
-  // Call asfdk_a2a_agent_card
+  // Call asfdk_a2a_agent_card: the caller's own issued card, not the harness's (THREAD-020).
   const cardResult = await client.callTool({ name: "asfdk_a2a_agent_card", arguments: {} });
   assert.ok(cardResult.content.length > 0);
   const cardData = JSON.parse(cardResult.content[0].text);
   assert.equal(cardData.kind, "a2a-agent-card");
-  assert.equal(cardData.governance.toiPath, "[REDACTED_PATH]");
-  assert.equal(cardData.governance.otoiPath, "[REDACTED_PATH]");
-  assert.equal(cardData.metadata.cwd, "[REDACTED_PATH]");
+  assert.equal(cardData.id, "local-test-client");
+  assert.equal(cardData.name, "Test Client");
+  assert.notEqual(cardData.id, "asfdk-harness");
+  assert.equal(cardData.issuance.surface, "local");
+  // Posture only: no TOI paths, contents or working directory.
+  assert.equal(cardData.governance.toiPath, undefined);
+  assert.equal(cardData.governance.otoiPath, undefined);
+  assert.equal(cardData.metadata.cwd, undefined);
   
   await client.close();
   await server.close();

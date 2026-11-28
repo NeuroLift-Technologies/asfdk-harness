@@ -1,0 +1,24 @@
+{
+  "agent_registration": {
+    "agent_name": "Claude Code",
+    "platform": "claude-code-remote",
+    "version": "cloud session",
+    "session_id": "session_01UNjnjnzprwgjSgL2dJWxbP",
+    "entry_date": "2026-11-27",
+    "entry_point": "Joshua: generate and display the A2A agent card; then make the MCP server issue each connected agent its own card for registration in the A2A hub",
+    "acknowledged_otoi": true,
+    "otoi_version": "ORG-DEV-OTOI-1.0.4",
+    "working_repo": "NeuroLift-Technologies/asfdk-harness",
+    "working_branch": "ccr-09d60405-fszgs0",
+    "capabilities_self_reported": [
+      "Reading and testing the harness MCP server locally (in-memory MCP clients)",
+      "Read-only inspection of the Worker's deployed versions and Workers logs through the Cloudflare API",
+      "Design writing for Cloudflare Workers, Durable Objects and MCP servers"
+    ],
+    "known_limitations": [
+      "Did not change Cloudflare resources, secrets or deployments; those are Joshua's actions",
+      "Cannot see the local discovery hub's state file on Joshua's machine"
+    ],
+    "preferred_handoff_format": "structured summary with file paths, commands run, and verification evidence"
+  }
+}

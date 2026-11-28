@@ -1,0 +1,80 @@
+{
+  "handoff_record": {
+    "session_id": "session_01UNjnjiYBNikLJEm2vLza6v",
+    "agent_name": "Claude Code (claude-code-remote)",
+    "date": "2026-11-28",
+    "timestamp": "2026-11-28T15:37:08Z",
+    "otoi_version": "ORG-DEV-OTOI-1.0.4",
+    "repo": "NeuroLift-Technologies/asfdk-harness",
+    "branch": "claude/vigilant-bardeen-gbsbss",
+    "work_completed": [
+      "Built on design PR #43 (branch ccr-09d60405-fszgs0 merged in) per handoff NLT-HND-2026-002 (docs/agent-log/handoffs/2026-11-28-NLT-HND-2026-002-worker-a2a-hub.md).",
+      "PR 1 (commit [Claude] feat(a2a): issue agent IDs at authorization and server-issued A2A cards): agent ID issued at OAuth acceptance into grant props and metadata; consent-page notice; caller resolution from grant props and observed client; issued card builder (posture-only governance, agent skills, issuance record); issue-once/edit lifecycle with observed-client binding; local-{client} identity with in-memory cards; A2AHub SQLite Durable Object (agent_ids, cards, card_revisions); wrangler binding A2A_HUB and migration v2; A2AHub kept out of routeAgentRequest; ASFDK_TOOL_SKILLS asfdk.a2a_agent_card description updated (approved with the design).",
+      "PR 2 (commit [Claude] feat(a2a): Worker A2A hub tools with the Composite Synthesis Gate and 24h retention): asfdk_hub_register/list_agents/get_agent/send_message/inbox/deregister/status; CSG at the hub (ADR-001 §3.3) with a fail-closed human release list in GOVERNANCE KV key a2a-releases; 24-hour retention with lazy purge and a Durable Object alarm; asfdk_discovery_hub returns transport mcp on the Worker; local HTTP identity from the user agent.",
+      "Records: design doc §12 (decisions and builder calls), THREAD-020, decision entry in docs/escalations/2026-11-21-kilo-mcp-a2a-ownership.md, registration docs/agent-log/registrations/2026-11-28-claude-code-a2a-hub-build.json, NLT-HND-2026-002 updated to Integrated."
+    ],
+    "work_in_progress": [
+      "Draft PR awaiting Joshua's review; nothing merged or deployed."
+    ],
+    "blockers": [
+      "ADR-001 revision recording the 2026-11-28 overrides must be made in NeuroLift-Technologies/solidarity-framework (read-only from this session). ADR OI-14 expects implementation PRs to cite the applicable ADR revision.",
+      "npm ci fails on the pre-existing agents/@cloudflare/codemode peer conflict (unchanged by this work); local runs used npm install --legacy-peer-deps plus a --no-save install of the lockfile-pinned @modelcontextprotocol/client@2.0.0."
+    ],
+    "decisions_made": [
+      "Release list for the CSG lives in GOVERNANCE KV key a2a-releases (operator-written, no tool can write it) until OTOI has a release grammar; no releases = deny all cross-agent delivery.",
+      "Source sets = sender + origins observed delivered to the sender within 24 hours (conservative over-taint); content returning to its origin card is private and needs no release.",
+      "Consent page shows only the platform part of the agent ID; the ID is reserved after Access sign-in, globally unique in the hub.",
+      "Issuance record lists agentId as verified and observedClient as observed (header-derived), and the governance extension states agentRuntimeGoverned: false, to avoid overclaiming (ADR-001 §3.1).",
+      "Discovery (list/get) requires the caller's own card to be registered; issued cards and agent IDs persist (24-hour rule applies to registrations and mailboxes).",
+      "Direct governance notification is recorded as unsupported on the Worker; denials go to hub counters and an operator log line only."
+    ],
+    "decisions_pending": [
+      "Joshua: review, merge and deploy; then reconnect the Claude and ChatGPT connectors once so their grants carry an agent ID.",
+      "Joshua: write the first a2a-releases entries (which agent routes may carry content); until then the gate denies every cross-agent message.",
+      "Joshua: confirm the builder calls in design §12.1 (release list location, over-taint, same-agentId routes needing a release, persistence of cards).",
+      "Joshua: whether to split this branch into two PRs (needs permission to push a second branch)."
+    ],
+    "escalations": [
+      "None new. The Workstream B escalation (2026-11-21) now records the 2026-11-28 approval."
+    ],
+    "next_agent_notes": "Tests: test/a2a-issued-cards.test.ts and test/a2a-hub.test.ts. The hub store runs the same SQL in the Durable Object and in tests through test/helpers/sqlite.ts (node:sqlite; tests skip on Node without it). Anything importing @cloudflare/workers-oauth-provider cannot load under node:test, which is why src/oauth/grant.ts holds the pure grant code. Follow-ups from the design (§9.3): move the local OpenCode/Kilo plugins onto the Worker hub; give the Kilo plugin its own default id; fix Codex CLI's rejected /mcp connection. PR #44 (Codex) touches src/mcp-server.ts and src/server.ts lightly; expect a small merge.",
+    "files_modified": [
+      "src/a2a-identity.ts",
+      "src/a2a-cards.ts",
+      "src/a2a.ts",
+      "src/harness.ts",
+      "src/tools.ts",
+      "src/mcp-server.ts",
+      "src/server.ts",
+      "src/oauth/access-handler.ts",
+      "src/oauth/grant.ts",
+      "src/oauth/consent-page.ts",
+      "src/hub/sql.ts",
+      "src/hub/store.ts",
+      "src/hub/csg.ts",
+      "src/hub/types.ts",
+      "src/hub/durable-object.ts",
+      "wrangler.jsonc",
+      "tsconfig.json",
+      "tsconfig.workers.json",
+      "test/a2a-issued-cards.test.ts",
+      "test/a2a-hub.test.ts",
+      "test/helpers/sqlite.ts",
+      "test/mcp-server.test.ts",
+      "docs/superpowers/specs/2026-11-27-server-issued-a2a-cards-design.md",
+      "docs/active-threads.md",
+      "docs/escalations/2026-11-21-kilo-mcp-a2a-ownership.md",
+      "docs/agent-log/registrations/2026-11-28-claude-code-a2a-hub-build.json",
+      "docs/agent-log/handoffs/2026-11-28-NLT-HND-2026-002-worker-a2a-hub.md",
+      "docs/agent-log/handoffs/2026-11-28-claude-code-a2a-hub-build.json"
+    ],
+    "tests_run": [
+      "npm run check; npm run cf:check (clean)",
+      "npm run test:unit: 148 tests, 147 pass; the 1 failure (harness.a2aAgentCardSanitized keeps real paths in development mode) is environmental and also fails on unmodified main",
+      "wrangler dev + stand-in OIDC provider: 27/27 end-to-end checks (consent notice, two authorizations with distinct agent IDs, card issue/edit/binding in the Durable Object, hub register/list, CSG deny then release via local KV, single delivery stamped unknown_taint, reverse route denied, status counters, discovery transport mcp, static token refused, A2AHub not routable under /agents/*, /mcp 401 without token)",
+      "wrangler deploy --dry-run (bundles; A2A_HUB and AsfdkGovernanceAgent bindings listed)"
+    ],
+    "tests_passing": true,
+    "pr_url": "https://github.com/NeuroLift-Technologies/asfdk-harness/pull/47"
+  }
+}

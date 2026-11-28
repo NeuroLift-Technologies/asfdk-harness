@@ -53,8 +53,18 @@ ${body}
 </html>`;
 }
 
+export interface ConsentPageOptions {
+  /** Platform part of the agent ID this connection will be issued (for example `claude`). */
+  agentIdPlatform?: string;
+}
+
 /** The consent page. `handle` is the single-use value from `beginConsent()`. */
-export function renderConsentPage(details: ConsentDetails, handle: string, serverName: string): string {
+export function renderConsentPage(
+  details: ConsentDetails,
+  handle: string,
+  serverName: string,
+  options: ConsentPageOptions = {},
+): string {
   const name = escapeHtml(details.clientName);
   const origin = details.clientDomain
     ? `Published by <strong>${escapeHtml(details.clientDomain)}</strong>.`
@@ -68,6 +78,12 @@ export function renderConsentPage(details: ConsentDetails, handle: string, serve
           .join("")}</ul>`
       : "";
 
+  // The ID itself is issued after sign-in, so only its platform part is known here.
+  const agentIdNotice = options.agentIdPlatform
+    ? `<p>This connection will be issued its own agent ID, <code>${escapeHtml(options.agentIdPlatform)}-</code> followed by a
+       random code, when you finish signing in. Agents on this connection use it to take part in the ASFDK A2A hub.</p>`
+    : "";
+
   const loopbackWarning = details.redirectIsLoopback
     ? `<div class="card warn"><strong>This sends access to an app on your computer.</strong>
        Continue only if you just started connecting from it.</div>`
@@ -80,6 +96,7 @@ export function renderConsentPage(details: ConsentDetails, handle: string, serve
   <p>${origin}</p>
   <p>Access will be sent to <strong>${escapeHtml(details.redirectHost)}</strong>.</p>
   ${scopes}
+  ${agentIdNotice}
 </div>
 ${loopbackWarning}
 <p>If you allow it, you'll sign in with Cloudflare Access next. You can revoke access by disconnecting the app.</p>

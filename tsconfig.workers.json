@@ -12,5 +12,5 @@
     "resolveJsonModule": true,
     "jsx": "react-jsx"
   },
-  "include": ["src/server.ts", "src/governance/**/*.ts", "src/oauth/**/*.ts", "agents/**/*.ts", "worker-configuration.d.ts"]
+  "include": ["src/server.ts", "src/governance/**/*.ts", "src/oauth/**/*.ts", "src/hub/**/*.ts", "agents/**/*.ts", "worker-configuration.d.ts"]
 }

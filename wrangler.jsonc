@@ -34,6 +34,13 @@
       {
         "name": "AsfdkGovernanceAgent",
         "class_name": "AsfdkGovernanceAgent"
+      },
+      {
+        // A2A hub (THREAD-020): issued agent IDs, issued cards, registry and
+        // mailboxes. Reached only from the Worker's MCP tools and OAuth
+        // callback, never routed: server.ts keeps it out of routeAgentRequest.
+        "name": "A2A_HUB",
+        "class_name": "A2AHub"
       }
     ]
   },
@@ -41,6 +48,10 @@
     {
       "tag": "v1",
       "new_sqlite_classes": ["AsfdkGovernanceAgent"]
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": ["A2AHub"]
     }
   ],
   "vars": {
